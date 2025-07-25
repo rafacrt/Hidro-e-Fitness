@@ -26,7 +26,7 @@ export default function StatCard({ title, value, change, changeType, period, ico
         <div className="text-2xl font-bold">{value}</div>
         <div className="flex items-center text-xs text-muted-foreground">
           <span className={cn('font-semibold', changeType === 'increase' ? 'text-green-600' : 'text-red-600')}>{change}</span>
-          <span className="ml-1">{period}</span>
+          {period && <span className="ml-1">{period}</span>}
         </div>
       </CardContent>
     </Card>
