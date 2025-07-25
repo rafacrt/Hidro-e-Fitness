@@ -1,0 +1,37 @@
+import Header from '@/components/layout/header';
+import Sidebar from '@/components/layout/sidebar';
+import StudentsTable from '@/components/alunos/students-table';
+import QuickActionsAlunos from '@/components/alunos/quick-actions-alunos';
+import StudentStats from '@/components/alunos/student-stats';
+import Filters from '@/components/alunos/filters';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
+
+export default function AlunosPage() {
+  return (
+    <div className="flex min-h-screen w-full bg-background text-foreground">
+      <Sidebar />
+      <div className="flex flex-col w-0 flex-1">
+        <Header />
+        <main className="flex-1 p-6 space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold">Alunos</h1>
+              <p className="text-muted-foreground">Gerencie todos os alunos cadastrados</p>
+            </div>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Novo Aluno
+            </Button>
+          </div>
+          
+          <Filters />
+          <StudentsTable />
+          <StudentStats />
+          <QuickActionsAlunos />
+
+        </main>
+      </div>
+    </div>
+  );
+}
