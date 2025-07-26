@@ -1,3 +1,4 @@
+
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import StudentsTable from '@/components/alunos/students-table';
@@ -6,6 +7,7 @@ import StudentStats from '@/components/alunos/student-stats';
 import Filters from '@/components/alunos/filters';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
+import { AddStudentForm } from '@/components/alunos/add-student-form';
 
 export default function AlunosPage() {
   return (
@@ -19,10 +21,12 @@ export default function AlunosPage() {
               <h1 className="text-2xl font-bold">Alunos</h1>
               <p className="text-muted-foreground">Gerencie todos os alunos cadastrados</p>
             </div>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Novo Aluno
-            </Button>
+            <AddStudentForm>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Novo Aluno
+              </Button>
+            </AddStudentForm>
           </div>
           
           <Filters />
