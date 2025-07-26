@@ -23,12 +23,15 @@ import AttendanceStatCards from '@/components/turmas/attendance-stat-cards';
 import AttendanceFilters from '@/components/turmas/attendance-filters';
 import AttendanceTable from '@/components/turmas/attendance-table';
 import AttendanceBatchActions from '@/components/turmas/attendance-batch-actions';
-
+import FrequenciaPorModalidadeReport from '@/components/turmas/frequencia-por-modalidade-report';
+import TendenciaMensalReport from '@/components/turmas/tendencia-mensal-report';
 
 type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença" | "Relatórios";
+type ActiveReport = 'ocupacao' | 'frequencia' | 'performance' | 'horarios';
 
 export default function TurmasPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Controle de Presença");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Relatórios");
+  const [activeReport, setActiveReport] = React.useState<ActiveReport>('frequencia');
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -87,12 +90,22 @@ export default function TurmasPage() {
 
           {activeTab === 'Relatórios' && (
             <div className="space-y-6">
-              <RelatoriosTurmasCards />
+              <RelatoriosTurmasCards activeCard={activeReport} setActiveCard={setActiveReport} />
               <FiltrosRelatorioTurmas />
               <Card>
                 <CardContent className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <OcupacaoModalidade />
-                  <OcupacaoHorario />
+                  {activeReport === 'ocupacao' && (
+                    <>
+                      <OcupacaoModalidade />
+                      <OcupacaoHorario />
+                    </>
+                  )}
+                  {activeReport === 'frequencia' && (
+                    <>
+                      <FrequenciaPorModalidadeReport />
+                      <TendenciaMensalReport />
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
