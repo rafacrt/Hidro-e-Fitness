@@ -22,7 +22,7 @@ export const navItems = [
   { href: '/turmas', label: 'Turmas', icon: Calendar },
   { href: '/modalidades', label: 'Modalidades', icon: Dumbbell },
   { href: '#professores', label: 'Professores', icon: User },
-  { href: '#financeiro', 'label': 'Financeiro', icon: DollarSign },
+  { href: '/financeiro', 'label': 'Financeiro', icon: DollarSign },
   { href: '#pagamentos', label: 'Pagamentos', icon: Receipt },
   { href: '#frequencia', label: 'Frequência', icon: BarChart },
   { href: '#relatorios', label: 'Relatórios', icon: AreaChart },
