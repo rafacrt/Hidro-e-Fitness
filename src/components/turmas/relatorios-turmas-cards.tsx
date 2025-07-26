@@ -44,7 +44,7 @@ export default function RelatoriosTurmasCards({ activeCard, setActiveCard }: Rel
     const { toast } = useToast();
 
     const handleCardClick = (id: ActiveReport, title: string) => {
-        if (id === 'ocupacao' || id === 'frequencia') {
+        if (id === 'ocupacao' || id === 'frequencia' || id === 'performance') {
             setActiveCard(id);
         } else {
             toast({
@@ -63,13 +63,13 @@ export default function RelatoriosTurmasCards({ activeCard, setActiveCard }: Rel
                         key={card.id} 
                         className={cn(
                             'hover:shadow-lg transition-shadow cursor-pointer',
-                            isActive ? 'bg-green-50 border-green-200' : ''
+                            isActive ? 'bg-yellow-50 border-yellow-200' : ''
                         )}
                         onClick={() => handleCardClick(card.id as ActiveReport, card.title)}
                     >
                         <CardContent className="p-4 flex items-start gap-4">
                             <div className={cn('p-2 rounded-lg', isActive ? '' : 'bg-secondary')}>
-                               <card.icon className={cn('h-6 w-6', isActive ? 'text-green-600' : 'text-muted-foreground')} />
+                               <card.icon className={cn('h-6 w-6', isActive ? 'text-yellow-600' : 'text-muted-foreground')} />
                             </div>
                             <div>
                                 <h3 className="font-semibold text-sm">{card.title}</h3>

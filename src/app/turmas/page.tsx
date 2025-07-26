@@ -25,13 +25,15 @@ import AttendanceTable from '@/components/turmas/attendance-table';
 import AttendanceBatchActions from '@/components/turmas/attendance-batch-actions';
 import FrequenciaPorModalidadeReport from '@/components/turmas/frequencia-por-modalidade-report';
 import TendenciaMensalReport from '@/components/turmas/tendencia-mensal-report';
+import ReceitaPorModalidadePerformance from '@/components/turmas/receita-por-modalidade-performance';
+import RentabilidadePerformance from '@/components/turmas/rentabilidade-performance';
 
 type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença" | "Relatórios";
 type ActiveReport = 'ocupacao' | 'frequencia' | 'performance' | 'horarios';
 
 export default function TurmasPage() {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Relatórios");
-  const [activeReport, setActiveReport] = React.useState<ActiveReport>('frequencia');
+  const [activeReport, setActiveReport] = React.useState<ActiveReport>('performance');
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -104,6 +106,12 @@ export default function TurmasPage() {
                     <>
                       <FrequenciaPorModalidadeReport />
                       <TendenciaMensalReport />
+                    </>
+                  )}
+                  {activeReport === 'performance' && (
+                    <>
+                      <ReceitaPorModalidadePerformance />
+                      <RentabilidadePerformance />
                     </>
                   )}
                 </CardContent>
