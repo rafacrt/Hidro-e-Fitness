@@ -1,5 +1,5 @@
 import {
-  AreaChart,
+  BarChart,
   Calendar,
   Cog,
   DollarSign,
@@ -9,12 +9,12 @@ import {
   User,
   Users,
   Wrench,
-  BarChart,
   UserPlus,
   MessageSquare,
   Upload,
   Download,
-  ClipboardCheck
+  ClipboardCheck,
+  FileText
 } from 'lucide-react';
 
 export const navItems = [
@@ -26,7 +26,7 @@ export const navItems = [
   { href: '/financeiro', 'label': 'Financeiro', icon: DollarSign },
   { href: '/pagamentos', label: 'Pagamentos', icon: Receipt },
   { href: '/frequencia', label: 'Frequência', icon: ClipboardCheck },
-  { href: '#relatorios', label: 'Relatórios', icon: AreaChart },
+  { href: '/relatorios', label: 'Relatórios', icon: FileText },
   { href: '#manutencao', label: 'Manutenção', icon: Wrench },
   { href: '#configuracoes', label: 'Configurações', icon: Cog },
 ];
