@@ -1,12 +1,13 @@
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
-import TurmasStatCards from '@/components/turmas/turmas-stat-cards';
-import AulasDeHoje from '@/components/turmas/aulas-de-hoje';
-import EstatisticasModalidade from '@/components/turmas/estatisticas-modalidade';
-import AcoesRapidasTurmas from '@/components/turmas/acoes-rapidas-turmas';
 import TurmasFilters from '@/components/turmas/turmas-filters';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Search } from 'lucide-react';
+import RelatoriosTurmasCards from '@/components/turmas/relatorios-turmas-cards';
+import FiltrosRelatorioTurmas from '@/components/turmas/filtros-relatorio-turmas';
+import { Card, CardContent } from '@/components/ui/card';
+import OcupacaoModalidade from '@/components/turmas/ocupacao-modalidade';
+import OcupacaoHorario from '@/components/turmas/ocupacao-horario';
 
 export default function TurmasPage() {
   return (
@@ -33,18 +34,15 @@ export default function TurmasPage() {
           </div>
           
           <TurmasFilters />
-          <TurmasStatCards />
+          <RelatoriosTurmasCards />
+          <FiltrosRelatorioTurmas />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <AulasDeHoje />
-            </div>
-            <div className="lg:col-span-2">
-              <EstatisticasModalidade />
-            </div>
-          </div>
-
-          <AcoesRapidasTurmas />
+          <Card>
+            <CardContent className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <OcupacaoModalidade />
+              <OcupacaoHorario />
+            </CardContent>
+          </Card>
 
         </main>
       </div>
