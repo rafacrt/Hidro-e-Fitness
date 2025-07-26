@@ -1,3 +1,6 @@
+'use client';
+
+import * as React from 'react';
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import TurmasFilters from '@/components/turmas/turmas-filters';
@@ -8,8 +11,15 @@ import FiltrosRelatorioTurmas from '@/components/turmas/filtros-relatorio-turmas
 import { Card, CardContent } from '@/components/ui/card';
 import OcupacaoModalidade from '@/components/turmas/ocupacao-modalidade';
 import OcupacaoHorario from '@/components/turmas/ocupacao-horario';
+import TurmasStatCards from '@/components/turmas/turmas-stat-cards';
+import AulasDeHoje from '@/components/turmas/aulas-de-hoje';
+import AcoesRapidasTurmas from '@/components/turmas/acoes-rapidas-turmas';
+
+type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença" | "Relatórios";
 
 export default function TurmasPage() {
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar />
@@ -33,16 +43,39 @@ export default function TurmasPage() {
             </div>
           </div>
           
-          <TurmasFilters />
-          <RelatoriosTurmasCards />
-          <FiltrosRelatorioTurmas />
+          <TurmasFilters activeTab={activeTab} setActiveTab={setActiveTab} />
+          
+          {activeTab === 'Visão Geral' && (
+            <div className="space-y-6">
+              <TurmasStatCards />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <AulasDeHoje />
+                <AcoesRapidasTurmas />
+              </div>
+            </div>
+          )}
 
-          <Card>
-            <CardContent className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <OcupacaoModalidade />
-              <OcupacaoHorario />
-            </CardContent>
-          </Card>
+          {activeTab === 'Relatórios' && (
+            <div className="space-y-6">
+              <RelatoriosTurmasCards />
+              <FiltrosRelatorioTurmas />
+              <Card>
+                <CardContent className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <OcupacaoModalidade />
+                  <OcupacaoHorario />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {(activeTab !== 'Visão Geral' && activeTab !== 'Relatórios') && (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <h3 className="text-lg font-semibold">Em Desenvolvimento</h3>
+                <p className="text-muted-foreground">A funcionalidade para "{activeTab}" está em desenvolvimento e será disponibilizada em breve.</p>
+              </CardContent>
+            </Card>
+          )}
 
         </main>
       </div>
