@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Upload,
   Download,
+  ClipboardCheck
 } from 'lucide-react';
 
 export const navItems = [
@@ -24,7 +25,7 @@ export const navItems = [
   { href: '#professores', label: 'Professores', icon: User },
   { href: '/financeiro', 'label': 'Financeiro', icon: DollarSign },
   { href: '/pagamentos', label: 'Pagamentos', icon: Receipt },
-  { href: '#frequencia', label: 'Frequência', icon: BarChart },
+  { href: '/frequencia', label: 'Frequência', icon: ClipboardCheck },
   { href: '#relatorios', label: 'Relatórios', icon: AreaChart },
   { href: '#manutencao', label: 'Manutenção', icon: Wrench },
   { href: '#configuracoes', label: 'Configurações', icon: Cog },

@@ -57,7 +57,7 @@ export default function CobrancasPendentes() {
             <div className="flex justify-between items-center mt-4">
                 <p className="text-lg font-bold">{charge.amount}</p>
                 <div className='flex gap-2'>
-                    <Button size="sm">Cobrar Agora</Button>
+                    <Button size="sm" variant="outline">Cobrar Agora</Button>
                     <Button variant="outline" size="icon">
                         <Copy className="h-4 w-4" />
                     </Button>
