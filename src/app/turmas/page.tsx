@@ -48,10 +48,8 @@ export default function TurmasPage() {
           {activeTab === 'Visão Geral' && (
             <div className="space-y-6">
               <TurmasStatCards />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <AulasDeHoje />
-                <AcoesRapidasTurmas />
-              </div>
+              <AulasDeHoje />
+              <AcoesRapidasTurmas />
             </div>
           )}
 
