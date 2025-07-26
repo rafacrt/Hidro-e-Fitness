@@ -92,6 +92,20 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
     resolver: zodResolver(studentFormSchema),
     defaultValues: {
       isWhatsApp: true,
+      name: '',
+      cpf: '',
+      email: '',
+      phone: '',
+      cep: '',
+      street: '',
+      number: '',
+      complement: '',
+      neighborhood: '',
+      city: '',
+      state: '',
+      responsibleName: '',
+      responsiblePhone: '',
+      medicalObservations: '',
     },
   });
 
