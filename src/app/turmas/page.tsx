@@ -19,11 +19,16 @@ import ManageClassesStatCards from '@/components/turmas/manage-classes-stat-card
 import ManageClassesFilters from '@/components/turmas/manage-classes-filters';
 import ManageClassesTable from '@/components/turmas/manage-classes-table';
 import ManageClassesQuickActions from '@/components/turmas/manage-classes-quick-actions';
+import AttendanceStatCards from '@/components/turmas/attendance-stat-cards';
+import AttendanceFilters from '@/components/turmas/attendance-filters';
+import AttendanceTable from '@/components/turmas/attendance-table';
+import AttendanceBatchActions from '@/components/turmas/attendance-batch-actions';
+
 
 type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença" | "Relatórios";
 
 export default function TurmasPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Gerenciar Turmas");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Controle de Presença");
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -71,6 +76,15 @@ export default function TurmasPage() {
             </div>
           )}
 
+          {activeTab === 'Controle de Presença' && (
+             <div className="space-y-6">
+                <AttendanceStatCards />
+                <AttendanceFilters />
+                <AttendanceTable />
+                <AttendanceBatchActions />
+             </div>
+          )}
+
           {activeTab === 'Relatórios' && (
             <div className="space-y-6">
               <RelatoriosTurmasCards />
@@ -82,15 +96,6 @@ export default function TurmasPage() {
                 </CardContent>
               </Card>
             </div>
-          )}
-
-          {(activeTab !== 'Visão Geral' && activeTab !== 'Relatórios' && activeTab !== 'Grade de Horários' && activeTab !== 'Gerenciar Turmas') && (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <h3 className="text-lg font-semibold">Em Desenvolvimento</h3>
-                <p className="text-muted-foreground">A funcionalidade para "{activeTab}" está em desenvolvimento e será disponibilizada em breve.</p>
-              </CardContent>
-            </Card>
           )}
 
         </main>
