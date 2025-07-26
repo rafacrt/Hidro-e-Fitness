@@ -15,11 +15,15 @@ import TurmasStatCards from '@/components/turmas/turmas-stat-cards';
 import AulasDeHoje from '@/components/turmas/aulas-de-hoje';
 import AcoesRapidasTurmas from '@/components/turmas/acoes-rapidas-turmas';
 import ScheduleGrid from '@/components/turmas/schedule-grid';
+import ManageClassesStatCards from '@/components/turmas/manage-classes-stat-cards';
+import ManageClassesFilters from '@/components/turmas/manage-classes-filters';
+import ManageClassesTable from '@/components/turmas/manage-classes-table';
+import ManageClassesQuickActions from '@/components/turmas/manage-classes-quick-actions';
 
 type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença" | "Relatórios";
 
 export default function TurmasPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Grade de Horários");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Gerenciar Turmas");
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -57,6 +61,15 @@ export default function TurmasPage() {
           {activeTab === 'Grade de Horários' && (
             <ScheduleGrid />
           )}
+          
+          {activeTab === 'Gerenciar Turmas' && (
+            <div className='space-y-6'>
+              <ManageClassesStatCards />
+              <ManageClassesFilters />
+              <ManageClassesTable />
+              <ManageClassesQuickActions />
+            </div>
+          )}
 
           {activeTab === 'Relatórios' && (
             <div className="space-y-6">
@@ -71,7 +84,7 @@ export default function TurmasPage() {
             </div>
           )}
 
-          {(activeTab !== 'Visão Geral' && activeTab !== 'Relatórios' && activeTab !== 'Grade de Horários') && (
+          {(activeTab !== 'Visão Geral' && activeTab !== 'Relatórios' && activeTab !== 'Grade de Horários' && activeTab !== 'Gerenciar Turmas') && (
             <Card>
               <CardContent className="p-6 text-center">
                 <h3 className="text-lg font-semibold">Em Desenvolvimento</h3>
