@@ -20,7 +20,7 @@ export default function AcoesRapidasManutencao() {
           {actions.map((action, index) => (
             <Button key={index} variant="outline" className="h-auto flex-col p-6 gap-2">
               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-secondary mb-4">
-                <action.icon className="h-6 w-6 text-muted-foreground" />
+                <action.icon className="h-8 w-8 text-muted-foreground" />
               </div>
               <span className="text-sm font-medium">{action.label}</span>
             </Button>

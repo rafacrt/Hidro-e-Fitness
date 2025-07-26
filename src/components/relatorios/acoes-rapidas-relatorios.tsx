@@ -20,7 +20,7 @@ export default function AcoesRapidasRelatorios() {
           {actions.map((action, index) => (
             <Button key={index} variant="outline" className="h-auto p-4 flex flex-col items-start justify-start text-left">
                 <div className={`flex items-center justify-center w-10 h-10 rounded-lg ${action.iconBg} mb-4`}>
-                    <action.icon className={`h-5 w-5 ${action.iconColor}`} />
+                    <action.icon className={`h-6 w-6 ${action.iconColor}`} />
                 </div>
                 <span className="text-sm font-semibold">{action.label}</span>
                 <span className="text-xs text-muted-foreground font-normal">{action.description}</span>

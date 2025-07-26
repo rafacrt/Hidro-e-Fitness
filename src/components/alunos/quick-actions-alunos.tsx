@@ -19,7 +19,7 @@ export default function QuickActionsAlunos() {
           {quickActionsAlunos.map((action, index) => (
             <Button key={index} variant="outline" className="h-auto flex-col p-6 gap-2">
                 <IconWrapper>
-                    <action.icon className="h-6 w-6 text-muted-foreground" />
+                    <action.icon className="h-8 w-8 text-muted-foreground" />
                 </IconWrapper>
               <span className="text-sm font-medium">{action.label}</span>
             </Button>
