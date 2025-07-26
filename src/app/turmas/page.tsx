@@ -14,11 +14,12 @@ import OcupacaoHorario from '@/components/turmas/ocupacao-horario';
 import TurmasStatCards from '@/components/turmas/turmas-stat-cards';
 import AulasDeHoje from '@/components/turmas/aulas-de-hoje';
 import AcoesRapidasTurmas from '@/components/turmas/acoes-rapidas-turmas';
+import ScheduleGrid from '@/components/turmas/schedule-grid';
 
 type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença" | "Relatórios";
 
 export default function TurmasPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Grade de Horários");
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -53,6 +54,10 @@ export default function TurmasPage() {
             </div>
           )}
 
+          {activeTab === 'Grade de Horários' && (
+            <ScheduleGrid />
+          )}
+
           {activeTab === 'Relatórios' && (
             <div className="space-y-6">
               <RelatoriosTurmasCards />
@@ -66,7 +71,7 @@ export default function TurmasPage() {
             </div>
           )}
 
-          {(activeTab !== 'Visão Geral' && activeTab !== 'Relatórios') && (
+          {(activeTab !== 'Visão Geral' && activeTab !== 'Relatórios' && activeTab !== 'Grade de Horários') && (
             <Card>
               <CardContent className="p-6 text-center">
                 <h3 className="text-lg font-semibold">Em Desenvolvimento</h3>

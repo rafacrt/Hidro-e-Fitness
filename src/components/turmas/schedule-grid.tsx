@@ -1,0 +1,107 @@
+import * as React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, Users, MapPin } from 'lucide-react';
+import { ScheduleLegend } from './schedule-legend';
+
+const days = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+const dates = ['21/07', '22/07', '23/07', '24/07', '25/07', '26/07', '27/07'];
+const times = Array.from({ length: 16 }, (_, i) => `${String(i + 6).padStart(2, '0')}:00`);
+
+const classes = [
+  { day: 'Segunda', start: '08:00', end: '09:00', title: 'Natação Adulto - Iniciante', instructor: 'Prof. Ana Silva', students: '12/15', location: 'Piscina 1', color: 'bg-blue-500', textColor: 'text-white' },
+  { day: 'Segunda', start: '09:00', end: '10:00', title: 'Hidroginástica', instructor: 'Prof. Carlos Santos', students: '18/20', location: 'Piscina 2', color: 'bg-green-500', textColor: 'text-white' },
+  { day: 'Segunda', start: '10:00', end: '11:00', title: 'Natação Infantil', instructor: 'Prof. Marina Costa', students: '8/10', location: 'Piscina 1', color: 'bg-yellow-500', textColor: 'text-white' },
+  { day: 'Segunda', start: '14:00', end: '15:00', title: 'Aqua Aeróbica', instructor: 'Prof. Roberto Lima', students: '11/15', location: 'Piscina 2', color: 'bg-purple-500', textColor: 'text-white' },
+  { day: 'Terça', start: '08:00', end: '09:00', title: 'Natação Adulto - Intermediário', instructor: 'Prof. Ana Silva', students: '14/15', location: 'Piscina 1', color: 'bg-blue-500', textColor: 'text-white' },
+  { day: 'Terça', start: '09:00', end: '10:00', title: 'Hidroginástica', instructor: 'Prof. Carlos Santos', students: '20/20', location: 'Piscina 2', color: 'bg-green-500', textColor: 'text-white' },
+  { day: 'Quarta', start: '07:00', end: '08:30', title: 'Natação Adulto - Avançado', instructor: 'Prof. Roberto Lima', students: '10/10', location: 'Piscina 1', color: 'bg-red-500', textColor: 'text-white' },
+  { day: 'Sexta', start: '15:30', end: '17:00', title: 'Natação Infantil', instructor: 'Prof. Marina Costa', students: '9/10', location: 'Piscina 1', color: 'bg-yellow-500', textColor: 'text-white' },
+];
+
+export default function ScheduleGrid() {
+  const calculatePosition = (time: string) => {
+    const [hour, minute] = time.split(':').map(Number);
+    return (hour - 6) * 60 + minute;
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="p-4 space-y-4">
+          <div className="flex justify-between items-center">
+            <Button variant="outline">
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Semana Anterior
+            </Button>
+            <div className="text-center">
+              <p className="font-semibold text-lg">21 de julho - 27 de julho de 2025</p>
+              <p className="text-sm text-muted-foreground">Grade de Horários</p>
+            </div>
+            <Button variant="outline">
+              Próxima Semana
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+
+          <div className="relative grid grid-cols-[auto_repeat(7,1fr)] grid-rows-[auto_repeat(16,60px)] gap-x-2">
+            {/* Header Vazio */}
+            <div className="sticky top-0 bg-background z-10"></div>
+            {/* Header Dias da Semana */}
+            {days.map((day, i) => (
+              <div key={day} className="text-center sticky top-0 bg-background z-10 py-2">
+                <p className="font-semibold">{day}</p>
+                <p className="text-sm text-muted-foreground">{dates[i]}</p>
+              </div>
+            ))}
+
+            {/* Coluna de Horários e Linhas da Grade */}
+            {times.map((time, index) => (
+              <React.Fragment key={time}>
+                <div className="row-start-auto text-right pr-4 text-sm text-muted-foreground">
+                  {time}
+                </div>
+                {days.map(day => (
+                  <div key={`${day}-${time}`} className="border-t border-r last:border-r-0"></div>
+                ))}
+              </React.Fragment>
+            ))}
+            
+            {/* Eventos da Agenda */}
+            {classes.map((cls, index) => {
+              const start = calculatePosition(cls.start);
+              const duration = calculatePosition(cls.end) - start;
+              const dayIndex = days.indexOf(cls.day) + 2; // +2 para compensar a coluna de horário
+
+              return (
+                <div
+                  key={index}
+                  className={`absolute p-2 rounded-lg shadow-md flex flex-col ${cls.color} ${cls.textColor}`}
+                  style={{
+                    gridColumnStart: dayIndex,
+                    top: `${(start / (16 * 60)) * (16 * 64)}px`, // Aproximação da posição
+                    height: `${(duration / (16 * 60)) * (16 * 64)}px`, // Aproximação da altura
+                    left: `${((dayIndex - 2) / 7) * 100}%`,
+                    width: `calc(${100/7}% - 8px)`,
+                    marginLeft: '8px'
+                  }}
+                >
+                  <p className="font-semibold text-sm">{cls.title}</p>
+                  <p className="text-xs">{cls.instructor}</p>
+                  <div className="flex-grow"></div>
+                  <div className="flex items-center text-xs mt-1">
+                    <Users className="h-3 w-3 mr-1" /> A: {cls.students}
+                  </div>
+                  <div className="flex items-center text-xs">
+                    <MapPin className="h-3 w-3 mr-1" /> {cls.location}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+      <ScheduleLegend />
+    </div>
+  );
+}
