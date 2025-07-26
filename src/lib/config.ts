@@ -27,7 +27,7 @@ export const navItems = [
   { href: '/pagamentos', label: 'Pagamentos', icon: Receipt },
   { href: '/frequencia', label: 'Frequência', icon: ClipboardCheck },
   { href: '/relatorios', label: 'Relatórios', icon: FileText },
-  { href: '#manutencao', label: 'Manutenção', icon: Wrench },
+  { href: '/manutencao', label: 'Manutenção', icon: Wrench },
   { href: '#configuracoes', label: 'Configurações', icon: Cog },
 ];
 
