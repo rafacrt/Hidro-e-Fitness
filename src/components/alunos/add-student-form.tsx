@@ -38,6 +38,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { IMaskInput } from 'react-imask';
+import { WaveSpinner } from '../ui/wave-spinner';
 
 const studentFormSchema = z
   .object({
@@ -341,7 +342,7 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
                             placeholder="00000-000"
                            />
                            {isFetchingCep && (
-                            <Loader2 className="absolute right-3 top-2.5 h-5 w-5 animate-spin text-muted-foreground" />
+                            <WaveSpinner className="absolute right-3 top-2.5 h-5 w-5 text-primary" />
                            )}
                          </div>
                       </FormControl>
