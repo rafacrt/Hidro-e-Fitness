@@ -27,13 +27,16 @@ import FrequenciaPorModalidadeReport from '@/components/turmas/frequencia-por-mo
 import TendenciaMensalReport from '@/components/turmas/tendencia-mensal-report';
 import ReceitaPorModalidadePerformance from '@/components/turmas/receita-por-modalidade-performance';
 import RentabilidadePerformance from '@/components/turmas/rentabilidade-performance';
+import DistribuicaoPorDiaSemana from '@/components/turmas/distribuicao-por-dia-semana';
+import DistribuicaoPorPeriodoDia from '@/components/turmas/distribuicao-por-periodo-dia';
+import PlaceholderReport from '@/components/turmas/placeholder-report';
 
 type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença" | "Relatórios";
-type ActiveReport = 'ocupacao' | 'frequencia' | 'performance' | 'horarios';
+type ActiveReport = 'ocupacao' | 'frequencia' | 'performance' | 'horarios' | null;
 
 export default function TurmasPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Relatórios");
-  const [activeReport, setActiveReport] = React.useState<ActiveReport>('performance');
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
+  const [activeReport, setActiveReport] = React.useState<ActiveReport>(null);
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -95,24 +98,35 @@ export default function TurmasPage() {
               <RelatoriosTurmasCards activeCard={activeReport} setActiveCard={setActiveReport} />
               <FiltrosRelatorioTurmas />
               <Card>
-                <CardContent className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {activeReport === 'ocupacao' && (
-                    <>
-                      <OcupacaoModalidade />
-                      <OcupacaoHorario />
-                    </>
-                  )}
-                  {activeReport === 'frequencia' && (
-                    <>
-                      <FrequenciaPorModalidadeReport />
-                      <TendenciaMensalReport />
-                    </>
-                  )}
-                  {activeReport === 'performance' && (
-                    <>
-                      <ReceitaPorModalidadePerformance />
-                      <RentabilidadePerformance />
-                    </>
+                <CardContent className="p-6">
+                  {activeReport === null && <PlaceholderReport />}
+                  {activeReport && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {activeReport === 'ocupacao' && (
+                        <>
+                          <OcupacaoModalidade />
+                          <OcupacaoHorario />
+                        </>
+                      )}
+                      {activeReport === 'frequencia' && (
+                        <>
+                          <FrequenciaPorModalidadeReport />
+                          <TendenciaMensalReport />
+                        </>
+                      )}
+                      {activeReport === 'performance' && (
+                        <>
+                          <ReceitaPorModalidadePerformance />
+                          <RentabilidadePerformance />
+                        </>
+                      )}
+                      {activeReport === 'horarios' && (
+                        <>
+                          <DistribuicaoPorDiaSemana />
+                          <DistribuicaoPorPeriodoDia />
+                        </>
+                      )}
+                    </div>
                   )}
                 </CardContent>
               </Card>

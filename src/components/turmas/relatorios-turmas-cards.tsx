@@ -3,10 +3,9 @@
 import * as React from 'react';
 import { Card, CardContent } from "@/components/ui/card"
 import { Users, BarChart, TrendingUp, Calendar, Clock } from "lucide-react"
-import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-type ActiveReport = 'ocupacao' | 'frequencia' | 'performance' | 'horarios';
+type ActiveReport = 'ocupacao' | 'frequencia' | 'performance' | 'horarios' | null;
 
 const reportCardsData = [
     { 
@@ -41,17 +40,8 @@ interface RelatoriosTurmasCardsProps {
 }
 
 export default function RelatoriosTurmasCards({ activeCard, setActiveCard }: RelatoriosTurmasCardsProps) {
-    const { toast } = useToast();
-
-    const handleCardClick = (id: ActiveReport, title: string) => {
-        if (id === 'ocupacao' || id === 'frequencia' || id === 'performance') {
-            setActiveCard(id);
-        } else {
-            toast({
-                title: 'Funcionalidade em desenvolvimento',
-                description: `O relatório de "${title}" será implementado em breve.`,
-            });
-        }
+    const handleCardClick = (id: ActiveReport) => {
+        setActiveCard(id);
     };
 
     return (
@@ -63,13 +53,13 @@ export default function RelatoriosTurmasCards({ activeCard, setActiveCard }: Rel
                         key={card.id} 
                         className={cn(
                             'hover:shadow-lg transition-shadow cursor-pointer',
-                            isActive ? 'bg-yellow-50 border-yellow-200' : ''
+                            isActive ? 'bg-primary/10 border-primary' : ''
                         )}
-                        onClick={() => handleCardClick(card.id as ActiveReport, card.title)}
+                        onClick={() => handleCardClick(card.id as ActiveReport)}
                     >
                         <CardContent className="p-4 flex items-start gap-4">
                             <div className={cn('p-2 rounded-lg', isActive ? '' : 'bg-secondary')}>
-                               <card.icon className={cn('h-6 w-6', isActive ? 'text-yellow-600' : 'text-muted-foreground')} />
+                               <card.icon className={cn('h-6 w-6', isActive ? 'text-primary' : 'text-muted-foreground')} />
                             </div>
                             <div>
                                 <h3 className="font-semibold text-sm">{card.title}</h3>
