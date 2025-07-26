@@ -1,13 +1,13 @@
 import StatCard from '@/components/dashboard/stat-card';
-import { Dumbbell, Users, DollarSign } from 'lucide-react';
+import { Dumbbell, Users, DollarSign, Activity } from 'lucide-react';
 
 export default function ModalitiesStatCards() {
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <StatCard 
         title="Total de Modalidades"
-        value="7"
-        change="+2 vs mês anterior"
+        value="5"
+        change=""
         changeType="increase"
         period=""
         icon={Dumbbell}
@@ -15,19 +15,29 @@ export default function ModalitiesStatCards() {
         iconColor="text-cyan-600"
       />
       <StatCard 
-        title="Alunos Ativos"
-        value="342"
-        change="+12 vs mês anterior"
+        title="Modalidades Ativas"
+        value="4"
+        change=""
+        changeType="increase"
+        period=""
+        icon={Activity}
+        iconBgColor="bg-green-100"
+        iconColor="text-green-600"
+      />
+      <StatCard 
+        title="Total de Alunos"
+        value="266"
+        change=""
         changeType="increase"
         period=""
         icon={Users}
-        iconBgColor="bg-blue-100"
-        iconColor="text-blue-600"
+        iconBgColor="bg-orange-100"
+        iconColor="text-orange-600"
       />
       <StatCard 
-        title="Receita Mensal"
-        value="R$ 58.500"
-        change="+8% vs mês anterior"
+        title="Receita Total"
+        value="R$ 46.600"
+        change=""
         changeType="increase"
         period=""
         icon={DollarSign}

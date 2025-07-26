@@ -1,19 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '../ui/button';
-import { PlusCircle, ListChecks, DollarSign, BarChart2 } from 'lucide-react';
+import { PlusCircle, CheckCircle, DollarSign, CalendarPlus } from 'lucide-react';
 
 const actions = [
-  { label: 'Nova Modalidade', icon: PlusCircle },
-  { label: 'Gerenciar Planos', icon: ListChecks },
-  { label: 'Definir Preços', icon: DollarSign },
-  { label: 'Ver Relatórios', icon: BarChart2 },
+  { label: 'Nova Modalidade', icon: PlusCircle, variant: 'default' },
+  { label: 'Ativar Selecionadas', icon: CheckCircle, variant: 'secondary' },
+  { label: 'Ajustar Preços', icon: DollarSign, variant: 'secondary' },
+  { label: 'Criar Turmas', icon: CalendarPlus, variant: 'secondary' },
 ];
-
-const IconWrapper = ({ children }: { children: React.ReactNode }) => (
-    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-secondary mb-4">
-        {children}
-    </div>
-)
 
 export default function QuickActionsModalities() {
   return (
@@ -24,10 +18,8 @@ export default function QuickActionsModalities() {
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {actions.map((action, index) => (
-            <Button key={index} variant="outline" className="h-auto flex-col p-6 gap-2">
-                <IconWrapper>
-                    <action.icon className="h-6 w-6 text-muted-foreground" />
-                </IconWrapper>
+            <Button key={index} variant={action.variant as any} className="h-auto p-4 flex items-center justify-center gap-2">
+              <action.icon className="h-4 w-4" />
               <span className="text-sm font-medium">{action.label}</span>
             </Button>
           ))}

@@ -2,12 +2,11 @@ import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import ModalitiesStatCards from '@/components/modalidades/modalities-stat-cards';
 import ModalitiesFilters from '@/components/modalidades/modalities-filters';
-import ModalityTypes from '@/components/modalidades/modality-types';
-import PopularModalities from '@/components/modalidades/popular-modalities';
-import AllModalities from '@/components/modalidades/all-modalities';
+import ModalitiesTable from '@/components/modalidades/modalities-table';
 import QuickActionsModalities from '@/components/modalidades/quick-actions-modalities';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Search } from 'lucide-react';
+import TableFilters from '@/components/modalidades/table-filters';
 
 export default function ModalidadesPage() {
   return (
@@ -35,17 +34,8 @@ export default function ModalidadesPage() {
           
           <ModalitiesFilters />
           <ModalitiesStatCards />
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 space-y-6">
-              <ModalityTypes />
-              <PopularModalities />
-            </div>
-            <div className="lg:col-span-2">
-              <AllModalities />
-            </div>
-          </div>
-
+          <TableFilters />
+          <ModalitiesTable />
           <QuickActionsModalities />
 
         </main>
