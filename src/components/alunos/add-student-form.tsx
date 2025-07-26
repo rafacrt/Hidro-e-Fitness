@@ -61,9 +61,17 @@ const studentFormSchema = z
   })
   .refine(
     (data) => {
-      const age = new Date().getFullYear() - new Date(data.birthDate).getFullYear();
-      if (age < 18) {
-        return !!data.responsibleName && !!data.responsiblePhone;
+      if (data.birthDate) {
+        const today = new Date();
+        const birthDate = new Date(data.birthDate);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        if (age < 18) {
+          return !!data.responsibleName && !!data.responsiblePhone;
+        }
       }
       return true;
     },
@@ -99,6 +107,8 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
         age--;
       }
       setIsMinor(age < 18);
+    } else {
+      setIsMinor(false);
     }
   }, [watchBirthDate]);
 
@@ -169,7 +179,7 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
                       <FormControl>
                         <IMaskInput
                           mask="000.000.000-00"
-                          value={field.value}
+                          value={field.value || ''}
                           onAccept={field.onChange}
                           className={cn(
                             'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
@@ -209,6 +219,9 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
+                            captionLayout="dropdown-buttons"
+                            fromYear={1920}
+                            toYear={new Date().getFullYear()}
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) =>
@@ -248,7 +261,7 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
                       <FormControl>
                          <IMaskInput
                           mask="(00) 00000-0000"
-                          value={field.value}
+                          value={field.value || ''}
                           onAccept={field.onChange}
                           className={cn(
                             'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
@@ -303,7 +316,7 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
                                     <FormControl>
                                        <IMaskInput
                                           mask="(00) 00000-0000"
-                                          value={field.value}
+                                          value={field.value || ''}
                                           onAccept={field.onChange}
                                           className={cn(
                                             'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
@@ -333,7 +346,7 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
                          <div className="relative">
                            <IMaskInput
                             mask="00000-000"
-                            value={field.value}
+                            value={field.value || ''}
                             onAccept={field.onChange}
                             onBlur={handleCepBlur}
                             className={cn(
