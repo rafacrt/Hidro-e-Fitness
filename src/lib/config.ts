@@ -28,7 +28,7 @@ export const navItems = [
   { href: '/frequencia', label: 'Frequência', icon: ClipboardCheck },
   { href: '/relatorios', label: 'Relatórios', icon: FileText },
   { href: '/manutencao', label: 'Manutenção', icon: Wrench },
-  { href: '#configuracoes', label: 'Configurações', icon: Cog },
+  { href: '/configuracoes', label: 'Configurações', icon: Cog },
 ];
 
 export const quickActionsAlunos = [
