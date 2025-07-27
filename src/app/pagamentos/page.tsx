@@ -17,11 +17,15 @@ import PlanosPrecosStats from '@/components/pagamentos/planos-precos-stats';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PlanosList from '@/components/pagamentos/planos-list';
 import PlanosPrecosActions from '@/components/pagamentos/planos-precos-actions';
+import HistoricoStatsCards from '@/components/pagamentos/historico-stats-cards';
+import HistoricoFilters from '@/components/pagamentos/historico-filters';
+import HistoricoTable from '@/components/pagamentos/historico-table';
+import HistoricoTablePagination from '@/components/pagamentos/historico-table-pagination';
 
 type ActiveTab = "Visão Geral" | "Métodos de Pagamento" | "Planos e Preços" | "Histórico" | "Relatórios";
 
 export default function PagamentosPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Planos e Preços");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Histórico");
 
   const renderHeaderButtons = () => {
     switch (activeTab) {
@@ -32,6 +36,21 @@ export default function PagamentosPage() {
             Novo Plano
           </Button>
         );
+      case 'Histórico':
+         return (
+            <div className='flex gap-2'>
+                <Button variant="outline">
+                    <Download className="mr-2 h-4 w-4" />
+                    Exportar
+                </Button>
+                 <AddPaymentForm>
+                    <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Novo Pagamento
+                    </Button>
+                </AddPaymentForm>
+            </div>
+         )
       default:
         return (
           <AddPaymentForm>
@@ -95,6 +114,15 @@ export default function PagamentosPage() {
               </div>
               <PlanosList />
               <PlanosPrecosActions />
+            </div>
+          )}
+
+          {activeTab === 'Histórico' && (
+            <div className="space-y-6">
+              <HistoricoStatsCards />
+              <HistoricoFilters />
+              <HistoricoTable />
+              <HistoricoTablePagination />
             </div>
           )}
 
