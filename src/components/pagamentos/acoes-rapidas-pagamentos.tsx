@@ -26,7 +26,7 @@ export default function AcoesRapidasPagamentos() {
           {actions.map((action, index) => (
             <Button key={index} variant="outline" className="h-auto flex-col p-6 gap-2">
                 <IconWrapper>
-                    <action.icon className="h-8 w-8 text-muted-foreground" />
+                    <action.icon className="h-8 w-8 text-secondary-foreground" />
                 </IconWrapper>
               <span className="text-sm font-medium">{action.label}</span>
             </Button>

@@ -41,7 +41,7 @@ export default function AcoesRapidasTurmas() {
              const buttonContent = (
                 <Button variant="outline" className="h-auto flex-col p-6 gap-2 w-full">
                     <IconWrapper>
-                        <action.icon className="h-8 w-8 text-muted-foreground" />
+                        <action.icon className="h-8 w-8 text-secondary-foreground" />
                     </IconWrapper>
                     <span className="text-sm font-medium">{action.label}</span>
                 </Button>
