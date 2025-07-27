@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { AlertCircle } from 'lucide-react';
+import { Badge } from '../ui/badge';
 
 const students = [
   { 
@@ -49,7 +50,7 @@ export default function AlunosBaixaFrequencia() {
                     <p className="font-semibold">{student.name}</p>
                     <p className="text-sm text-muted-foreground">{student.modality}</p>
                 </div>
-                <Badge-like className="text-sm font-semibold text-red-600">{student.presenceRate.toFixed(1)}%</Badge-like>
+                <Badge variant="destructive" className="text-sm font-semibold">{student.presenceRate.toFixed(1)}%</Badge>
             </div>
             <div className="mt-2 space-y-1 text-sm">
                 <div className="flex justify-between">
