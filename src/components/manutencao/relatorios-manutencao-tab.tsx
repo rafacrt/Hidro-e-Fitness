@@ -8,6 +8,8 @@ import ConfiabilidadeEquipamentosReport from './confiabilidade-equipamentos-repo
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import PlaceholderContent from '../financeiro/placeholder-content';
 import PlaceholderReport from '../turmas/placeholder-report';
+import CustoManutencaoMensalReport from './custo-manutencao-mensal-report';
+import DistribuicaoManutencaoReport from './distribuicao-manutencao-report';
 
 type ActiveReport = 'equipamentos' | 'manutencao' | 'quimico' | 'custos' | null;
 
@@ -30,7 +32,18 @@ export default function RelatoriosManutencaoTab() {
           </Card>
         );
       case 'manutencao':
-        return <PlaceholderContent title="Relatório de Manutenções" />;
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Relatório de Manutenções</CardTitle>
+                    <CardDescription>Análise de custos e tipos de manutenção realizadas.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <CustoManutencaoMensalReport />
+                    <DistribuicaoManutencaoReport />
+                </CardContent>
+            </Card>
+        )
       case 'quimico':
         return <PlaceholderContent title="Controle Químico" />;
       case 'custos':
