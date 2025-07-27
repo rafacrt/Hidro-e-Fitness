@@ -1,4 +1,3 @@
-
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import StatCard from '@/components/dashboard/stat-card';
@@ -7,7 +6,7 @@ import RecentPayments from '@/components/dashboard/recent-payments';
 import QuickActions from '@/components/dashboard/quick-actions';
 import { Users, Calendar, DollarSign, Percent } from 'lucide-react';
 
-function Dashboard() {
+export default function HomePage() {
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar />
@@ -83,5 +82,3 @@ function Dashboard() {
     </div>
   );
 }
-
-export default Dashboard;
