@@ -27,11 +27,12 @@ import ReceitaPorMetodoReport from '@/components/pagamentos/receita-por-metodo-r
 import EvolucaoMensalReport from '@/components/pagamentos/evolucao-mensal-report';
 import ReceitaPorPlanoReport from '@/components/pagamentos/receita-por-plano-report';
 import { Card, CardContent } from '@/components/ui/card';
+import MetodosPagamentoTab from '@/components/pagamentos/metodos-pagamento-tab';
 
 type ActiveTab = "Visão Geral" | "Métodos de Pagamento" | "Planos e Preços" | "Histórico" | "Relatórios";
 
 export default function PagamentosPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Relatórios");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Métodos de Pagamento");
 
   const renderHeaderButtons = () => {
     switch (activeTab) {
@@ -44,6 +45,7 @@ export default function PagamentosPage() {
         );
       case 'Histórico':
       case 'Relatórios':
+      case 'Métodos de Pagamento':
          return (
             <div className='flex gap-2'>
                 <Button variant="outline">
@@ -103,6 +105,8 @@ export default function PagamentosPage() {
               <AcoesRapidasPagamentos />
             </div>
           )}
+
+          {activeTab === 'Métodos de Pagamento' && <MetodosPagamentoTab />}
 
           {activeTab === 'Planos e Preços' && (
             <div className="space-y-6">
