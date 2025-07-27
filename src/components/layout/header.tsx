@@ -15,6 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { NavContent } from './nav-content';
 import Image from 'next/image';
+import { GlobalSearchDialog } from './global-search-dialog';
 
 export default function Header() {
   return (
@@ -32,15 +33,12 @@ export default function Header() {
       </Sheet>
 
       <div className="w-full flex-1">
-        <form>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              className="w-full max-w-sm bg-background pl-9"
-              placeholder="Buscar alunos, turmas..."
-            />
-          </div>
-        </form>
+        <GlobalSearchDialog>
+            <Button variant="outline" className="w-full max-w-sm justify-start text-muted-foreground font-normal pl-9 relative">
+                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                 Buscar alunos, turmas...
+            </Button>
+        </GlobalSearchDialog>
       </div>
 
       <Button variant="ghost" size="icon" className="rounded-full relative">
