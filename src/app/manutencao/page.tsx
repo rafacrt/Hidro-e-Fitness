@@ -16,11 +16,12 @@ import { AddManutencaoForm } from '@/components/manutencao/add-manutencao-form';
 import EquipamentosTab from '@/components/manutencao/equipamentos-tab';
 import AgendamentosTab from '@/components/manutencao/agendamentos-tab';
 import ProdutosQuimicosTab from '@/components/manutencao/produtos-quimicos-tab';
+import RelatoriosManutencaoTab from '@/components/manutencao/relatorios-manutencao-tab';
 
 type ActiveTab = "Visão Geral" | "Equipamentos" | "Agendamentos" | "Produtos Químicos" | "Relatórios";
 
 export default function ManutencaoPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Produtos Químicos");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Relatórios");
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -62,6 +63,8 @@ export default function ManutencaoPage() {
           {activeTab === 'Agendamentos' && <AgendamentosTab />}
           
           {activeTab === 'Produtos Químicos' && <ProdutosQuimicosTab />}
+
+          {activeTab === 'Relatórios' && <RelatoriosManutencaoTab />}
 
         </main>
       </div>
