@@ -32,18 +32,3 @@ export default function OcupacaoModalidade() {
         </div>
     )
 }
-
-// Add a new prop to Progress to allow for custom indicator color
-const OldProgress = Progress;
-const NewProgress = ({ indicatorClassName, ...props }: React.ComponentProps<typeof OldProgress> & { indicatorClassName?: string }) => {
-    return (
-        <OldProgress
-            {...props}
-            classNames={{
-                indicator: indicatorClassName
-            }}
-        />
-    )
-}
-
-export { NewProgress as Progress }
