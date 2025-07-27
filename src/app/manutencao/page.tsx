@@ -14,11 +14,12 @@ import StatusEquipamentos from '@/components/manutencao/status-equipamentos';
 import AcoesRapidasManutencao from '@/components/manutencao/acoes-rapidas-manutencao';
 import { AddManutencaoForm } from '@/components/manutencao/add-manutencao-form';
 import EquipamentosTab from '@/components/manutencao/equipamentos-tab';
+import AgendamentosTab from '@/components/manutencao/agendamentos-tab';
 
 type ActiveTab = "Visão Geral" | "Equipamentos" | "Agendamentos" | "Produtos Químicos" | "Relatórios";
 
 export default function ManutencaoPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Equipamentos");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Agendamentos");
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -56,6 +57,8 @@ export default function ManutencaoPage() {
           )}
 
           {activeTab === 'Equipamentos' && <EquipamentosTab />}
+
+          {activeTab === 'Agendamentos' && <AgendamentosTab />}
 
         </main>
       </div>
