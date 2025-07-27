@@ -24,6 +24,16 @@ const classes = [
 ];
 
 const dayNames = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+const dayNameMap: { [key: string]: number } = {
+  'Domingo': 0,
+  'Segunda': 1,
+  'Terça': 2,
+  'Quarta': 3,
+  'Quinta': 4,
+  'Sexta': 5,
+  'Sábado': 6,
+};
+
 
 export default function ScheduleGrid() {
   const [currentDate, setCurrentDate] = React.useState(new Date());
@@ -42,8 +52,10 @@ export default function ScheduleGrid() {
 
   const calculateRow = (time: string) => {
     const [hour, minute] = time.split(':').map(Number);
-    const totalMinutes = (hour - 7) * 60 + minute;
-    return (totalMinutes / 30) * 2 + 2; // Each hour has 4 slots of 15min, starts at row 2
+    // Grid starts at 7:00. 1 hour = 4 rows (15 min each)
+    const totalMinutes = (hour * 60 + minute) - (7 * 60);
+    // +1 because grid rows are 1-indexed
+    return (totalMinutes / 15) + 1;
   };
 
   return (
@@ -67,60 +79,57 @@ export default function ScheduleGrid() {
             </Button>
           </div>
 
-          <div className="relative grid grid-cols-[auto_repeat(7,1fr)] overflow-auto">
-            {/* Header Vazio */}
-            <div className="sticky top-0 bg-background z-20 col-start-1 row-start-1"></div>
-            
-            {/* Header Dias da Semana */}
-            {weekDates.map((date, i) => (
-              <div key={i} className="text-center sticky top-0 bg-background z-20 py-2 border-b col-start-auto">
-                <p className="font-semibold capitalize">{format(date, 'EEE', { locale: ptBR })}</p>
-                <p className="text-sm text-muted-foreground">{format(date, 'dd/MM')}</p>
-              </div>
-            ))}
-            
-            {/* Coluna de Horários e Linhas da Grade */}
-            <div className="col-start-1 col-end-9 row-start-1 grid grid-cols-[auto_repeat(7,1fr)] grid-rows-[auto_repeat(60,15px)] -z-10">
+          <div className="overflow-auto" style={{ maxHeight: '70vh' }}>
+            <div className="relative grid grid-cols-[auto_repeat(7,1fr)]">
+              {/* Header Vazio */}
+              <div className="sticky top-0 bg-background z-20 col-start-1 row-start-1"></div>
+              
+              {/* Header Dias da Semana */}
+              {weekDates.map((date, i) => (
+                <div key={i} className="text-center sticky top-0 bg-background z-20 py-2 border-b col-start-auto">
+                  <p className="font-semibold capitalize">{format(date, 'EEE', { locale: ptBR })}</p>
+                  <p className="text-sm text-muted-foreground">{format(date, 'dd/MM')}</p>
+                </div>
+              ))}
+
               {/* Coluna de Horários */}
-              <div className="col-start-1 row-start-2 row-end-[-1] grid grid-rows-subgrid">
-                 {times.map((time) => (
-                    <div key={time} className="row-start-auto row-span-4 text-right pr-4 text-sm text-muted-foreground -mt-2">
-                       {time}
-                    </div>
+              <div className="col-start-1 row-start-2 grid divide-y">
+                {times.map((time) => (
+                  <div key={time} className="h-24 flex justify-end">
+                    <span className="text-sm text-muted-foreground -translate-y-3 pr-2">{time}</span>
+                  </div>
                 ))}
               </div>
 
-               {/* Linhas da Grade */}
-              <div className="col-start-2 col-end-[-1] row-start-2 row-end-[-1] grid grid-cols-subgrid grid-rows-subgrid">
-                {Array.from({ length: 7 * 60 }).map((_, i) => (
-                   <div key={i} className={cn(
-                       "border-r border-b",
-                       (i + 1) % 4 === 0 ? "border-b-zinc-300" : "border-b-zinc-200",
-                       (i + 1) % (7 * 4) === 0 ? "border-r-transparent" : "",
-                   )}></div>
-                ))}
-              </div>
-
-                {/* Eventos da Agenda */}
-                {classes.map((cls, index) => {
-                    const colStart = dayNames.indexOf(cls.day) + 2;
+              {/* Colunas da Grade */}
+              {weekDates.map((date, i) => (
+                <div key={i} className="col-start-auto row-start-2 grid divide-y border-l">
+                  {times.map((time) => (
+                    <div key={time} className="h-24"></div>
+                  ))}
+                </div>
+              ))}
+              
+              {/* Eventos da Agenda */}
+              <div className="col-start-2 col-end-[-1] row-start-2 grid grid-cols-7 grid-rows-[repeat(60,24px)] pointer-events-none">
+                 {classes.map((cls, index) => {
+                    const colStart = dayNameMap[cls.day as keyof typeof dayNameMap];
+                    if (colStart === undefined) return null;
+                    
                     const rowStart = calculateRow(cls.start);
                     const rowEnd = calculateRow(cls.end);
-
-                    if (colStart < 2) return null;
 
                     return (
                         <div
                         key={index}
                         className={cn(
-                            `p-2 rounded-lg shadow-md flex flex-col text-xs z-10 m-px overflow-hidden`,
+                            `p-2 rounded-lg shadow-md flex flex-col text-xs z-10 m-px overflow-hidden pointer-events-auto`,
                             cls.color,
                             cls.textColor
                         )}
                         style={{
                             gridColumnStart: colStart,
-                            gridRowStart: rowStart,
-                            gridRowEnd: rowEnd,
+                            gridRow: `${rowStart} / ${rowEnd}`,
                         }}
                         >
                             <p className="font-semibold">{cls.title}</p>
@@ -135,7 +144,7 @@ export default function ScheduleGrid() {
                         </div>
                     );
                 })}
-
+              </div>
             </div>
           </div>
         </CardContent>
