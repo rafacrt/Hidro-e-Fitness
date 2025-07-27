@@ -44,7 +44,7 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>;
 
-const roles = ['Admin', 'Professor', 'Recepção'];
+const roles = ['Desenvolvedor', 'Administrador', 'Recepção'];
 
 export function AddUserDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);

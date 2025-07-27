@@ -12,28 +12,29 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 const users = [
   {
+    name: 'Desenvolvedor',
+    email: 'dev@hidrofitness.com',
+    role: 'Desenvolvedor',
+    avatar: 'https://placehold.co/40x40.png',
+    avatarHint: 'person portrait',
+  },
+  {
     name: 'Admin Sistema',
     email: 'admin@hidrofitness.com',
-    role: 'Admin',
+    role: 'Administrador',
     avatar: 'https://placehold.co/40x40.png',
     avatarHint: 'person portrait',
   },
   {
     name: 'Ana Silva',
     email: 'ana.silva@email.com',
-    role: 'Professor',
-    avatar: 'https://placehold.co/40x40.png',
-    avatarHint: 'woman portrait',
-  },
-  {
-    name: 'Carlos Santos',
-    email: 'carlos.santos@email.com',
     role: 'Recepção',
     avatar: 'https://placehold.co/40x40.png',
-    avatarHint: 'man portrait',
+    avatarHint: 'woman portrait',
   },
 ];
 
@@ -44,6 +45,12 @@ const getInitials = (name: string) => {
     }
     return name.substring(0, 2);
 }
+
+const roleStyles: { [key: string]: string } = {
+    'Desenvolvedor': 'bg-purple-100 text-purple-800 border-purple-200',
+    'Administrador': 'bg-blue-100 text-blue-800 border-blue-200',
+    'Recepção': 'bg-green-100 text-green-800 border-green-200',
+};
 
 export default function UsersTable() {
   return (
@@ -72,14 +79,14 @@ export default function UsersTable() {
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>{user.role}</Badge>
+                <Badge variant="outline" className={cn(roleStyles[user.role])}>{user.role}</Badge>
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" disabled={user.role === 'Desenvolvedor'}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
+                  <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" disabled={user.role === 'Desenvolvedor'}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
