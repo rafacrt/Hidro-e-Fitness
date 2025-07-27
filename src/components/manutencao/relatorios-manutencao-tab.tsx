@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -6,7 +5,7 @@ import RelatoriosManutencaoCards from './relatorios-manutencao-cards';
 import FiltrosRelatorioManutencao from './filtros-relatorio-manutencao';
 import StatusEquipamentosReport from './status-equipamentos-report';
 import ConfiabilidadeEquipamentosReport from './confiabilidade-equipamentos-report';
-import { Card, CardContent } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 
 type ActiveReport = 'equipamentos' | 'manutencao' | 'quimico' | 'custos';
 
