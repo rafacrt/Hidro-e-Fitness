@@ -16,11 +16,11 @@ import EvolucaoMensal from '@/components/financeiro/evolucao-mensal';
 import FinanceiroStatCards from '@/components/financeiro/financeiro-stat-cards';
 import VisaoGeralCharts from '@/components/financeiro/visao-geral-charts';
 import AcoesRapidasFinanceiro from '@/components/financeiro/acoes-rapidas-financeiro';
-import PlaceholderContent from '@/components/financeiro/placeholder-content';
 import { AddTransacaoDialog } from '@/components/financeiro/add-transacao-dialog';
 import { ExportFinanceiroDialog } from '@/components/financeiro/export-financeiro-dialog';
 import RecebimentosTab from '@/components/financeiro/recebimentos-tab';
 import PagamentosTab from '@/components/financeiro/pagamentos-tab';
+import FluxoDeCaixaTab from '@/components/financeiro/fluxo-de-caixa-tab';
 
 type ActiveTab = "Visão Geral" | "Recebimentos" | "Pagamentos" | "Fluxo de Caixa" | "Relatórios";
 
@@ -68,6 +68,8 @@ export default function FinanceiroPage() {
           
           {activeTab === 'Pagamentos' && <PagamentosTab />}
 
+          {activeTab === 'Fluxo de Caixa' && <FluxoDeCaixaTab />}
+
           {activeTab === 'Relatórios' && (
             <div className="space-y-6">
               <CardsRelatorios />
@@ -81,8 +83,6 @@ export default function FinanceiroPage() {
               <EvolucaoMensal />
             </div>
           )}
-
-          {activeTab === 'Fluxo de Caixa' && <PlaceholderContent title="Fluxo de Caixa" />}
 
         </main>
       </div>
