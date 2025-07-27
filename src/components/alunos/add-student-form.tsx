@@ -135,7 +135,7 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
       const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
       const data = await response.json();
       if (!data.erro) {
-        form.setValue('street', data.logradouro);
+        form.setValue('street', data.logouro);
         form.setValue('neighborhood', data.bairro);
         form.setValue('city', data.localidade);
         form.setValue('state', data.uf);
@@ -369,7 +369,9 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
                             placeholder="00000-000"
                            />
                            {isFetchingCep && (
-                            <WaveSpinner className="absolute right-3 top-2.5 h-5 w-5 text-primary" />
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                                <WaveSpinner className="h-5 w-5 text-primary" />
+                            </div>
                            )}
                          </div>
                       </FormControl>
