@@ -20,11 +20,12 @@ import PlaceholderContent from '@/components/financeiro/placeholder-content';
 import { AddTransacaoDialog } from '@/components/financeiro/add-transacao-dialog';
 import { ExportFinanceiroDialog } from '@/components/financeiro/export-financeiro-dialog';
 import RecebimentosTab from '@/components/financeiro/recebimentos-tab';
+import PagamentosTab from '@/components/financeiro/pagamentos-tab';
 
 type ActiveTab = "Visão Geral" | "Recebimentos" | "Pagamentos" | "Fluxo de Caixa" | "Relatórios";
 
 export default function FinanceiroPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Recebimentos");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -64,6 +65,8 @@ export default function FinanceiroPage() {
           )}
 
           {activeTab === 'Recebimentos' && <RecebimentosTab />}
+          
+          {activeTab === 'Pagamentos' && <PagamentosTab />}
 
           {activeTab === 'Relatórios' && (
             <div className="space-y-6">
@@ -79,7 +82,6 @@ export default function FinanceiroPage() {
             </div>
           )}
 
-          {activeTab === 'Pagamentos' && <PlaceholderContent title="Pagamentos" />}
           {activeTab === 'Fluxo de Caixa' && <PlaceholderContent title="Fluxo de Caixa" />}
 
         </main>
