@@ -1,11 +1,15 @@
+
+'use client';
+
 import * as React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Users, MapPin } from 'lucide-react';
 import { ScheduleLegend } from './schedule-legend';
+import { addDays, subDays, startOfWeek, endOfWeek, format, eachDayOfInterval } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-const days = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
-const dates = ['21/07', '22/07', '23/07', '24/07', '25/07', '26/07', '27/07'];
+const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 const times = Array.from({ length: 16 }, (_, i) => `${String(i + 6).padStart(2, '0')}:00`);
 
 const classes = [
@@ -20,25 +24,43 @@ const classes = [
 ];
 
 export default function ScheduleGrid() {
+  const [currentDate, setCurrentDate] = React.useState(new Date());
+
+  const startOfWeekDate = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const endOfWeekDate = endOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekDates = eachDayOfInterval({ start: startOfWeekDate, end: endOfWeekDate });
+
+  const handlePrevWeek = () => {
+    setCurrentDate(subDays(currentDate, 7));
+  };
+
+  const handleNextWeek = () => {
+    setCurrentDate(addDays(currentDate, 7));
+  };
+  
   const calculatePosition = (time: string) => {
     const [hour, minute] = time.split(':').map(Number);
     return (hour - 6) * 60 + minute;
   };
+
+  const dayNames = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
   return (
     <div className="space-y-6">
       <Card>
         <CardContent className="p-4 space-y-4">
           <div className="flex justify-between items-center">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handlePrevWeek}>
               <ChevronLeft className="h-4 w-4 mr-2" />
               Semana Anterior
             </Button>
             <div className="text-center">
-              <p className="font-semibold text-lg">21 de julho - 27 de julho de 2025</p>
+              <p className="font-semibold text-lg capitalize">
+                {format(startOfWeekDate, 'd \'de\' MMMM', { locale: ptBR })} - {format(endOfWeekDate, 'd \'de\' MMMM \'de\' yyyy', { locale: ptBR })}
+              </p>
               <p className="text-sm text-muted-foreground">Grade de Horários</p>
             </div>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleNextWeek}>
               Próxima Semana
               <ChevronRight className="h-4 w-4 ml-2" />
             </Button>
@@ -48,10 +70,10 @@ export default function ScheduleGrid() {
             {/* Header Vazio */}
             <div className="sticky top-0 bg-background z-10"></div>
             {/* Header Dias da Semana */}
-            {days.map((day, i) => (
-              <div key={day} className="text-center sticky top-0 bg-background z-10 py-2">
-                <p className="font-semibold">{day}</p>
-                <p className="text-sm text-muted-foreground">{dates[i]}</p>
+            {weekDates.map((date, i) => (
+              <div key={i} className="text-center sticky top-0 bg-background z-10 py-2">
+                <p className="font-semibold capitalize">{format(date, 'EEE', { locale: ptBR })}</p>
+                <p className="text-sm text-muted-foreground">{format(date, 'dd/MM')}</p>
               </div>
             ))}
 
@@ -61,7 +83,7 @@ export default function ScheduleGrid() {
                 <div className="row-start-auto text-right pr-4 text-sm text-muted-foreground">
                   {time}
                 </div>
-                {days.map(day => (
+                {dayNames.map(day => (
                   <div key={`${day}-${time}`} className="border-t border-r last:border-r-0"></div>
                 ))}
               </React.Fragment>
@@ -71,7 +93,9 @@ export default function ScheduleGrid() {
             {classes.map((cls, index) => {
               const start = calculatePosition(cls.start);
               const duration = calculatePosition(cls.end) - start;
-              const dayIndex = days.indexOf(cls.day) + 2; // +2 para compensar a coluna de horário
+              const dayIndex = dayNames.indexOf(cls.day) + 2; // +2 para compensar a coluna de horário
+
+              if (dayIndex < 2) return null;
 
               return (
                 <div
