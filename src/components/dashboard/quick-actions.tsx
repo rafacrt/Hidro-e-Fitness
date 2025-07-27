@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -61,7 +62,7 @@ export default function QuickActions() {
             }
             
             return (
-              <div key={index} onClick={() => handleActionClick(action.label)} className="w-full">
+              <div key={index} onClick={() => handleActionClick(action.label)} className="w-full cursor-pointer">
                 {buttonContent}
               </div>
             )

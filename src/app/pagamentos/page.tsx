@@ -1,3 +1,4 @@
+
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import PerformanceMetodos from '@/components/pagamentos/performance-metodos';
 import TransacoesRecentes from '@/components/pagamentos/transacoes-recentes';
 import CobrancasPendentes from '@/components/pagamentos/cobrancas-pendentes';
 import AcoesRapidasPagamentos from '@/components/pagamentos/acoes-rapidas-pagamentos';
+import { AddPaymentForm } from '@/components/pagamentos/add-payment-form';
 
 export default function PagamentosPage() {
   return (
@@ -22,14 +24,12 @@ export default function PagamentosPage() {
               <p className="text-muted-foreground">Gestão completa de pagamentos e cobrança</p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Exportar
-              </Button>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Novo Pagamento
-              </Button>
+              <AddPaymentForm>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Novo Pagamento
+                </Button>
+              </AddPaymentForm>
             </div>
           </div>
           

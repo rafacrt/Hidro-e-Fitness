@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -31,9 +32,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 import { cn } from '@/lib/utils';
 import { IMaskInput } from 'react-imask';
 
@@ -125,15 +126,20 @@ export function AddPaymentForm({ children }: { children: React.ReactNode }) {
                     <FormLabel>Valor</FormLabel>
                      <FormControl>
                         <IMaskInput
-                          mask={Number}
-                          radix=","
-                          thousandsSeparator="."
-                          scale={2}
-                          padFractionalZeros
-                          normalizeZeros
-                          mapToRadix={['.']}
+                          mask="R$ num"
+                          blocks={{
+                            num: {
+                              mask: Number,
+                              radix: ",",
+                              thousandsSeparator: ".",
+                              scale: 2,
+                              padFractionalZeros: true,
+                              normalizeZeros: true,
+                              mapToRadix: ['.'],
+                            }
+                          }}
                           value={field.value}
-                          onAccept={field.onChange}
+                          onAccept={(value) => field.onChange(value)}
                           className={cn(
                             'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
                           )}
