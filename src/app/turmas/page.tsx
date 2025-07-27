@@ -30,8 +30,8 @@ import RentabilidadePerformance from '@/components/turmas/rentabilidade-performa
 import DistribuicaoPorDiaSemana from '@/components/turmas/distribuicao-por-dia-semana';
 import DistribuicaoPorPeriodoDia from '@/components/turmas/distribuicao-por-periodo-dia';
 import PlaceholderReport from '@/components/turmas/placeholder-report';
-import { useToast } from '@/hooks/use-toast';
 import { AddClassForm } from '@/components/turmas/add-class-form';
+import { SearchClassDialog } from '@/components/turmas/search-class-dialog';
 
 type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença" | "Relatórios";
 type ActiveReport = 'ocupacao' | 'frequencia' | 'performance' | 'horarios' | null;
@@ -39,14 +39,6 @@ type ActiveReport = 'ocupacao' | 'frequencia' | 'performance' | 'horarios' | nul
 export default function TurmasPage() {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
   const [activeReport, setActiveReport] = React.useState<ActiveReport>(null);
-  const { toast } = useToast();
-
-  const handleSearchClick = () => {
-    toast({
-      title: 'Funcionalidade em desenvolvimento',
-      description: 'A busca de turmas será implementada em breve.',
-    });
-  };
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -60,10 +52,12 @@ export default function TurmasPage() {
               <p className="text-muted-foreground">Gestão completa de turmas e horários</p>
             </div>
             <div className='flex gap-2'>
-                <Button variant="outline" onClick={handleSearchClick}>
-                    <Search className="mr-2 h-4 w-4" />
-                    Buscar Turma
-                </Button>
+                <SearchClassDialog>
+                  <Button variant="outline">
+                      <Search className="mr-2 h-4 w-4" />
+                      Buscar Turma
+                  </Button>
+                </SearchClassDialog>
                 <AddClassForm>
                   <Button>
                       <PlusCircle className="mr-2 h-4 w-4" />
