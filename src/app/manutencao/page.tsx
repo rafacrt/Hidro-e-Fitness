@@ -1,13 +1,14 @@
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Upload } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import ManutencaoFilters from '@/components/manutencao/manutencao-filters';
 import ManutencaoStats from '@/components/manutencao/manutencao-stats';
 import ManutencaoUrgente from '@/components/manutencao/manutencao-urgente';
 import AtividadesRecentesManutencao from '@/components/manutencao/atividades-recentes-manutencao';
 import StatusEquipamentos from '@/components/manutencao/status-equipamentos';
 import AcoesRapidasManutencao from '@/components/manutencao/acoes-rapidas-manutencao';
+import { AddManutencaoForm } from '@/components/manutencao/add-manutencao-form';
 
 export default function ManutencaoPage() {
   return (
@@ -22,14 +23,12 @@ export default function ManutencaoPage() {
               <p className="text-muted-foreground">Gestão completa de equipamentos e manutenção</p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline">
-                <Upload className="mr-2 h-4 w-4" />
-                Exportar
-              </Button>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Nova Manutenção
-              </Button>
+              <AddManutencaoForm>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Nova Manutenção
+                </Button>
+              </AddManutencaoForm>
             </div>
           </div>
           
