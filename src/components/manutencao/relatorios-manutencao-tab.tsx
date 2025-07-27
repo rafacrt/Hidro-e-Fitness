@@ -6,12 +6,14 @@ import FiltrosRelatorioManutencao from './filtros-relatorio-manutencao';
 import StatusEquipamentosReport from './status-equipamentos-report';
 import ConfiabilidadeEquipamentosReport from './confiabilidade-equipamentos-report';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import PlaceholderContent from '../financeiro/placeholder-content';
+import PlaceholderContent from './placeholder-content';
 import PlaceholderReport from '../turmas/placeholder-report';
 import CustoManutencaoMensalReport from './custo-manutencao-mensal-report';
 import DistribuicaoManutencaoReport from './distribuicao-manutencao-report';
 import ConsumoQuimicosMensalReport from './consumo-quimicos-mensal-report';
 import VariacaoParametrosAguaReport from './variacao-parametros-agua-report';
+import CustoPorCategoriaReport from './custo-por-categoria-report';
+import CustoPorEquipamentoReport from './custo-por-equipamento-report';
 
 type ActiveReport = 'equipamentos' | 'manutencao' | 'quimico' | 'custos' | null;
 
@@ -60,7 +62,18 @@ export default function RelatoriosManutencaoTab() {
             </Card>
         );
       case 'custos':
-        return <PlaceholderContent title="Análise de Custos" />;
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Análise de Custos de Manutenção</CardTitle>
+              <CardDescription>Distribuição de custos por categoria e por equipamento.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <CustoPorCategoriaReport />
+              <CustoPorEquipamentoReport />
+            </CardContent>
+          </Card>
+        );
       default:
         return (
             <Card>
