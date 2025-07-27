@@ -60,7 +60,7 @@ export default function PerformanceMetodos() {
                     <div key={index}>
                         <div className="flex items-start gap-4">
                            <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-secondary">
-                                <method.icon className="h-5 w-5 text-muted-foreground" />
+                                <method.icon className="h-5 w-5 text-secondary-foreground" />
                            </div>
                            <div className="flex-1">
                                 <div className="flex justify-between items-center mb-1">
