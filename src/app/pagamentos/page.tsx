@@ -21,11 +21,17 @@ import HistoricoStatsCards from '@/components/pagamentos/historico-stats-cards';
 import HistoricoFilters from '@/components/pagamentos/historico-filters';
 import HistoricoTable from '@/components/pagamentos/historico-table';
 import HistoricoTablePagination from '@/components/pagamentos/historico-table-pagination';
+import RelatoriosPagamentosCards from '@/components/pagamentos/relatorios-pagamentos-cards';
+import FiltrosRelatorioPagamentos from '@/components/pagamentos/filtros-relatorio-pagamentos';
+import ReceitaPorMetodoReport from '@/components/pagamentos/receita-por-metodo-report';
+import EvolucaoMensalReport from '@/components/pagamentos/evolucao-mensal-report';
+import ReceitaPorPlanoReport from '@/components/pagamentos/receita-por-plano-report';
+import { Card, CardContent } from '@/components/ui/card';
 
 type ActiveTab = "Visão Geral" | "Métodos de Pagamento" | "Planos e Preços" | "Histórico" | "Relatórios";
 
 export default function PagamentosPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Histórico");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Relatórios");
 
   const renderHeaderButtons = () => {
     switch (activeTab) {
@@ -37,6 +43,7 @@ export default function PagamentosPage() {
           </Button>
         );
       case 'Histórico':
+      case 'Relatórios':
          return (
             <div className='flex gap-2'>
                 <Button variant="outline">
@@ -123,6 +130,18 @@ export default function PagamentosPage() {
               <HistoricoFilters />
               <HistoricoTable />
               <HistoricoTablePagination />
+            </div>
+          )}
+
+          {activeTab === 'Relatórios' && (
+            <div className="space-y-6">
+              <RelatoriosPagamentosCards />
+              <FiltrosRelatorioPagamentos />
+              <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                <ReceitaPorMetodoReport />
+                <EvolucaoMensalReport />
+              </div>
+              <ReceitaPorPlanoReport />
             </div>
           )}
 
