@@ -44,4 +44,4 @@ Para executar o projeto em seu ambiente de desenvolvimento local, siga os passos
     npm run dev
     ```
 
-3.  Abra [http://localhost:9002](http://localhost:9002) em seu navegador para ver o resultado.
+3.  Abra [http://localhost:3000](http://localhost:3000) em seu navegador para ver o resultado.
