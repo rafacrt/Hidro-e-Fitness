@@ -1,3 +1,7 @@
+
+'use client';
+
+import * as React from 'react';
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
@@ -9,8 +13,13 @@ import AtividadesRecentesManutencao from '@/components/manutencao/atividades-rec
 import StatusEquipamentos from '@/components/manutencao/status-equipamentos';
 import AcoesRapidasManutencao from '@/components/manutencao/acoes-rapidas-manutencao';
 import { AddManutencaoForm } from '@/components/manutencao/add-manutencao-form';
+import EquipamentosTab from '@/components/manutencao/equipamentos-tab';
+
+type ActiveTab = "Visão Geral" | "Equipamentos" | "Agendamentos" | "Produtos Químicos" | "Relatórios";
 
 export default function ManutencaoPage() {
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Equipamentos");
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar />
@@ -32,16 +41,21 @@ export default function ManutencaoPage() {
             </div>
           </div>
           
-          <ManutencaoFilters />
-          <ManutencaoStats />
+          <ManutencaoFilters activeTab={activeTab} setActiveTab={setActiveTab} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ManutencaoUrgente />
-            <AtividadesRecentesManutencao />
-          </div>
+          {activeTab === 'Visão Geral' && (
+            <div className="space-y-6">
+              <ManutencaoStats />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ManutencaoUrgente />
+                <AtividadesRecentesManutencao />
+              </div>
+              <StatusEquipamentos />
+              <AcoesRapidasManutencao />
+            </div>
+          )}
 
-          <StatusEquipamentos />
-          <AcoesRapidasManutencao />
+          {activeTab === 'Equipamentos' && <EquipamentosTab />}
 
         </main>
       </div>
