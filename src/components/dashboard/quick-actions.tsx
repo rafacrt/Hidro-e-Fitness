@@ -6,12 +6,15 @@ import { Button } from '../ui/button';
 import { UserPlus, CalendarPlus, DollarSign, Award } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AddStudentForm } from '../alunos/add-student-form';
+import { AddClassForm } from '../turmas/add-class-form';
+import { AddPaymentForm } from '../pagamentos/add-payment-form';
+import { AddAssessmentForm } from '../avaliacoes/add-assessment-form';
 
 const actions = [
-  { label: 'Novo Aluno', icon: UserPlus },
-  { label: 'Nova Turma', icon: CalendarPlus },
-  { label: 'Pagamento', icon: DollarSign },
-  { label: 'Avaliação', icon: Award },
+  { label: 'Novo Aluno', icon: UserPlus, component: AddStudentForm },
+  { label: 'Nova Turma', icon: CalendarPlus, component: AddClassForm },
+  { label: 'Pagamento', icon: DollarSign, component: AddPaymentForm },
+  { label: 'Avaliação', icon: Award, component: AddAssessmentForm },
 ];
 
 const IconWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -47,14 +50,16 @@ export default function QuickActions() {
               </Button>
             );
 
-            if (action.label === 'Novo Aluno') {
-              return (
-                <AddStudentForm key={index}>
-                  {buttonContent}
-                </AddStudentForm>
-              )
-            }
+            const ActionComponent = action.component;
 
+            if (ActionComponent) {
+                return (
+                    <ActionComponent key={index}>
+                        {buttonContent}
+                    </ActionComponent>
+                )
+            }
+            
             return (
               <div key={index} onClick={() => handleActionClick(action.label)} className="w-full">
                 {buttonContent}
