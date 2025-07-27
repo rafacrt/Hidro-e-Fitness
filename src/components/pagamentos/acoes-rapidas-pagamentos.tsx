@@ -1,6 +1,11 @@
+
+'use client';
+
+import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '../ui/button';
 import { QrCode, Link, MessageSquare, Laptop } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const actions = [
   { label: 'Gerar PIX', icon: QrCode },
@@ -16,6 +21,15 @@ const IconWrapper = ({ children }: { children: React.ReactNode }) => (
 )
 
 export default function AcoesRapidasPagamentos() {
+  const { toast } = useToast();
+
+  const handleActionClick = (label: string) => {
+    toast({
+      title: 'Funcionalidade em desenvolvimento',
+      description: `A ação "${label}" será implementada em breve.`,
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -24,12 +38,14 @@ export default function AcoesRapidasPagamentos() {
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {actions.map((action, index) => (
-            <Button key={index} variant="outline" className="h-auto flex-col p-6 gap-2">
-                <IconWrapper>
-                    <action.icon className="h-8 w-8 text-secondary-foreground" />
-                </IconWrapper>
-              <span className="text-sm font-medium">{action.label}</span>
-            </Button>
+            <div key={index} onClick={() => handleActionClick(action.label)} className="w-full cursor-pointer">
+              <Button variant="outline" className="h-auto flex-col p-6 gap-2 w-full">
+                  <IconWrapper>
+                      <action.icon className="h-8 w-8 text-secondary-foreground" />
+                  </IconWrapper>
+                <span className="text-sm font-medium">{action.label}</span>
+              </Button>
+            </div>
           ))}
         </div>
       </CardContent>
