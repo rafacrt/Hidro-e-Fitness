@@ -6,7 +6,7 @@ import RecentPayments from '@/components/dashboard/recent-payments';
 import QuickActions from '@/components/dashboard/quick-actions';
 import { Users, Calendar, DollarSign, Percent } from 'lucide-react';
 
-export default function Dashboard() {
+function Dashboard() {
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar />
@@ -82,3 +82,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+export default Dashboard;
