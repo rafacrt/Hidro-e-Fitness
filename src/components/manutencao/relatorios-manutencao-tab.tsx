@@ -5,11 +5,13 @@ import RelatoriosManutencaoCards from './relatorios-manutencao-cards';
 import FiltrosRelatorioManutencao from './filtros-relatorio-manutencao';
 import StatusEquipamentosReport from './status-equipamentos-report';
 import ConfiabilidadeEquipamentosReport from './confiabilidade-equipamentos-report';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import PlaceholderContent from '../financeiro/placeholder-content';
 import PlaceholderReport from '../turmas/placeholder-report';
 import CustoManutencaoMensalReport from './custo-manutencao-mensal-report';
 import DistribuicaoManutencaoReport from './distribuicao-manutencao-report';
+import ConsumoQuimicosMensalReport from './consumo-quimicos-mensal-report';
+import VariacaoParametrosAguaReport from './variacao-parametros-agua-report';
 
 type ActiveReport = 'equipamentos' | 'manutencao' | 'quimico' | 'custos' | null;
 
@@ -43,9 +45,20 @@ export default function RelatoriosManutencaoTab() {
                     <DistribuicaoManutencaoReport />
                 </CardContent>
             </Card>
-        )
+        );
       case 'quimico':
-        return <PlaceholderContent title="Controle Químico" />;
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Relatório de Controle Químico</CardTitle>
+                    <CardDescription>Análise de consumo de produtos e qualidade da água.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <ConsumoQuimicosMensalReport />
+                    <VariacaoParametrosAguaReport />
+                </CardContent>
+            </Card>
+        );
       case 'custos':
         return <PlaceholderContent title="Análise de Custos" />;
       default:
