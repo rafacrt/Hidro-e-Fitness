@@ -2,13 +2,17 @@
 FROM node:20-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci --force
+RUN npm ci
 
 # Stage 2: Build the application
 FROM node:20-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Garantir que a pasta public existe
+RUN mkdir -p public
+
 RUN npm run build
 
 # Stage 3: Production image
@@ -16,12 +20,21 @@ FROM node:20-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
 
-COPY --from=builder /app/public ./public
+# Criar estrutura de pastas
+RUN mkdir -p public
+
+# Copiar arquivos construídos
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
+
+# Copiar pasta public (se existir)
+COPY --from=builder /app/public* ./public/ 2>/dev/null || true
+
+# Garantir pasta public existe
+RUN mkdir -p public
 
 EXPOSE 3000
 
