@@ -1,10 +1,8 @@
-# Dockerfile
-
 # Stage 1: Install dependencies
 FROM node:20-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --force
 
 # Stage 2: Build the application
 FROM node:20-slim AS builder
@@ -25,11 +23,8 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
-# Expose the port the app runs on
 EXPOSE 3000
 
-# Set the correct user and group
 USER node
 
-# Command to run the application
 CMD ["npm", "start", "--", "-p", "3000"]
