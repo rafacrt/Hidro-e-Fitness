@@ -2,7 +2,6 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  // Bypass middleware in dev mode
   if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
     return NextResponse.next();
   }
@@ -22,54 +21,48 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
+          request.cookies.set({ name, value, ...options })
           response = NextResponse.next({
             request: {
               headers: request.headers,
             },
           })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
+          response.cookies.set({ name, value, ...options })
         },
         remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
+          request.cookies.set({ name, value: '', ...options })
           response = NextResponse.next({
             request: {
               headers: request.headers,
             },
           })
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
+          response.cookies.set({ name, value: '', ...options })
         },
       },
     }
   )
 
   const { data: { session } } = await supabase.auth.getSession()
-
-  const { pathname } = request.nextUrl;
-
+  const { pathname } = request.nextUrl
   const publicRoutes = ['/login', '/register', '/auth/callback'];
 
+  // Se não houver sessão e a rota não for pública, redireciona para o login
   if (!session && !publicRoutes.includes(pathname)) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // Se houver sessão e o usuário tentar acessar as rotas de login/registro, redireciona para o dashboard
   if (session && (pathname === '/login' || pathname === '/register')) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  // Se não houver sessão e a rota for a raiz, redireciona para o login
+  if (!session && pathname === '/') {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Se houver sessão e a rota for a raiz, redireciona para o dashboard
+  if (session && pathname === '/') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
