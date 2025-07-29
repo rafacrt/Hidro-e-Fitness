@@ -38,6 +38,12 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 export default function LoginForm() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
+
+  // Evitar problemas de hidratação
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -49,22 +55,54 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    const result = await login(data);
-    if (result?.error) {
+    
+    try {
+      console.log('Tentando fazer login com:', data.email);
+      const result = await login(data);
+      
+      if (result?.error) {
+        console.error('Erro no login:', result.error);
+        toast({
+          title: "Erro no Login",
+          description: result.error.message,
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+      } else {
+        // Se chegou aqui, o login foi bem-sucedido
+        // O redirect será feito pelo server action
+        console.log('Login bem-sucedido, redirecionando...');
+      }
+    } catch (error) {
+      console.error('Erro inesperado no login:', error);
       toast({
         title: "Erro no Login",
-        description: result.error.message,
+        description: "Ocorreu um erro inesperado. Tente novamente.",
         variant: 'destructive',
       });
       setIsLoading(false);
     }
   };
 
+  // Evitar renderização no servidor para componentes que dependem do client
+  if (!mounted) {
+    return (
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <Icons.Logo className="h-12 w-12 text-primary" />
+          </div>
+          <CardTitle>Carregando...</CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
-            <Icons.Logo className="h-12 w-12 text-primary" />
+          <Icons.Logo className="h-12 w-12 text-primary" />
         </div>
         <CardTitle>Bem-vindo ao Hidro Fitness</CardTitle>
         <CardDescription>
@@ -86,6 +124,7 @@ export default function LoginForm() {
                       placeholder="seu@email.com"
                       {...field}
                       disabled={isLoading}
+                      autoComplete="email"
                     />
                   </FormControl>
                   <FormMessage />
@@ -104,20 +143,21 @@ export default function LoginForm() {
                       placeholder="••••••••"
                       {...field}
                       disabled={isLoading}
+                      autoComplete="current-password"
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-             <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Entrar
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Entrar
             </Button>
           </form>
         </Form>
       </CardContent>
-       <CardFooter className="flex flex-col gap-4">
+      <CardFooter className="flex flex-col gap-4">
         <p className="text-xs text-muted-foreground">
           Não tem uma conta?{' '}
           <Link href="/register" className="font-medium text-primary hover:underline">

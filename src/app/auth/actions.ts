@@ -20,56 +20,80 @@ export async function signup(formData: unknown) {
   const parsedData = signupSchema.safeParse(formData);
 
   if (!parsedData.success) {
-    return { error: { message: 'Invalid form data' } };
+    return { error: { message: 'Dados do formulário inválidos' } };
   }
   
   const { name, email, password } = parsedData.data;
-  const supabase = await createSupabaseServerClient();
-  const origin = headers().get('origin');
+  
+  try {
+    const supabase = await createSupabaseServerClient();
+    const headersList = await headers();
+    const origin = headersList.get('origin') || 'http://localhost:3000';
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        full_name: name,
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name,
+        },
+        emailRedirectTo: `${origin}/auth/callback`,
       },
-      emailRedirectTo: `${origin}/auth/callback`,
-    },
-  });
+    });
 
-  if (error) {
-    return { error };
+    if (error) {
+      console.error('Erro no signup:', error);
+      return { error: { message: error.message } };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Erro no signup:', error);
+    return { error: { message: 'Erro interno do servidor' } };
   }
-
-  // No redirect here, user needs to confirm email.
-  return {};
 }
 
 export async function login(formData: unknown) {
     const parsedData = loginSchema.safeParse(formData);
 
     if (!parsedData.success) {
-      return { error: { message: 'Invalid form data' } };
+      return { error: { message: 'Dados do formulário inválidos' } };
     }
 
     const { email, password } = parsedData.data;
-    const supabase = await createSupabaseServerClient();
+    
+    try {
+      const supabase = await createSupabaseServerClient();
 
-    const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-    });
+      const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+      });
 
-    if (error) {
-        return { error };
+      if (error) {
+          console.error('Erro no login:', error);
+          return { error: { message: 'E-mail ou senha incorretos' } };
+      }
+
+      if (data.session) {
+          console.log('Login realizado com sucesso:', data.user?.email);
+          redirect('/dashboard');
+      }
+
+      return { error: { message: 'Falha na autenticação' } };
+    } catch (error) {
+        console.error('Erro no login:', error);
+        return { error: { message: 'Erro interno do servidor' } };
     }
-
-    redirect('/dashboard');
 }
 
 export async function logout() {
-    const supabase = await createSupabaseServerClient();
-    await supabase.auth.signOut();
-    redirect('/login');
+    try {
+        const supabase = await createSupabaseServerClient();
+        await supabase.auth.signOut();
+        redirect('/login');
+    } catch (error) {
+        console.error('Erro no logout:', error);
+        redirect('/login');
+    }
 }
