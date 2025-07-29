@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react/hook-form';
+import { useForm } from 'react-hook-form'; // ✅ CORRIGIDO: era 'react/hook-form'
 import { z } from 'zod';
 import {
   Card,
@@ -92,7 +92,7 @@ export default function RegisterForm() {
                   <FormLabel>Nome Completo</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Seu nome"
+                      placeholder="Seu nome completo"
                       {...field}
                       disabled={isLoading}
                     />
