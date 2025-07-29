@@ -16,6 +16,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { NavContent } from './nav-content';
 import Image from 'next/image';
 import { GlobalSearchDialog } from './global-search-dialog';
+import { logout } from '@/app/auth/actions';
+import Link from 'next/link';
 
 export default function Header() {
   return (
@@ -65,10 +67,14 @@ export default function Header() {
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Perfil</DropdownMenuItem>
-          <DropdownMenuItem>Configurações</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/configuracoes">Perfil</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/configuracoes">Configurações</Link>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Sair</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => logout()}>Sair</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>
