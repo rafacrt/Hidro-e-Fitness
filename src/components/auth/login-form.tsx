@@ -24,9 +24,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Icons } from '../icons';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { login } from '@/app/auth/actions';
 
 const loginFormSchema = z.object({
   email: z.string().email('E-mail inválido.'),
@@ -36,23 +36,8 @@ const loginFormSchema = z.object({
 type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 export default function LoginForm() {
-  const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
-
-  // Check for dev mode
-  React.useEffect(() => {
-    if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
-      setIsLoading(true);
-      toast({
-        title: "Modo de Desenvolvimento Ativado",
-        description: "Login automático. Redirecionando para o dashboard...",
-      });
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 1000);
-    }
-  }, [router, toast]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -62,30 +47,18 @@ export default function LoginForm() {
     },
   });
 
-  const onSubmit = (data: LoginFormValues) => {
+  const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    console.log(data);
-    // Simulate API call
-    setTimeout(() => {
-      // For this example, we'll just assume login is successful
-      // In a real app, you would check credentials here.
-       toast({
-        title: "Login bem-sucedido!",
-        description: "Redirecionando para o dashboard...",
+    const result = await login(data);
+    if (result?.error) {
+      toast({
+        title: "Erro no Login",
+        description: result.error.message,
+        variant: 'destructive',
       });
-      router.push('/dashboard');
-    }, 1500);
+      setIsLoading(false);
+    }
   };
-
-  if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
-    return (
-       <div className="flex flex-col items-center justify-center text-center">
-        <Loader2 className="h-12 w-12 animate-spin mb-4 text-primary" />
-        <h3 className="text-lg font-semibold">Modo de Desenvolvimento</h3>
-        <p className="text-sm text-muted-foreground">Realizando login automático...</p>
-      </div>
-    )
-  }
 
   return (
     <Card className="w-full max-w-sm">

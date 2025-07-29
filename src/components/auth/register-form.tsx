@@ -24,11 +24,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Icons } from '../icons';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Terminal } from 'lucide-react';
+import { signup } from '@/app/auth/actions';
 
 const registerFormSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
@@ -39,13 +37,8 @@ const registerFormSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerFormSchema>;
 
 export default function RegisterForm() {
-  const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
-
-  // In a real application, you would check if any user exists in the database.
-  // For this prototype, we'll assume this is the first user registration.
-  const isFirstUser = true; 
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerFormSchema),
@@ -56,17 +49,25 @@ export default function RegisterForm() {
     },
   });
 
-  const onSubmit = (data: RegisterFormValues) => {
+  const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
-    console.log('Registering developer:', data);
-    
-    setTimeout(() => {
-      toast({
-        title: "Cadastro de Desenvolvedor realizado!",
-        description: "Você agora pode acessar o sistema e cadastrar o administrador.",
+    const result = await signup(data);
+
+    if (result?.error) {
+       toast({
+        title: "Erro no Cadastro",
+        description: result.error.message,
+        variant: 'destructive'
       });
-      router.push('/dashboard');
-    }, 1500);
+      setIsLoading(false);
+    } else {
+        toast({
+            title: "Verifique seu e-mail",
+            description: "Enviamos um link de confirmação para o seu e-mail para ativar sua conta.",
+        });
+        form.reset();
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -75,21 +76,12 @@ export default function RegisterForm() {
         <div className="flex justify-center mb-4">
             <Icons.Logo className="h-12 w-12 text-primary" />
         </div>
-        <CardTitle>Crie sua Conta de Desenvolvedor</CardTitle>
+        <CardTitle>Crie sua Conta</CardTitle>
         <CardDescription>
-          Este será o usuário principal com acesso total ao sistema.
+          Preencha os dados para criar sua conta de acesso.
         </CardDescription>
       </CardHeader>
       <CardContent>
-         {isFirstUser && (
-            <Alert className="mb-4">
-                <Terminal className="h-4 w-4" />
-                <AlertTitle>Primeiro Acesso</AlertTitle>
-                <AlertDescription>
-                    Como primeiro usuário, sua conta terá o perfil de <strong>Desenvolvedor</strong>.
-                </AlertDescription>
-            </Alert>
-         )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
