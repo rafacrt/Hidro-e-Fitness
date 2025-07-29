@@ -94,3 +94,23 @@ export async function addStudent(formData: unknown) {
     return { success: false, message: 'Ocorreu um erro inesperado.' };
   }
 }
+
+export async function getStudents() {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from('students')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase Error:', error);
+      throw new Error('Não foi possível buscar os alunos.');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected Error:', error);
+    return [];
+  }
+}

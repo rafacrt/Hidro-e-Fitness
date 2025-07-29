@@ -1,13 +1,46 @@
+'use client';
+
 import { Card, CardContent } from "@/components/ui/card"
+import type { Database } from "@/lib/database.types";
+import { useMemo } from "react";
 
-const stats = [
-    { value: 3, label: "Alunos Ativos" },
-    { value: 1, label: "Alunos Inativos" },
-    { value: 2, label: "Menores de Idade" },
-    { value: 4, label: "Com WhatsApp" },
-]
+type Student = Database['public']['Tables']['students']['Row'];
 
-export default function StudentStats() {
+interface StudentStatsProps {
+    students: Student[];
+}
+
+const calculateAge = (birthDate: string | null): number | null => {
+    if (!birthDate) return null;
+    const today = new Date();
+    const birthDateObj = new Date(birthDate);
+    let age = today.getFullYear() - birthDateObj.getFullYear();
+    const m = today.getMonth() - birthDateObj.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
+        age--;
+    }
+    return age;
+};
+
+export default function StudentStats({ students }: StudentStatsProps) {
+    const stats = useMemo(() => {
+        const activeStudents = students.filter(s => s.status === 'ativo').length;
+        const inactiveStudents = students.filter(s => s.status === 'inativo').length;
+        const minors = students.filter(s => {
+            const age = calculateAge(s.birth_date);
+            return age !== null && age < 18;
+        }).length;
+        const withWhatsApp = students.filter(s => s.is_whatsapp).length;
+
+        return [
+            { value: activeStudents, label: "Alunos Ativos" },
+            { value: inactiveStudents, label: "Alunos Inativos" },
+            { value: minors, label: "Menores de Idade" },
+            { value: withWhatsApp, label: "Com WhatsApp" },
+        ]
+    }, [students]);
+
+
     return (
         <Card>
             <CardContent className="p-6">

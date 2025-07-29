@@ -8,8 +8,13 @@ import Filters from '@/components/alunos/filters';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { AddStudentForm } from '@/components/alunos/add-student-form';
+import { getStudents } from './actions';
+import { unstable_noStore as noStore } from 'next/cache';
 
-export default function AlunosPage() {
+export default async function AlunosPage() {
+  noStore();
+  const students = await getStudents();
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar />
@@ -30,8 +35,8 @@ export default function AlunosPage() {
           </div>
           
           <Filters />
-          <StudentsTable />
-          <StudentStats />
+          <StudentsTable students={students} />
+          <StudentStats students={students} />
           <QuickActionsAlunos />
 
         </main>
