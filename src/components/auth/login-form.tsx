@@ -4,6 +4,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -37,6 +38,7 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 export default function LoginForm() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
 
@@ -59,13 +61,8 @@ export default function LoginForm() {
     try {
       console.log('=== TENTATIVA DE LOGIN ===');
       console.log('E-mail:', data.email);
-      console.log('Senha fornecida:', data.password ? '***fornecida***' : 'vazia');
       
-      // Toast de início
-      toast({
-        title: "Fazendo login...",
-        description: "Verificando suas credenciais.",
-      });
+      // Toast de início (removido para evitar conflito)
       
       const result = await login(data);
       
@@ -97,12 +94,10 @@ export default function LoginForm() {
           variant: 'destructive',
         });
         
-        // Alert nativo também
-        alert(`❌ ${errorTitle}\n\n${errorMessage}`);
-        
         setIsLoading(false);
-      } else {
-        console.log('✅ Login bem-sucedido, redirecionando...');
+        
+      } else if (result?.success) {
+        console.log('✅ Login bem-sucedido!');
         
         // Toast de sucesso
         toast({
@@ -110,23 +105,29 @@ export default function LoginForm() {
           description: "Redirecionando para o dashboard...",
         });
         
-        // Alert de sucesso
-        alert('✅ Login realizado com sucesso!\nRedirecionando...');
+        // MUDANÇA: Redirect no client-side em vez de server-side
+        setTimeout(() => {
+          router.push('/dashboard');
+          router.refresh(); // Força refresh para atualizar o estado de autenticação
+        }, 1000);
         
-        // O redirect será feito pelo server action
+      } else {
+        console.error('❌ Resposta inesperada:', result);
+        toast({
+          title: "Erro Inesperado",
+          description: "Resposta inesperada do servidor. Tente novamente.",
+          variant: 'destructive',
+        });
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('💥 Erro inesperado no login:', error);
       
-      const errorMessage = "Ocorreu um erro inesperado. Tente novamente.";
-      
       toast({
         title: "Erro Inesperado",
-        description: errorMessage,
+        description: "Ocorreu um erro inesperado. Tente novamente.",
         variant: 'destructive',
       });
-      
-      alert(`💥 Erro Inesperado\n\n${errorMessage}`);
       
       setIsLoading(false);
     }
@@ -200,7 +201,7 @@ export default function LoginForm() {
             />
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Entrar
+              {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
         </Form>
@@ -215,11 +216,13 @@ export default function LoginForm() {
           </p>
           
           {/* Dados de teste para desenvolvimento */}
-          <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-            <strong>Para teste:</strong><br />
-            E-mail: {process.env.NODE_ENV === 'development' ? 'seu-email@teste.com' : 'seu e-mail cadastrado'}<br />
-            Senha: sua senha
-          </div>
+          {process.env.NODE_ENV === 'development' && (
+            <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+              <strong>Para teste:</strong><br />
+              E-mail: tecnorafa12@gmail.com<br />
+              Senha: sua senha
+            </div>
+          )}
         </div>
       </CardFooter>
     </Card>

@@ -74,7 +74,7 @@ export async function login(formData: unknown) {
       
       console.log('🔄 Tentando autenticar no Supabase...');
       const { data, error } = await supabase.auth.signInWithPassword({
-          email: email.toLowerCase().trim(), // Garantir que email esteja limpo
+          email: email.toLowerCase().trim(),
           password
       });
 
@@ -85,7 +85,6 @@ export async function login(formData: unknown) {
       if (error) {
           console.error('❌ Erro do Supabase:', error);
           
-          // Mapear erros específicos do Supabase
           let errorMessage = 'E-mail ou senha incorretos';
           
           if (error.message.includes('Invalid login credentials')) {
@@ -108,23 +107,9 @@ export async function login(formData: unknown) {
           console.log('👤 Usuário:', data.user.email);
           console.log('🎫 Sessão:', data.session.access_token ? 'Criada' : 'Erro');
           
-          // Verificar se o usuário existe na tabela profiles
-          console.log('👥 Verificando perfil do usuário...');
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
-            
-          if (profileError) {
-            console.error('⚠️ Erro ao buscar perfil:', profileError);
-            // Não falhar o login por causa disso
-          } else {
-            console.log('👤 Perfil encontrado:', profile);
-          }
-          
-          console.log('🔄 Redirecionando para dashboard...');
-          redirect('/dashboard');
+          // MUDANÇA: Não fazer redirect aqui, deixar o frontend lidar com isso
+          console.log('🔄 Login bem-sucedido, retornando sucesso...');
+          return { success: true, user: data.user };
       }
 
       console.error('❌ Falha na autenticação - sem sessão');
