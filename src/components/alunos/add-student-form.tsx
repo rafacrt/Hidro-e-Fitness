@@ -39,6 +39,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { IMaskInput } from 'react-imask';
 import { WaveSpinner } from '../ui/wave-spinner';
+import { addStudent } from '@/app/alunos/actions';
+import { useToast } from '@/hooks/use-toast';
 
 const studentFormSchema = z
   .object({
@@ -87,6 +89,7 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
   const [isMinor, setIsMinor] = React.useState(false);
   const [isFetchingCep, setIsFetchingCep] = React.useState(false);
+  const { toast } = useToast();
 
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
@@ -150,10 +153,22 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const onSubmit = (data: StudentFormValues) => {
-    console.log(data);
-    // TODO: Handle form submission (e.g., API call)
-    setOpen(false);
+  const onSubmit = async (data: StudentFormValues) => {
+    const result = await addStudent(data);
+    if (result.success) {
+      toast({
+        title: 'Sucesso!',
+        description: result.message,
+      });
+      setOpen(false);
+      form.reset();
+    } else {
+      toast({
+        title: 'Erro!',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -480,21 +495,21 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
                   )}
                 />
             </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Cancelar
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                {form.formState.isSubmitting ? 'Cadastrando...' : 'Cadastrar Aluno'}
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Cancelar
-            </Button>
-          </DialogClose>
-          <Button type="submit" onClick={form.handleSubmit(onSubmit)}>
-            {form.formState.isSubmitting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
-            Cadastrar Aluno
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
