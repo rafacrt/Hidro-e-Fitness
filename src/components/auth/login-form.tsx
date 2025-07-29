@@ -57,29 +57,77 @@ export default function LoginForm() {
     setIsLoading(true);
     
     try {
-      console.log('Tentando fazer login com:', data.email);
+      console.log('=== TENTATIVA DE LOGIN ===');
+      console.log('E-mail:', data.email);
+      console.log('Senha fornecida:', data.password ? '***fornecida***' : 'vazia');
+      
+      // Toast de início
+      toast({
+        title: "Fazendo login...",
+        description: "Verificando suas credenciais.",
+      });
+      
       const result = await login(data);
       
+      console.log('=== RESULTADO DO LOGIN ===');
+      console.log('Result:', result);
+      
       if (result?.error) {
-        console.error('Erro no login:', result.error);
+        console.error('❌ Erro no login:', result.error);
+        
+        // Alert específico baseado no erro
+        let errorMessage = result.error.message;
+        let errorTitle = "Erro no Login";
+        
+        if (errorMessage.includes("Invalid login credentials")) {
+          errorTitle = "Credenciais Inválidas";
+          errorMessage = "E-mail ou senha incorretos. Verifique seus dados e tente novamente.";
+        } else if (errorMessage.includes("Email not confirmed")) {
+          errorTitle = "E-mail Não Confirmado";
+          errorMessage = "Verifique seu e-mail e confirme sua conta antes de fazer login.";
+        } else if (errorMessage.includes("Too many requests")) {
+          errorTitle = "Muitas Tentativas";
+          errorMessage = "Aguarde alguns minutos antes de tentar novamente.";
+        }
+        
+        // Toast de erro
         toast({
-          title: "Erro no Login",
-          description: result.error.message,
+          title: errorTitle,
+          description: errorMessage,
           variant: 'destructive',
         });
+        
+        // Alert nativo também
+        alert(`❌ ${errorTitle}\n\n${errorMessage}`);
+        
         setIsLoading(false);
       } else {
-        // Se chegou aqui, o login foi bem-sucedido
+        console.log('✅ Login bem-sucedido, redirecionando...');
+        
+        // Toast de sucesso
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Redirecionando para o dashboard...",
+        });
+        
+        // Alert de sucesso
+        alert('✅ Login realizado com sucesso!\nRedirecionando...');
+        
         // O redirect será feito pelo server action
-        console.log('Login bem-sucedido, redirecionando...');
       }
     } catch (error) {
-      console.error('Erro inesperado no login:', error);
+      console.error('💥 Erro inesperado no login:', error);
+      
+      const errorMessage = "Ocorreu um erro inesperado. Tente novamente.";
+      
       toast({
-        title: "Erro no Login",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
+        title: "Erro Inesperado",
+        description: errorMessage,
         variant: 'destructive',
       });
+      
+      alert(`💥 Erro Inesperado\n\n${errorMessage}`);
+      
       setIsLoading(false);
     }
   };
@@ -158,12 +206,21 @@ export default function LoginForm() {
         </Form>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
-        <p className="text-xs text-muted-foreground">
-          Não tem uma conta?{' '}
-          <Link href="/register" className="font-medium text-primary hover:underline">
-            Cadastre-se
-          </Link>
-        </p>
+        <div className="text-center space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Não tem uma conta?{' '}
+            <Link href="/register" className="font-medium text-primary hover:underline">
+              Cadastre-se
+            </Link>
+          </p>
+          
+          {/* Dados de teste para desenvolvimento */}
+          <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+            <strong>Para teste:</strong><br />
+            E-mail: {process.env.NODE_ENV === 'development' ? 'seu-email@teste.com' : 'seu e-mail cadastrado'}<br />
+            Senha: sua senha
+          </div>
+        </div>
       </CardFooter>
     </Card>
   );
