@@ -10,150 +10,101 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Calendar, Check, X, Edit, Trash2, User } from 'lucide-react';
+import { Calendar, Check, X, Edit, Trash2, User, Wrench } from 'lucide-react';
+import type { Database } from '@/lib/database.types';
+import { format } from 'date-fns';
 
-const maintenances = [
-  {
-    title: 'Manutenção Preventiva - Bomba Principal',
-    description: 'Troca de filtros, verificação do motor e lubrificação',
-    priority: 'Alta',
-    priorityClass: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    equipment: 'Bomba Principal Piscina 1',
-    location: 'Casa de Máquinas A',
-    type: 'Preventiva',
-    date: '17/01/2024',
-    time: '08:00 (120min)',
-    technician: 'João Silva',
-    status: 'Agendada',
-    statusClass: 'bg-blue-100 text-blue-800 border-blue-200',
-    cost: 'R$ 450,00',
-  },
-  {
-    title: 'Reparo Emergencial - Aquecedor',
-    description: 'Reparo no trocador de calor com vazamento',
-    priority: 'Urgente',
-    priorityClass: 'bg-red-100 text-red-800 border-red-200',
-    equipment: 'Aquecedor Solar Piscina 2',
-    location: 'Cobertura',
-    type: 'Emergencial',
-    date: '15/01/2024',
-    time: '14:00 (240min)',
-    technician: 'Carlos Santos',
-    status: 'Em Andamento',
-    statusClass: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    cost: 'R$ 1200,00',
-  },
-  {
-    title: 'Substituição de Lâmpadas LED',
-    description: 'Substituição de 2 lâmpadas LED queimadas',
-    priority: 'Média',
-    priorityClass: 'bg-orange-100 text-orange-800 border-orange-200',
-    equipment: 'Sistema LED Piscina 1',
-    location: 'Piscina 1',
-    type: 'Preventiva',
-    date: '19/01/2024',
-    time: '10:00 (90min)',
-    technician: 'Ana Costa',
-    status: 'Agendada',
-    statusClass: 'bg-blue-100 text-blue-800 border-blue-200',
-    cost: 'R$ 320,00',
-  },
-  {
-    title: 'Limpeza do Filtro de Areia',
-    description: 'Retrolavagem e limpeza do filtro',
-    priority: 'Média',
-    priorityClass: 'bg-orange-100 text-orange-800 border-orange-200',
-    equipment: 'Filtro de Areia Principal',
-    location: 'Casa de Máquinas A',
-    type: 'Preventiva',
-    date: '11/01/2024',
-    time: '09:00 (60min)',
-    technician: 'Roberto Lima',
-    status: 'Concluída',
-    statusClass: 'bg-green-100 text-green-800 border-green-200',
-    cost: 'R$ 0,00',
-  },
-  {
-    title: 'Calibração do Controlador de pH',
-    description: 'Substituição do sensor de pH danificado',
-    priority: 'Alta',
-    priorityClass: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    equipment: 'Controlador de pH Automático',
-    location: 'Casa de Máquinas B',
-    type: 'Corretiva',
-    date: '14/01/2024',
-    time: '16:00 (180min)',
-    technician: 'João Silva',
-    status: 'Cancelada',
-    statusClass: 'bg-zinc-100 text-zinc-800 border-zinc-200',
-    cost: 'R$ 800,00',
-  },
-];
+type Equipment = Database['public']['Tables']['equipments']['Row'];
+type Maintenance = Database['public']['Tables']['maintenance_schedules']['Row'] & { equipments: Pick<Equipment, 'name'> | null };
 
-export default function AgendamentosTable() {
+interface AgendamentosTableProps {
+  maintenances: Maintenance[];
+}
+
+const statusConfig = {
+    agendada: { text: 'Agendada', class: 'bg-blue-100 text-blue-800 border-blue-200' },
+    em_andamento: { text: 'Em Andamento', class: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+    concluida: { text: 'Concluída', class: 'bg-green-100 text-green-800 border-green-200' },
+    cancelada: { text: 'Cancelada', class: 'bg-zinc-100 text-zinc-800 border-zinc-200' },
+};
+
+const priorityConfig = {
+    baixa: { text: 'Baixa', class: 'bg-gray-100 text-gray-800 border-gray-200' },
+    media: { text: 'Média', class: 'bg-orange-100 text-orange-800 border-orange-200' },
+    alta: { text: 'Alta', class: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+    urgente: { text: 'Urgente', class: 'bg-red-100 text-red-800 border-red-200' },
+};
+
+export default function AgendamentosTable({ maintenances }: AgendamentosTableProps) {
+  if (maintenances.length === 0) {
+    return (
+      <div className="p-6 text-center text-muted-foreground">
+        <Wrench className="mx-auto h-12 w-12 mb-4" />
+        <h3 className="text-lg font-semibold">Nenhum agendamento encontrado</h3>
+        <p className="text-sm">Tente agendar uma nova manutenção.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Manutenção</TableHead>
             <TableHead>Equipamento</TableHead>
-            <TableHead>Tipo</TableHead>
-            <TableHead>Data/Hora</TableHead>
-            <TableHead>Técnico</TableHead>
+            <TableHead>Descrição</TableHead>
+            <TableHead>Data</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Custo</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {maintenances.map((item, index) => (
-            <TableRow key={index}>
-              <TableCell>
-                <p className="font-medium text-sm">{item.title}</p>
-                <p className="text-xs text-muted-foreground">{item.description}</p>
-                <Badge variant="outline" className={cn("mt-1 font-normal", item.priorityClass)}>{item.priority}</Badge>
-              </TableCell>
-              <TableCell>
-                <p className="font-medium text-sm">{item.equipment}</p>
-                <p className="text-xs text-muted-foreground">{item.location}</p>
-              </TableCell>
-              <TableCell>
-                <p className="text-sm">{item.type}</p>
-              </TableCell>
-              <TableCell>
-                <p className="font-medium text-sm">{item.date}</p>
-                <p className="text-xs text-muted-foreground">{item.time}</p>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <User className="h-4 w-4" />
-                    <span className='text-sm'>{item.technician}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline" className={cn("font-medium", item.statusClass)}>
-                   {item.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <p className="font-medium text-sm">{item.cost}</p>
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
-                  <Button variant="ghost" size="icon">
-                    <Calendar className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon">
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+          {maintenances.map((item) => {
+            const statusInfo = statusConfig[item.status as keyof typeof statusConfig] || statusConfig.agendada;
+            const priorityInfo = priorityConfig[item.priority as keyof typeof priorityConfig] || priorityConfig.baixa;
+            return (
+              <TableRow key={item.id}>
+                <TableCell>
+                  <p className="font-medium text-sm">{item.equipments?.name}</p>
+                   <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="outline" className={cn("font-normal", priorityInfo.class)}>{priorityInfo.text}</Badge>
+                      <Badge variant="outline" className="font-normal capitalize">{item.type}</Badge>
+                   </div>
+                </TableCell>
+                <TableCell>
+                  <p className="font-medium text-sm">{item.description}</p>
+                  {item.responsible && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <User className="h-3 w-3" />
+                      <span>{item.responsible}</span>
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <p className="font-medium text-sm">{format(new Date(item.scheduled_date), 'dd/MM/yyyy')}</p>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={cn("font-medium", statusInfo.class)}>
+                     {statusInfo.text}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <p className="font-medium text-sm">{item.cost ? `R$ ${item.cost.toFixed(2)}` : '-'}</p>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="icon">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )
+          })}
         </TableBody>
       </Table>
     </div>

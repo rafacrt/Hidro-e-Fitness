@@ -39,36 +39,64 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Textarea } from '../ui/textarea';
+import type { Database } from '@/lib/database.types';
+import { addMaintenance } from '@/app/manutencao/actions';
+
+type Equipment = Database['public']['Tables']['equipments']['Row'];
+
+interface AddManutencaoFormProps {
+    equipments: Equipment[];
+    children: React.ReactNode;
+}
 
 const maintenanceFormSchema = z.object({
-  equipment: z.string({ required_error: 'Selecione um equipamento.' }),
-  type: z.enum(['preventiva', 'corretiva'], { required_error: 'Selecione o tipo.' }),
-  date: z.date({ required_error: 'A data é obrigatória.' }),
-  responsible: z.string({ required_error: 'Selecione um responsável.' }),
+  equipment_id: z.string({ required_error: 'Selecione um equipamento.' }),
+  type: z.enum(['preventiva', 'corretiva', 'emergencial'], { required_error: 'Selecione o tipo.' }),
+  priority: z.enum(['baixa', 'media', 'alta', 'urgente']),
   description: z.string().min(10, 'A descrição deve ter pelo menos 10 caracteres.'),
+  scheduled_date: z.date({ required_error: 'A data é obrigatória.' }),
+  responsible: z.string().optional(),
   cost: z.string().optional(),
+  status: z.enum(['agendada', 'em_andamento', 'concluida', 'cancelada']),
 });
 
 type MaintenanceFormValues = z.infer<typeof maintenanceFormSchema>;
-
-const equipments = ['Bomba da Piscina 1', 'Sistema de Aquecimento', 'Filtro de Areia', 'Iluminação LED'];
 const responsibleTeam = ['João Silva (Equipe Interna)', 'Carlos Santos (Equipe Interna)', 'Fornecedor Externo'];
 
-export function AddManutencaoForm({ children }: { children: React.ReactNode }) {
+export function AddManutencaoForm({ children, equipments }: AddManutencaoFormProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
   const form = useForm<MaintenanceFormValues>({
     resolver: zodResolver(maintenanceFormSchema),
+    defaultValues: {
+        type: 'preventiva',
+        priority: 'media',
+        status: 'agendada'
+    }
   });
 
-  const onSubmit = (data: MaintenanceFormValues) => {
-    console.log(data);
-    toast({
-        title: "Manutenção Agendada!",
-        description: `Manutenção para ${data.equipment} agendada com sucesso.`,
-    })
-    setOpen(false);
-    form.reset();
+  const onSubmit = async (data: MaintenanceFormValues) => {
+    const costAsNumber = data.cost ? parseFloat(data.cost.replace('R$ ', '').replace('.', '').replace(',', '.')) : undefined;
+    
+    const result = await addMaintenance({
+      ...data,
+      cost: costAsNumber
+    });
+
+    if (result.success) {
+      toast({
+        title: 'Sucesso!',
+        description: 'Manutenção agendada com sucesso.',
+      });
+      setOpen(false);
+      form.reset();
+    } else {
+      toast({
+        title: 'Erro!',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -85,7 +113,7 @@ export function AddManutencaoForm({ children }: { children: React.ReactNode }) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="equipment"
+              name="equipment_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Equipamento</FormLabel>
@@ -96,7 +124,7 @@ export function AddManutencaoForm({ children }: { children: React.ReactNode }) {
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                           {equipments.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                           {equipments.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                   <FormMessage />
@@ -118,6 +146,7 @@ export function AddManutencaoForm({ children }: { children: React.ReactNode }) {
                         <SelectContent>
                            <SelectItem value="preventiva">Preventiva</SelectItem>
                            <SelectItem value="corretiva">Corretiva</SelectItem>
+                           <SelectItem value="emergencial">Emergencial</SelectItem>
                         </SelectContent>
                     </Select>
                   <FormMessage />
@@ -126,7 +155,7 @@ export function AddManutencaoForm({ children }: { children: React.ReactNode }) {
             />
             <FormField
               control={form.control}
-              name="date"
+              name="scheduled_date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Data</FormLabel>

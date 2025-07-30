@@ -17,11 +17,37 @@ import EquipamentosTab from '@/components/manutencao/equipamentos-tab';
 import AgendamentosTab from '@/components/manutencao/agendamentos-tab';
 import ProdutosQuimicosTab from '@/components/manutencao/produtos-quimicos-tab';
 import RelatoriosManutencaoTab from '@/components/manutencao/relatorios-manutencao-tab';
+import type { Database } from '@/lib/database.types';
+import { getEquipments, getMaintenances } from './actions';
+
+type Equipment = Database['public']['Tables']['equipments']['Row'];
+type Maintenance = Database['public']['Tables']['maintenance_schedules']['Row'] & { equipments: Pick<Equipment, 'name'> | null };
 
 type ActiveTab = "Visão Geral" | "Equipamentos" | "Agendamentos" | "Produtos Químicos" | "Relatórios";
 
 export default function ManutencaoPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Relatórios");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Equipamentos");
+  const [equipments, setEquipments] = React.useState<Equipment[]>([]);
+  const [maintenances, setMaintenances] = React.useState<Maintenance[]>([]);
+
+  React.useEffect(() => {
+    async function loadData() {
+      if (activeTab === 'Equipamentos') {
+        const fetchedEquipments = await getEquipments();
+        setEquipments(fetchedEquipments);
+      }
+      if (activeTab === 'Agendamentos') {
+        const [fetchedEquipments, fetchedMaintenances] = await Promise.all([
+          getEquipments(),
+          getMaintenances()
+        ]);
+        setEquipments(fetchedEquipments);
+        setMaintenances(fetchedMaintenances);
+      }
+    }
+    loadData();
+  }, [activeTab]);
+
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -35,7 +61,7 @@ export default function ManutencaoPage() {
               <p className="text-muted-foreground">Gestão completa de equipamentos e manutenção</p>
             </div>
             <div className="flex gap-2">
-              <AddManutencaoForm>
+              <AddManutencaoForm equipments={equipments}>
                 <Button>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Nova Manutenção
@@ -58,9 +84,9 @@ export default function ManutencaoPage() {
             </div>
           )}
 
-          {activeTab === 'Equipamentos' && <EquipamentosTab />}
+          {activeTab === 'Equipamentos' && <EquipamentosTab equipments={equipments} />}
 
-          {activeTab === 'Agendamentos' && <AgendamentosTab />}
+          {activeTab === 'Agendamentos' && <AgendamentosTab maintenances={maintenances} equipments={equipments} />}
           
           {activeTab === 'Produtos Químicos' && <ProdutosQuimicosTab />}
 

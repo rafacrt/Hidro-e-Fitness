@@ -4,8 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Calendar, PlusCircle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddManutencaoForm } from "./add-manutencao-form";
+import type { Database } from "@/lib/database.types";
 
-export default function AgendamentosFilters() {
+type Equipment = Database['public']['Tables']['equipments']['Row'];
+
+interface AgendamentosFiltersProps {
+    equipments: Equipment[];
+}
+
+export default function AgendamentosFilters({ equipments }: AgendamentosFiltersProps) {
     return (
         <div className="p-4 flex flex-col md:flex-row items-center gap-4">
             <Button variant="outline" className="w-full md:w-auto">
@@ -35,7 +42,7 @@ export default function AgendamentosFilters() {
                     <SelectItem value="cancelada">Cancelada</SelectItem>
                 </SelectContent>
             </Select>
-            <AddManutencaoForm>
+            <AddManutencaoForm equipments={equipments}>
                 <Button className="w-full md:w-auto ml-auto">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Agendar Manutenção
