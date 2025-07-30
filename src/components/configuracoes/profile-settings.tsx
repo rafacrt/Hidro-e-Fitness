@@ -62,7 +62,7 @@ export default function ProfileSettings() {
         <CardHeader className="items-center text-center p-6 pt-0">
             <div className="relative -mt-12">
                 <Avatar className="h-24 w-24 border-4 border-background">
-                <AvatarImage src={avatarUrl || 'https://placehold.co/96x96.png'} alt="Admin's avatar" />
+                <AvatarImage src={avatarUrl || 'https://placehold.co/96x96.png'} alt="Admin's avatar" className="object-cover" />
                 <AvatarFallback>AD</AvatarFallback>
                 </Avatar>
                 <Button size="icon" className="absolute bottom-0 right-0 rounded-full h-8 w-8" onClick={handleAvatarClick} disabled={isUploading}>
