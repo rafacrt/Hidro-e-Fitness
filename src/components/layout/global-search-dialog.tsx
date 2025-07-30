@@ -1,16 +1,19 @@
+
 'use client';
 
 import * as React from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Search, User, Users, Calendar } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { Badge } from '../ui/badge';
 
 const studentResults = [
   { name: 'Maria Silva Santos', cpf: '123.456.789-10', avatar: 'MS' },
@@ -32,6 +35,12 @@ export function GlobalSearchDialog({ children }: { children: React.ReactNode }) 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[600px] top-20 translate-y-0 p-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Busca Global</DialogTitle>
+          <DialogDescription>
+            Busque por alunos, turmas, professores em todo o sistema.
+          </DialogDescription>
+        </DialogHeader>
         <div className="flex items-center border-b px-4">
             <Search className="h-5 w-5 text-muted-foreground" />
             <Input 
