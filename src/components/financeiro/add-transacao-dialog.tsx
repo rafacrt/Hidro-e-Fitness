@@ -86,7 +86,7 @@ export function AddTransacaoDialog({ children }: { children: React.ReactNode }) 
       form.reset();
     } else {
        toast({
-        title: 'Erro!',
+        title: 'Erro ao registrar transação!',
         description: result.message,
         variant: 'destructive',
       });

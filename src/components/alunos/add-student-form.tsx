@@ -164,7 +164,7 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
       form.reset();
     } else {
       toast({
-        title: 'Erro!',
+        title: 'Erro ao cadastrar aluno!',
         description: result.message,
         variant: 'destructive',
       });

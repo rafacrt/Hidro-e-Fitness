@@ -54,7 +54,7 @@ export function AddModalityForm({ children }: { children: React.ReactNode }) {
 
   const onSubmit = async (data: ModalityFormValues) => {
     // Convert price string "R$ 180,00" to number 180.00
-    const priceAsNumber = Number(data.price.replace('R$ ', '').replace('.', '').replace(',', '.'));
+    const priceAsNumber = Number(data.price.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
     
     const result = await addModality({ ...data, price: priceAsNumber });
 
@@ -67,7 +67,7 @@ export function AddModalityForm({ children }: { children: React.ReactNode }) {
       form.reset();
     } else {
       toast({
-        title: 'Erro!',
+        title: 'Erro ao cadastrar modalidade!',
         description: result.message,
         variant: 'destructive',
       });

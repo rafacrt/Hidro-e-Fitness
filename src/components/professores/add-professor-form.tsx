@@ -87,7 +87,7 @@ export function AddProfessorForm({ children }: { children: React.ReactNode }) {
       form.reset();
     } else {
       toast({
-        title: 'Erro!',
+        title: 'Erro ao cadastrar professor!',
         description: result.message,
         variant: 'destructive',
       });

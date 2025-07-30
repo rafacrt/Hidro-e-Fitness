@@ -100,7 +100,7 @@ export function AddClassForm({ children }: { children: React.ReactNode }) {
       form.reset();
     } else {
       toast({
-        title: 'Erro!',
+        title: 'Erro ao cadastrar turma!',
         description: result.message,
         variant: 'destructive',
       });

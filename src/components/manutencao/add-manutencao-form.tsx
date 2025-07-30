@@ -56,7 +56,7 @@ const maintenanceFormSchema = z.object({
   description: z.string().min(10, 'A descrição deve ter pelo menos 10 caracteres.'),
   scheduled_date: z.date({ required_error: 'A data é obrigatória.' }),
   responsible: z.string().optional(),
-  cost: z.string().optional(),
+  cost: z.coerce.number().optional(),
   status: z.enum(['agendada', 'em_andamento', 'concluida', 'cancelada']),
 });
 
@@ -76,17 +76,12 @@ export function AddManutencaoForm({ children, equipments }: AddManutencaoFormPro
   });
 
   const onSubmit = async (data: MaintenanceFormValues) => {
-    const costAsNumber = data.cost ? parseFloat(data.cost.replace('R$ ', '').replace('.', '').replace(',', '.')) : undefined;
-    
-    const result = await addMaintenance({
-      ...data,
-      cost: costAsNumber
-    });
+    const result = await addMaintenance(data);
 
     if (result.success) {
       toast({
         title: 'Sucesso!',
-        description: 'Manutenção agendada com sucesso.',
+        description: result.message,
       });
       setOpen(false);
       form.reset();
@@ -219,7 +214,7 @@ export function AddManutencaoForm({ children, equipments }: AddManutencaoFormPro
                   <FormItem>
                     <FormLabel>Custo Estimado (Opcional)</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="R$ 0,00" {...field} />
+                      <Input type="number" placeholder="0.00" {...field} onChange={event => field.onChange(+event.target.value)} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
