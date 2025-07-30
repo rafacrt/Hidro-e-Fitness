@@ -1,8 +1,12 @@
+
 'use server';
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import type { Database } from '@/lib/database.types';
+
+type Student = Database['public']['Tables']['students']['Row'];
 
 const studentFormSchema = z
   .object({
@@ -22,13 +26,13 @@ const studentFormSchema = z
     responsibleName: z.string().optional(),
     responsiblePhone: z.string().optional(),
     medicalObservations: z.string().optional(),
+    status: z.enum(['ativo', 'inativo']).default('ativo'),
   });
 
 export async function addStudent(formData: unknown) {
   const parsedData = studentFormSchema.safeParse(formData);
 
   if (!parsedData.success) {
-    console.error('Validation Error:', parsedData.error);
     return {
       success: false,
       message: 'Dados do formulário inválidos.',
@@ -38,45 +42,26 @@ export async function addStudent(formData: unknown) {
 
   try {
     const supabase = await createSupabaseServerClient();
-    const {
-      name,
-      cpf,
-      birthDate,
-      email,
-      phone,
-      isWhatsApp,
-      cep,
-      street,
-      number,
-      complement,
-      neighborhood,
-      city,
-      state,
-      responsibleName,
-      responsiblePhone,
-      medicalObservations,
-    } = parsedData.data;
-
     const { error } = await supabase
       .from('students')
       .insert([
         {
-          name,
-          cpf: cpf.replace(/\D/g, ''),
-          birth_date: birthDate.toISOString(),
-          email,
-          phone: phone.replace(/\D/g, ''),
-          is_whatsapp: isWhatsApp,
-          cep: cep.replace(/\D/g, ''),
-          street,
-          number,
-          complement,
-          neighborhood,
-          city,
-          state,
-          responsible_name: responsibleName,
-          responsible_phone: responsiblePhone,
-          medical_observations: medicalObservations,
+          name: parsedData.data.name,
+          cpf: parsedData.data.cpf.replace(/\D/g, ''),
+          birth_date: parsedData.data.birthDate.toISOString(),
+          email: parsedData.data.email,
+          phone: parsedData.data.phone.replace(/\D/g, ''),
+          is_whatsapp: parsedData.data.isWhatsApp,
+          cep: parsedData.data.cep.replace(/\D/g, ''),
+          street: parsedData.data.street,
+          number: parsedData.data.number,
+          complement: parsedData.data.complement,
+          neighborhood: parsedData.data.neighborhood,
+          city: parsedData.data.city,
+          state: parsedData.data.state,
+          responsible_name: parsedData.data.responsibleName,
+          responsible_phone: parsedData.data.responsiblePhone?.replace(/\D/g, ''),
+          medical_observations: parsedData.data.medicalObservations,
           status: 'ativo',
         },
       ]);
@@ -95,13 +80,93 @@ export async function addStudent(formData: unknown) {
   }
 }
 
-export async function getStudents() {
+export async function updateStudent(id: string, formData: unknown) {
+  const parsedData = studentFormSchema.safeParse(formData);
+
+  if (!parsedData.success) {
+    return {
+      success: false,
+      message: 'Dados do formulário inválidos.',
+      errors: parsedData.error.flatten().fieldErrors,
+    };
+  }
+  
   try {
     const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
+    const { error } = await supabase
+      .from('students')
+      .update({
+        name: parsedData.data.name,
+        cpf: parsedData.data.cpf.replace(/\D/g, ''),
+        birth_date: parsedData.data.birthDate.toISOString(),
+        email: parsedData.data.email,
+        phone: parsedData.data.phone.replace(/\D/g, ''),
+        is_whatsapp: parsedData.data.isWhatsApp,
+        cep: parsedData.data.cep.replace(/\D/g, ''),
+        street: parsedData.data.street,
+        number: parsedData.data.number,
+        complement: parsedData.data.complement,
+        neighborhood: parsedData.data.neighborhood,
+        city: parsedData.data.city,
+        state: parsedData.data.state,
+        responsible_name: parsedData.data.responsibleName,
+        responsible_phone: parsedData.data.responsiblePhone?.replace(/\D/g, ''),
+        medical_observations: parsedData.data.medicalObservations,
+        status: parsedData.data.status,
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Supabase Error:', error);
+      return { success: false, message: `Erro ao atualizar aluno: ${error.message}` };
+    }
+
+    revalidatePath('/alunos');
+    return { success: true, message: 'Aluno atualizado com sucesso!' };
+
+  } catch (error) {
+    console.error('Unexpected Error:', error);
+    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  }
+}
+
+export async function deleteStudent(id: string) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase.from('students').delete().eq('id', id);
+
+    if (error) {
+      console.error('Supabase Error:', error);
+      return { success: false, message: `Erro ao excluir aluno: ${error.message}` };
+    }
+
+    revalidatePath('/alunos');
+    return { success: true, message: 'Aluno excluído com sucesso!' };
+
+  } catch (error) {
+    console.error('Unexpected Error:', error);
+    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  }
+}
+
+
+export async function getStudents({ query, status }: { query: string; status: string }): Promise<Student[]> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    let queryBuilder = supabase
       .from('students')
       .select('*')
       .order('created_at', { ascending: false });
+
+    if (query) {
+      queryBuilder = queryBuilder.or(`name.ilike.%${query}%,email.ilike.%${query}%,cpf.ilike.%${query}%`);
+    }
+
+    if (status && status !== 'all') {
+      queryBuilder = queryBuilder.eq('status', status);
+    }
+    
+    const { data, error } = await queryBuilder;
 
     if (error) {
       console.error('Supabase Error:', error);

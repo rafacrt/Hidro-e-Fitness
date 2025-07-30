@@ -11,9 +11,20 @@ import { AddStudentForm } from '@/components/alunos/add-student-form';
 import { getStudents } from './actions';
 import { unstable_noStore as noStore } from 'next/cache';
 
-export default async function AlunosPage() {
+export default async function AlunosPage({
+  searchParams,
+}: {
+  searchParams?: {
+    query?: string;
+    status?: string;
+  };
+}) {
   noStore();
-  const students = await getStudents();
+  const query = searchParams?.query || '';
+  const status = searchParams?.status || 'all';
+
+  const students = await getStudents({ query, status });
+  const allStudents = await getStudents({ query: '', status: 'all' });
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -36,7 +47,7 @@ export default async function AlunosPage() {
           
           <Filters />
           <StudentsTable students={students} />
-          <StudentStats students={students} />
+          <StudentStats students={allStudents} />
           <QuickActionsAlunos />
 
         </main>

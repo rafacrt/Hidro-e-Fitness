@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Table,
@@ -16,15 +17,26 @@ import {
   Phone,
   MessageSquare,
   Calendar,
-  Copy,
   Pencil,
   Trash2,
   Users,
+  MoreHorizontal,
 } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { Card } from '../ui/card';
 import type { Database } from '@/lib/database.types';
 import { format } from 'date-fns';
+import { EditStudentForm } from './edit-student-form';
+import { DeleteStudentAlert } from './delete-student-alert';
+
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -81,7 +93,7 @@ export default function StudentsTable({ students }: StudentsTableProps) {
         <div className="p-6 text-center text-muted-foreground">
           <Users className="mx-auto h-12 w-12 mb-4" />
           <h3 className="text-lg font-semibold">Nenhum aluno encontrado</h3>
-          <p className="text-sm">Cadastre um novo aluno para começar a gerenciar.</p>
+          <p className="text-sm">Tente ajustar seus filtros ou cadastre um novo aluno.</p>
         </div>
       </Card>
     );
@@ -179,17 +191,30 @@ export default function StudentsTable({ students }: StudentsTableProps) {
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon">
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <EditStudentForm student={student}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Editar
+                                </DropdownMenuItem>
+                            </EditStudentForm>
+                            <DeleteStudentAlert studentId={student.id}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Excluir
+                                </DropdownMenuItem>
+                            </DeleteStudentAlert>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </TableCell>
               </TableRow>
             )
