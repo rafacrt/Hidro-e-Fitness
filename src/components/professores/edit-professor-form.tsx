@@ -29,7 +29,15 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { IMaskInput } from 'react-imask';
-import { addInstructor } from '@/app/professores/actions';
+import { updateInstructor } from '@/app/professores/actions';
+import type { Database } from '@/lib/database.types';
+
+type Instructor = Database['public']['Tables']['instructors']['Row'];
+
+interface EditProfessorFormProps {
+    instructor: Instructor;
+    children: React.ReactNode;
+}
 
 const professorFormSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
@@ -62,29 +70,28 @@ const weekdays = [
   { id: 'Sábado', label: 'Sábado' },
 ];
 
-export function AddProfessorForm({ children }: { children: React.ReactNode }) {
+export function EditProfessorForm({ instructor, children }: EditProfessorFormProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
   const form = useForm<ProfessorFormValues>({
     resolver: zodResolver(professorFormSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      specialties: [],
-      availability: [],
+      name: instructor.name,
+      email: instructor.email || '',
+      phone: instructor.phone || '',
+      specialties: (instructor.specialties as string[]) || [],
+      availability: (instructor.availability as string[]) || [],
     },
   });
 
   const onSubmit = async (data: ProfessorFormValues) => {
-    const result = await addInstructor(data);
+    const result = await updateInstructor(instructor.id, data);
     if (result.success) {
       toast({
         title: 'Sucesso!',
         description: result.message,
       });
       setOpen(false);
-      form.reset();
     } else {
       toast({
         title: 'Erro!',
@@ -99,9 +106,9 @@ export function AddProfessorForm({ children }: { children: React.ReactNode }) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Cadastrar Novo Professor</DialogTitle>
+          <DialogTitle>Editar Professor</DialogTitle>
           <DialogDescription>
-            Preencha os campos abaixo para adicionar um novo professor.
+            Atualize os dados do professor.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -238,7 +245,7 @@ export function AddProfessorForm({ children }: { children: React.ReactNode }) {
                 </DialogClose>
                 <Button type="submit" disabled={form.formState.isSubmitting}>
                     {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Cadastrar Professor
+                    Salvar Alterações
                 </Button>
             </DialogFooter>
           </form>

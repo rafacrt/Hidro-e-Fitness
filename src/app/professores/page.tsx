@@ -6,8 +6,13 @@ import ProfessoresTable from '@/components/professores/professores-table';
 import ProfessoresStats from '@/components/professores/professores-stats';
 import ProfessoresFilters from '@/components/professores/professores-filters';
 import { AddProfessorForm } from '@/components/professores/add-professor-form';
+import { getInstructors } from './actions';
+import { unstable_noStore as noStore } from 'next/cache';
 
-export default function ProfessoresPage() {
+export default async function ProfessoresPage() {
+  noStore();
+  const instructors = await getInstructors();
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar />
@@ -27,9 +32,9 @@ export default function ProfessoresPage() {
             </AddProfessorForm>
           </div>
 
-          <ProfessoresStats />
+          <ProfessoresStats instructors={instructors} />
           <ProfessoresFilters />
-          <ProfessoresTable />
+          <ProfessoresTable instructors={instructors} />
 
         </main>
       </div>

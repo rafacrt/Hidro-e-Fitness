@@ -1,14 +1,29 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, CheckCircle, Dumbbell, Calendar } from "lucide-react";
+import type { Database } from "@/lib/database.types";
+import { useMemo } from "react";
 
-const stats = [
-    { title: "Total de Professores", value: "4", icon: Users },
-    { title: "Professores Ativos", value: "4", icon: CheckCircle },
-    { title: "Especialidades", value: "5", icon: Dumbbell },
-    { title: "Média de Aulas/Semana", value: "12", icon: Calendar },
-];
+type Instructor = Database['public']['Tables']['instructors']['Row'];
 
-export default function ProfessoresStats() {
+interface ProfessoresStatsProps {
+    instructors: Instructor[];
+}
+
+export default function ProfessoresStats({ instructors }: ProfessoresStatsProps) {
+    const stats = useMemo(() => {
+        const total = instructors.length;
+        const active = instructors.length; // Assuming all are active for now
+        const specialties = new Set(instructors.flatMap(i => i.specialties as string[] || [])).size;
+        const avgClasses = 12; // Static for now
+
+        return [
+            { title: "Total de Professores", value: total.toString(), icon: Users },
+            { title: "Professores Ativos", value: active.toString(), icon: CheckCircle },
+            { title: "Especialidades", value: specialties.toString(), icon: Dumbbell },
+            { title: "Média de Aulas/Semana", value: avgClasses.toString(), icon: Calendar },
+        ];
+    }, [instructors]);
+
     return (
         <Card>
             <CardContent className="p-6">
