@@ -14,15 +14,16 @@ import { Input } from '@/components/ui/input';
 import { Search, User, Users, Calendar } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { Avatar, AvatarFallback } from '../ui/avatar';
+import Link from 'next/link';
 
 const studentResults = [
-  { name: 'Maria Silva Santos', cpf: '123.456.789-10', avatar: 'MS' },
-  { name: 'João Pedro Costa', cpf: '987.654.321-00', avatar: 'JP' },
+  { id: '1', name: 'Maria Silva Santos', cpf: '123.456.789-10', avatar: 'MS' },
+  { id: '2', name: 'João Pedro Costa', cpf: '987.654.321-00', avatar: 'JP' },
 ];
 
 const classResults = [
-  { name: 'Natação Adulto - Intermediário', professor: 'Prof. Ana Silva' },
-  { name: 'Hidroginástica', professor: 'Prof. Carlos Santos' },
+  { id: '1', name: 'Natação Adulto - Intermediário', professor: 'Prof. Ana Silva' },
+  { id: '2', name: 'Hidroginástica', professor: 'Prof. Carlos Santos' },
 ];
 
 export function GlobalSearchDialog({ children }: { children: React.ReactNode }) {
@@ -30,6 +31,10 @@ export function GlobalSearchDialog({ children }: { children: React.ReactNode }) 
   const [query, setQuery] = React.useState('');
 
   const hasResults = studentResults.length > 0 || classResults.length > 0;
+
+  const handleSelect = () => {
+    setOpen(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -57,16 +62,18 @@ export function GlobalSearchDialog({ children }: { children: React.ReactNode }) 
                     <div>
                         <h4 className="text-sm font-semibold text-muted-foreground px-2 my-2 flex items-center gap-2"><Users className='h-4 w-4' /> Alunos</h4>
                         <div className="space-y-1">
-                            {studentResults.map((student, i) => (
-                                <div key={i} className="flex items-center gap-3 p-2 rounded-md hover:bg-accent cursor-pointer">
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarFallback className="bg-cyan-100 text-cyan-700 text-xs">{student.avatar}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-medium text-sm">{student.name}</p>
-                                        <p className="text-xs text-muted-foreground">{student.cpf}</p>
+                            {studentResults.map((student) => (
+                                <Link href={`/alunos?query=${student.name}`} key={student.id} onClick={handleSelect}>
+                                    <div className="flex items-center gap-3 p-2 rounded-md hover:bg-accent cursor-pointer">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarFallback className="bg-cyan-100 text-cyan-700 text-xs">{student.avatar}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-medium text-sm">{student.name}</p>
+                                            <p className="text-xs text-muted-foreground">{student.cpf}</p>
+                                        </div>
                                     </div>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </div>
@@ -74,16 +81,18 @@ export function GlobalSearchDialog({ children }: { children: React.ReactNode }) 
                     <div>
                         <h4 className="text-sm font-semibold text-muted-foreground px-2 my-2 flex items-center gap-2"><Calendar className='h-4 w-4' /> Turmas</h4>
                          <div className="space-y-1">
-                            {classResults.map((cls, i) => (
-                                <div key={i} className="flex items-center gap-3 p-2 rounded-md hover:bg-accent cursor-pointer">
-                                    <div className='flex items-center justify-center h-8 w-8 rounded-md bg-secondary'>
-                                        <Calendar className='h-4 w-4 text-secondary-foreground' />
+                            {classResults.map((cls) => (
+                                <Link href="/turmas" key={cls.id} onClick={handleSelect}>
+                                    <div className="flex items-center gap-3 p-2 rounded-md hover:bg-accent cursor-pointer">
+                                        <div className='flex items-center justify-center h-8 w-8 rounded-md bg-secondary'>
+                                            <Calendar className='h-4 w-4 text-secondary-foreground' />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-sm">{cls.name}</p>
+                                            <p className="text-xs text-muted-foreground">{cls.professor}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="font-medium text-sm">{cls.name}</p>
-                                        <p className="text-xs text-muted-foreground">{cls.professor}</p>
-                                    </div>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </div>

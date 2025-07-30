@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -47,9 +48,12 @@ const searchResults = [
 export function SearchClassDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
   const [hasSearched, setHasSearched] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleSearch = () => {
+  const handleSearch = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault(); // Impede o comportamento padrão que pode remover o foco
     setHasSearched(true);
+    inputRef.current?.focus(); // Foca novamente no input
   };
 
   return (
@@ -63,7 +67,7 @@ export function SearchClassDialog({ children }: { children: React.ReactNode }) {
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col md:flex-row gap-4 p-1">
-            <Input placeholder="Buscar por nome, professor..." className="flex-1" />
+            <Input ref={inputRef} placeholder="Buscar por nome, professor..." className="flex-1" />
             <Select>
                 <SelectTrigger className="md:w-[180px]">
                     <SelectValue placeholder="Dia da Semana" />
