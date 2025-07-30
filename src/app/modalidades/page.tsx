@@ -7,8 +7,14 @@ import QuickActionsModalities from '@/components/modalidades/quick-actions-modal
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Search } from 'lucide-react';
 import TableFilters from '@/components/modalidades/table-filters';
+import { getModalities } from './actions';
+import { AddModalityForm } from '@/components/modalidades/add-modality-form';
+import { unstable_noStore as noStore } from 'next/cache';
 
-export default function ModalidadesPage() {
+export default async function ModalidadesPage() {
+  noStore();
+  const modalities = await getModalities();
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar />
@@ -25,17 +31,19 @@ export default function ModalidadesPage() {
                     <Search className="mr-2 h-4 w-4" />
                     Buscar Modalidade
                 </Button>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Nova Modalidade
-                </Button>
+                <AddModalityForm>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Nova Modalidade
+                    </Button>
+                </AddModalityForm>
             </div>
           </div>
           
           <ModalitiesFilters />
           <ModalitiesStatCards />
           <TableFilters />
-          <ModalitiesTable />
+          <ModalitiesTable modalities={modalities} />
           <QuickActionsModalities />
 
         </main>
