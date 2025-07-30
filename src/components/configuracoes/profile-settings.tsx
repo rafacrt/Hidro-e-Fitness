@@ -117,7 +117,7 @@ export default function ProfileSettings() {
                         <FormItem>
                         <FormLabel>Nova Senha</FormLabel>
                         <FormControl>
-                            <Input id="new-password" type="password" {...field} />
+                            <Input id="new-password" type="password" {...field} autoComplete="new-password" />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
