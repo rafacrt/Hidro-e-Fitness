@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { cn, validateCPF } from '@/lib/utils';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -45,7 +45,7 @@ import { useToast } from '@/hooks/use-toast';
 const studentFormSchema = z
   .object({
     name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
-    cpf: z.string().refine((cpf) => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(cpf), 'CPF inválido.'),
+    cpf: z.string().refine(validateCPF, 'CPF inválido.'),
     birthDate: z.date({ required_error: 'A data de nascimento é obrigatória.' }),
     email: z.string().email('E-mail inválido.'),
     phone: z.string().min(10, 'Telefone inválido.'),
@@ -129,16 +129,16 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
     }
   }, [watchBirthDate]);
 
-  const handleCepBlur = async (event: React.FocusEvent<HTMLInputElement>) => {
-    const cep = event.target.value.replace(/\D/g, '');
-    if (cep.length !== 8) return;
+  const handleCepBlur = async (cep: string) => {
+    const cepValue = cep.replace(/\D/g, '');
+    if (cepValue.length !== 8) return;
 
     setIsFetchingCep(true);
     try {
-      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const response = await fetch(`https://viacep.com.br/ws/${cepValue}/json/`);
       const data = await response.json();
       if (!data.erro) {
-        form.setValue('street', data.logouro);
+        form.setValue('street', data.logradouro);
         form.setValue('neighborhood', data.bairro);
         form.setValue('city', data.localidade);
         form.setValue('state', data.uf);
@@ -376,8 +376,12 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
                            <IMaskInput
                             mask="00000-000"
                             value={field.value || ''}
-                            onAccept={field.onChange}
-                            onBlur={handleCepBlur}
+                            onAccept={(value) => {
+                                field.onChange(value);
+                                if (value.replace(/\D/g, '').length === 8) {
+                                  handleCepBlur(value);
+                                }
+                              }}
                             className={cn(
                                 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
                               )}
