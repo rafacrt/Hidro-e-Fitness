@@ -1,11 +1,15 @@
-
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import ProfileSettings from '@/components/configuracoes/profile-settings';
 import AcademySettings from '@/components/configuracoes/academy-settings';
 import UserManagement from '@/components/configuracoes/user-management';
+import { getAcademySettings } from './actions';
+import { unstable_noStore as noStore } from 'next/cache';
 
-export default function ConfiguracoesPage() {
+export default async function ConfiguracoesPage() {
+  noStore();
+  const academySettings = await getAcademySettings();
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar />
@@ -22,7 +26,7 @@ export default function ConfiguracoesPage() {
               <ProfileSettings />
             </div>
             <div className="lg:col-span-2 space-y-6">
-              <AcademySettings />
+              <AcademySettings settings={academySettings} />
               <UserManagement />
             </div>
           </div>

@@ -2,6 +2,9 @@
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import type { Database } from '@/lib/database.types';
+
+type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 
 export async function uploadAvatar(formData: FormData) {
   const file = formData.get('avatar') as File;
@@ -21,7 +24,6 @@ export async function uploadAvatar(formData: FormData) {
     const fileName = `${user.id}-${Math.random()}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    // Upload da imagem para o bucket 'avatars'
     const { error: uploadError } = await supabase.storage
       .from('avatars')
       .upload(filePath, file);
@@ -31,12 +33,10 @@ export async function uploadAvatar(formData: FormData) {
       return { success: false, message: `Erro no upload: ${uploadError.message}` };
     }
 
-    // Obter a URL pública da imagem
     const { data: { publicUrl } } = supabase.storage
       .from('avatars')
       .getPublicUrl(filePath);
 
-    // Atualizar a tabela de profiles com a nova URL do avatar
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ avatar_url: publicUrl })
@@ -44,7 +44,6 @@ export async function uploadAvatar(formData: FormData) {
 
     if (updateError) {
       console.error('Supabase Update Error:', updateError);
-      // Opcional: remover a imagem do storage se a atualização do perfil falhar
       await supabase.storage.from('avatars').remove([filePath]);
       return { success: false, message: `Erro ao atualizar perfil: ${updateError.message}` };
     }
@@ -56,4 +55,98 @@ export async function uploadAvatar(formData: FormData) {
     console.error('Unexpected Error:', error);
     return { success: false, message: 'Ocorreu um erro inesperado.' };
   }
+}
+
+// --- Academy Settings Actions ---
+
+export async function getAcademySettings(): Promise<AcademySettings | null> {
+    try {
+        const supabase = await createSupabaseServerClient();
+        const { data, error } = await supabase
+            .from('academy_settings')
+            .select('*')
+            .limit(1)
+            .single();
+
+        if (error) {
+            console.error('Supabase Error:', error);
+            if (error.code === 'PGRST116') return null; // No rows found, which is fine
+            throw new Error('Não foi possível buscar as configurações da academia.');
+        }
+        return data;
+    } catch (error) {
+        console.error('Unexpected Error:', error);
+        return null;
+    }
+}
+
+export async function updateAcademySettings(formData: FormData) {
+    const name = formData.get('name') as string;
+    if (!name) {
+        return { success: false, message: 'O nome da academia é obrigatório.' };
+    }
+
+    try {
+        const supabase = await createSupabaseServerClient();
+        const { error } = await supabase
+            .from('academy_settings')
+            .update({ name })
+            .eq('id', 1);
+
+        if (error) {
+            console.error('Supabase Update Error:', error);
+            return { success: false, message: `Erro ao atualizar dados: ${error.message}` };
+        }
+
+        revalidatePath('/configuracoes');
+        return { success: true, message: 'Dados da academia atualizados com sucesso!' };
+    } catch (error) {
+        console.error('Unexpected Error:', error);
+        return { success: false, message: 'Ocorreu um erro inesperado.' };
+    }
+}
+
+export async function uploadLogo(formData: FormData) {
+    const file = formData.get('logo') as File;
+    if (!file || file.size === 0) {
+        return { success: false, message: 'Nenhum arquivo selecionado.' };
+    }
+
+    try {
+        const supabase = await createSupabaseServerClient();
+        const fileExt = file.name.split('.').pop();
+        const fileName = `logo-${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('logos')
+            .upload(filePath, file);
+
+        if (uploadError) {
+            console.error('Supabase Upload Error:', uploadError);
+            return { success: false, message: `Erro no upload: ${uploadError.message}` };
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('logos')
+            .getPublicUrl(filePath);
+
+        const { error: updateError } = await supabase
+            .from('academy_settings')
+            .update({ logo_url: publicUrl })
+            .eq('id', 1);
+            
+        if (updateError) {
+            console.error('Supabase Update Error:', updateError);
+            await supabase.storage.from('logos').remove([filePath]);
+            return { success: false, message: `Erro ao atualizar logo: ${updateError.message}` };
+        }
+        
+        revalidatePath('/configuracoes');
+        return { success: true, message: 'Logo atualizado com sucesso!', logoUrl: publicUrl };
+
+    } catch (error) {
+        console.error('Unexpected Error:', error);
+        return { success: false, message: 'Ocorreu um erro inesperado.' };
+    }
 }

@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { uploadAvatar } from '@/app/configuracoes/actions';
+import Image from 'next/image';
 
 export default function ProfileSettings() {
   const { toast } = useToast();
