@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -8,13 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera, Loader2 } from 'lucide-react';
-import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { uploadAvatar } from '@/app/configuracoes/actions';
 
 export default function ProfileSettings() {
   const { toast } = useToast();
-  const [avatarUrl, setAvatarUrl] = React.useState("https://placehold.co/96x96.png");
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const [isUploading, setIsUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -50,39 +48,41 @@ export default function ProfileSettings() {
     }
   };
 
+  const handlePasswordSave = () => {
+    toast({
+        title: 'Funcionalidade em desenvolvimento',
+        description: `A alteração de senha será implementada em breve.`,
+    });
+  }
+
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Perfil</CardTitle>
-        <CardDescription>Atualize sua foto e senha.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="relative">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={avatarUrl} alt="Admin's avatar" />
-              <AvatarFallback>AD</AvatarFallback>
-            </Avatar>
-            <Button size="icon" className="absolute bottom-0 right-0 rounded-full h-8 w-8" onClick={handleAvatarClick} disabled={isUploading}>
-              {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-            </Button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept="image/png, image/jpeg, image/gif"
-              disabled={isUploading}
-            />
-          </div>
-          <div className="text-center">
-            <p className="font-semibold">Admin Sistema</p>
-            <p className="text-sm text-muted-foreground">admin@hidrofitness.com</p>
-          </div>
-        </div>
+    <Card className="overflow-hidden">
+        <div className="h-24 bg-secondary" />
+        <CardHeader className="items-center text-center p-6 pt-0">
+            <div className="relative -mt-12">
+                <Avatar className="h-24 w-24 border-4 border-background">
+                <AvatarImage src={avatarUrl || 'https://placehold.co/96x96.png'} alt="Admin's avatar" />
+                <AvatarFallback>AD</AvatarFallback>
+                </Avatar>
+                <Button size="icon" className="absolute bottom-0 right-0 rounded-full h-8 w-8" onClick={handleAvatarClick} disabled={isUploading}>
+                    {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                </Button>
+                 <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept="image/png, image/jpeg, image/gif"
+                    disabled={isUploading}
+                />
+            </div>
+            <CardTitle>Admin Sistema</CardTitle>
+            <CardDescription>admin@hidrofitness.com</CardDescription>
+        </CardHeader>
+      <CardContent className="space-y-6 px-6 pb-6">
         <div className="space-y-4">
-          <h4 className="font-medium">Alterar Senha</h4>
+          <h4 className="font-medium text-center">Alterar Senha</h4>
           <div className="space-y-2">
             <Label htmlFor="current-password">Senha Atual</Label>
             <Input id="current-password" type="password" />
@@ -96,7 +96,7 @@ export default function ProfileSettings() {
             <Input id="confirm-password" type="password" />
           </div>
         </div>
-        <Button className="w-full">Salvar Alterações</Button>
+        <Button className="w-full" onClick={handlePasswordSave}>Salvar Alterações</Button>
       </CardContent>
     </Card>
   );
