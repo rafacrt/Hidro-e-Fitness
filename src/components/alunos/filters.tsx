@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,22 +6,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "../ui/button";
 import { Filter, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useDebouncedCallback } from 'use-debounce';
+import { useCallback, useRef } from 'react';
 
 export default function Filters() {
     const searchParams = useSearchParams();
     const pathname = usePathname();
     const { replace } = useRouter();
+    const timeoutRef = useRef<NodeJS.Timeout>();
 
-    const handleSearch = useDebouncedCallback((term: string) => {
-        const params = new URLSearchParams(searchParams);
-        if (term) {
-            params.set('query', term);
-        } else {
-            params.delete('query');
+    // Implementação customizada do debounce
+    const handleSearch = useCallback((term: string) => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
         }
-        replace(`${pathname}?${params.toString()}`);
-    }, 300);
+        
+        timeoutRef.current = setTimeout(() => {
+            const params = new URLSearchParams(searchParams);
+            if (term) {
+                params.set('query', term);
+            } else {
+                params.delete('query');
+            }
+            replace(`${pathname}?${params.toString()}`);
+        }, 300);
+    }, [searchParams, pathname, replace]);
 
     const handleStatusChange = (status: string) => {
         const params = new URLSearchParams(searchParams);
@@ -33,7 +40,6 @@ export default function Filters() {
         }
         replace(`${pathname}?${params.toString()}`);
     };
-
 
     return (
         <Card>
