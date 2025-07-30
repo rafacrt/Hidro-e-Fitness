@@ -28,11 +28,14 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { login } from '@/app/auth/actions';
-import { getAcademySettings } from '@/app/configuracoes/actions';
 import type { Database } from '@/lib/database.types';
 import Image from 'next/image';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+
+interface LoginFormProps {
+    settings: AcademySettings | null;
+}
 
 const loginFormSchema = z.object({
   email: z.string().email('E-mail inválido.'),
@@ -41,22 +44,11 @@ const loginFormSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
 
-export default function LoginForm() {
+export default function LoginForm({ settings }: LoginFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
-  const [mounted, setMounted] = React.useState(false);
-  const [settings, setSettings] = React.useState<AcademySettings | null>(null);
-
-  React.useEffect(() => {
-    setMounted(true);
-    async function loadSettings() {
-        const academySettings = await getAcademySettings();
-        setSettings(academySettings);
-    }
-    loadSettings();
-  }, []);
-
+  
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
@@ -137,19 +129,6 @@ export default function LoginForm() {
     }
   };
 
-  if (!mounted) {
-    return (
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Icons.Logo className="h-12 w-12 text-primary" />
-          </div>
-          <CardTitle>Carregando...</CardTitle>
-        </CardHeader>
-      </Card>
-    );
-  }
-
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
@@ -192,7 +171,12 @@ export default function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Senha</FormLabel>
+                  <div className="flex justify-between items-center">
+                    <FormLabel>Senha</FormLabel>
+                    <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                        Esqueceu a senha?
+                    </Link>
+                  </div>
                   <FormControl>
                     <Input
                       type="password"

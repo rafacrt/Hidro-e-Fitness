@@ -16,6 +16,14 @@ const loginSchema = z.object({
     password: z.string().min(1)
 });
 
+const forgotPasswordSchema = z.object({
+    email: z.string().email('E-mail inválido.'),
+});
+
+const updatePasswordSchema = z.object({
+    password: z.string().min(6, 'A nova senha deve ter pelo menos 6 caracteres.'),
+});
+
 export async function signup(formData: unknown) {
   const parsedData = signupSchema.safeParse(formData);
 
@@ -131,4 +139,46 @@ export async function logout() {
         console.error('❌ Erro no logout:', error);
         redirect('/login');
     }
+}
+
+export async function forgotPassword(formData: unknown) {
+  const parsedData = forgotPasswordSchema.safeParse(formData);
+
+  if (!parsedData.success) {
+    return { success: false, message: 'E-mail inválido.' };
+  }
+
+  const { email } = parsedData.data;
+  const supabase = await createSupabaseServerClient();
+  const headersList = await headers();
+  const origin = headersList.get('origin');
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/reset-password`,
+  });
+
+  if (error) {
+    return { success: false, message: `Erro ao enviar e-mail: ${error.message}` };
+  }
+
+  return { success: true, message: 'E-mail de redefinição de senha enviado com sucesso.' };
+}
+
+export async function updatePassword(formData: unknown) {
+    const parsedData = updatePasswordSchema.safeParse(formData);
+
+    if (!parsedData.success) {
+        return { success: false, message: 'Dados inválidos.', errors: parsedData.error.flatten().fieldErrors };
+    }
+
+    const { password } = parsedData.data;
+    const supabase = await createSupabaseServerClient();
+
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+        return { success: false, message: `Erro ao atualizar senha: ${error.message}` };
+    }
+
+    return { success: true, message: 'Senha atualizada com sucesso!' };
 }
