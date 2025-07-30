@@ -36,7 +36,9 @@ import { SearchClassDialog } from '@/components/turmas/search-class-dialog';
 import { getClasses } from './actions';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Database } from '@/lib/database.types';
+import { getAcademySettings } from '../configuracoes/actions';
 
+type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Instructor = Database['public']['Tables']['instructors']['Row'];
 type Modality = Database['public']['Tables']['modalities']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'] & { instructors: Pick<Instructor, 'name'> | null } & { modalities: Pick<Modality, 'name'> | null };
@@ -49,21 +51,26 @@ export default function TurmasPage() {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Gerenciar Turmas");
   const [activeReport, setActiveReport] = React.useState<ActiveReport>(null);
   const [classes, setClasses] = React.useState<ClassRow[]>([]);
+  const [settings, setSettings] = React.useState<AcademySettings | null>(null);
 
   React.useEffect(() => {
-    async function loadClasses() {
-      const fetchedClasses = await getClasses();
+    async function loadData() {
+      const [fetchedClasses, fetchedSettings] = await Promise.all([
+        getClasses(),
+        getAcademySettings()
+      ]);
       setClasses(fetchedClasses);
+      setSettings(fetchedSettings);
     }
-    loadClasses();
+    loadData();
   }, [activeTab]);
 
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar />
+      <Sidebar settings={settings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header />
+        <Header settings={settings} />
         <main className="flex-1 p-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>

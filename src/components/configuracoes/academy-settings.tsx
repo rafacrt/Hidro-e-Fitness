@@ -73,7 +73,7 @@ export default function AcademySettings({ settings }: AcademySettingsProps) {
           <div className="space-y-2">
             <Label>Logo do Sistema</Label>
             <div className="flex items-center gap-4">
-              <div className="w-24 h-24 rounded-lg border flex items-center justify-center bg-secondary">
+              <div className="w-24 h-24 rounded-lg border flex items-center justify-center">
                  <Image src={logoUrl || "https://placehold.co/64x64.png"} alt="Logo da Academia" width={64} height={64} className="object-contain" data-ai-hint="water fitness" />
               </div>
               <Button type="button" variant="outline" onClick={handleLogoClick} disabled={isUploading}>

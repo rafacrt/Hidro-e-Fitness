@@ -5,17 +5,29 @@ import { cn } from '@/lib/utils';
 import { Icons } from '@/components/icons';
 import { navItems } from '@/lib/config';
 import { usePathname } from 'next/navigation';
+import type { Database } from '@/lib/database.types';
+import Image from 'next/image';
 
-export function NavContent() {
+type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+
+interface NavContentProps {
+  settings: AcademySettings | null;
+}
+
+export function NavContent({ settings }: NavContentProps) {
   const activePath = usePathname();
 
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b">
         <Link href="/" className="flex items-center gap-3 font-bold text-xl text-foreground">
-          <Icons.Logo className="h-8 w-8 text-primary" />
+          {settings?.logo_url ? (
+            <Image src={settings.logo_url} alt="Logo da Academia" width={32} height={32} className="object-contain" />
+          ) : (
+            <Icons.Logo className="h-8 w-8 text-primary" />
+          )}
           <div className="flex flex-col">
-            <span className="leading-tight">Hidro Fitness</span>
+            <span className="leading-tight">{settings?.name || 'Hidro Fitness'}</span>
             <span className="text-xs font-normal text-muted-foreground leading-tight">Sistema de Gestão</span>
           </div>
         </Link>

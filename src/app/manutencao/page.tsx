@@ -19,7 +19,9 @@ import ProdutosQuimicosTab from '@/components/manutencao/produtos-quimicos-tab';
 import RelatoriosManutencaoTab from '@/components/manutencao/relatorios-manutencao-tab';
 import type { Database } from '@/lib/database.types';
 import { getEquipments, getMaintenances } from './actions';
+import { getAcademySettings } from '../configuracoes/actions';
 
+type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Equipment = Database['public']['Tables']['equipments']['Row'];
 type Maintenance = Database['public']['Tables']['maintenance_schedules']['Row'] & { equipments: Pick<Equipment, 'name'> | null };
 
@@ -29,9 +31,13 @@ export default function ManutencaoPage() {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Equipamentos");
   const [equipments, setEquipments] = React.useState<Equipment[]>([]);
   const [maintenances, setMaintenances] = React.useState<Maintenance[]>([]);
+  const [settings, setSettings] = React.useState<AcademySettings | null>(null);
 
   React.useEffect(() => {
     async function loadData() {
+      const academySettings = await getAcademySettings();
+      setSettings(academySettings);
+      
       if (activeTab === 'Equipamentos') {
         const fetchedEquipments = await getEquipments();
         setEquipments(fetchedEquipments);
@@ -51,9 +57,9 @@ export default function ManutencaoPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar />
+      <Sidebar settings={settings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header />
+        <Header settings={settings} />
         <main className="flex-1 p-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>

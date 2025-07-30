@@ -18,8 +18,15 @@ import Image from 'next/image';
 import { GlobalSearchDialog } from './global-search-dialog';
 import { logout } from '@/app/auth/actions';
 import Link from 'next/link';
+import type { Database } from '@/lib/database.types';
 
-export default function Header() {
+type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+
+interface HeaderProps {
+  settings: AcademySettings | null;
+}
+
+export default function Header({ settings }: HeaderProps) {
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-card px-6 sticky top-0 z-30">
       <Sheet>
@@ -30,7 +37,7 @@ export default function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="p-0 w-72 bg-card">
-          <NavContent />
+          <NavContent settings={settings} />
         </SheetContent>
       </Sheet>
 

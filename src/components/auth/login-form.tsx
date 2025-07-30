@@ -28,6 +28,11 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { login } from '@/app/auth/actions';
+import { getAcademySettings } from '@/app/configuracoes/actions';
+import type { Database } from '@/lib/database.types';
+import Image from 'next/image';
+
+type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 
 const loginFormSchema = z.object({
   email: z.string().email('E-mail inválido.'),
@@ -41,10 +46,15 @@ export default function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+  const [settings, setSettings] = React.useState<AcademySettings | null>(null);
 
-  // Evitar problemas de hidratação
   React.useEffect(() => {
     setMounted(true);
+    async function loadSettings() {
+        const academySettings = await getAcademySettings();
+        setSettings(academySettings);
+    }
+    loadSettings();
   }, []);
 
   const form = useForm<LoginFormValues>({
@@ -62,8 +72,6 @@ export default function LoginForm() {
       console.log('=== TENTATIVA DE LOGIN ===');
       console.log('E-mail:', data.email);
       
-      // Toast de início (removido para evitar conflito)
-      
       const result = await login(data);
       
       console.log('=== RESULTADO DO LOGIN ===');
@@ -72,7 +80,6 @@ export default function LoginForm() {
       if (result?.error) {
         console.error('❌ Erro no login:', result.error);
         
-        // Alert específico baseado no erro
         let errorMessage = result.error.message;
         let errorTitle = "Erro no Login";
         
@@ -87,7 +94,6 @@ export default function LoginForm() {
           errorMessage = "Aguarde alguns minutos antes de tentar novamente.";
         }
         
-        // Toast de erro
         toast({
           title: errorTitle,
           description: errorMessage,
@@ -99,16 +105,14 @@ export default function LoginForm() {
       } else if (result?.success) {
         console.log('✅ Login bem-sucedido!');
         
-        // Toast de sucesso
         toast({
           title: "Login realizado com sucesso!",
           description: "Redirecionando para o dashboard...",
         });
         
-        // MUDANÇA: Redirect no client-side em vez de server-side
         setTimeout(() => {
           router.push('/dashboard');
-          router.refresh(); // Força refresh para atualizar o estado de autenticação
+          router.refresh();
         }, 1000);
         
       } else {
@@ -133,7 +137,6 @@ export default function LoginForm() {
     }
   };
 
-  // Evitar renderização no servidor para componentes que dependem do client
   if (!mounted) {
     return (
       <Card className="w-full max-w-sm">
@@ -151,9 +154,13 @@ export default function LoginForm() {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
-          <Icons.Logo className="h-12 w-12 text-primary" />
+          {settings?.logo_url ? (
+            <Image src={settings.logo_url} alt="Logo da Academia" width={48} height={48} className="object-contain" />
+          ) : (
+            <Icons.Logo className="h-12 w-12 text-primary" />
+          )}
         </div>
-        <CardTitle>Bem-vindo ao Hidro Fitness</CardTitle>
+        <CardTitle>Bem-vindo ao {settings?.name || 'Hidro Fitness'}</CardTitle>
         <CardDescription>
           Acesse sua conta para gerenciar a academia.
         </CardDescription>
@@ -215,7 +222,6 @@ export default function LoginForm() {
             </Link>
           </p>
           
-          {/* Dados de teste para desenvolvimento */}
           {process.env.NODE_ENV === 'development' && (
             <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
               <strong>Para teste:</strong><br />

@@ -5,18 +5,23 @@ import UpcomingClasses from '@/components/dashboard/upcoming-classes';
 import RecentPayments from '@/components/dashboard/recent-payments';
 import QuickActions from '@/components/dashboard/quick-actions';
 import { Users, Calendar, DollarSign, Percent } from 'lucide-react';
+import { getAcademySettings } from '../configuracoes/actions';
+import { unstable_noStore as noStore } from 'next/cache';
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  noStore();
+  const academySettings = await getAcademySettings();
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar />
+      <Sidebar settings={academySettings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header />
+        <Header settings={academySettings} />
         <main className="flex-1 p-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold">Dashboard</h1>
-              <p className="text-muted-foreground">Visão geral do sistema Hidro Fitness</p>
+              <p className="text-muted-foreground">Visão geral do sistema {academySettings?.name || 'Hidro Fitness'}</p>
             </div>
             <div className="text-sm text-muted-foreground">
               Última atualização: 25/07/2025, 20:40:45

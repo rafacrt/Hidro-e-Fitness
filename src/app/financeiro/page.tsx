@@ -21,17 +21,30 @@ import { ExportFinanceiroDialog } from '@/components/financeiro/export-financeir
 import RecebimentosTab from '@/components/financeiro/recebimentos-tab';
 import PagamentosTab from '@/components/financeiro/pagamentos-tab';
 import FluxoDeCaixaTab from '@/components/financeiro/fluxo-de-caixa-tab';
+import type { Database } from '@/lib/database.types';
+import { getAcademySettings } from '../configuracoes/actions';
+
+type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 
 type ActiveTab = "Visão Geral" | "Recebimentos" | "Pagamentos" | "Fluxo de Caixa" | "Relatórios";
 
 export default function FinanceiroPage() {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
+  const [settings, setSettings] = React.useState<AcademySettings | null>(null);
+
+  React.useEffect(() => {
+    async function loadSettings() {
+      const academySettings = await getAcademySettings();
+      setSettings(academySettings);
+    }
+    loadSettings();
+  }, []);
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar />
+      <Sidebar settings={settings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header />
+        <Header settings={settings} />
         <main className="flex-1 p-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>

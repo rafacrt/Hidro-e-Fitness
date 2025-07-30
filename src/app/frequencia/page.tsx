@@ -8,13 +8,18 @@ import FrequenciaPorModalidade from '@/components/frequencia/frequencia-por-moda
 import AulasDeHojeFrequencia from '@/components/frequencia/aulas-de-hoje-frequencia';
 import AlunosBaixaFrequencia from '@/components/frequencia/alunos-baixa-frequencia';
 import AcoesRapidasFrequencia from '@/components/frequencia/acoes-rapidas-frequencia';
+import { getAcademySettings } from '../configuracoes/actions';
+import { unstable_noStore as noStore } from 'next/cache';
 
-export default function FrequenciaPage() {
+export default async function FrequenciaPage() {
+  noStore();
+  const academySettings = await getAcademySettings();
+  
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar />
+      <Sidebar settings={academySettings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header />
+        <Header settings={academySettings} />
         <main className="flex-1 p-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>

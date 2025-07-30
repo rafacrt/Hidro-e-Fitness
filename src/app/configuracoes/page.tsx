@@ -12,9 +12,9 @@ export default async function ConfiguracoesPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar />
+      <Sidebar settings={academySettings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header />
+        <Header settings={academySettings} />
         <main className="flex-1 p-6 space-y-6">
           <div>
             <h1 className="text-2xl font-bold">Configurações</h1>
