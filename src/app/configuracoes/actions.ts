@@ -5,6 +5,36 @@ import { revalidatePath } from 'next/cache';
 import type { Database } from '@/lib/database.types';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
+
+
+export async function getUserProfile(): Promise<Profile | null> {
+    try {
+        const supabase = await createSupabaseServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return null;
+        }
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+        if (error) {
+            console.error('Supabase Error getting profile:', error);
+            return null;
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Unexpected Error getting profile:', error);
+        return null;
+    }
+}
+
 
 export async function uploadAvatar(formData: FormData) {
   const file = formData.get('avatar') as File;
@@ -118,6 +148,15 @@ export async function uploadLogo(formData: FormData) {
         const fileName = `logo-${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
 
+        // Remove a logo antiga, se existir
+        const { data: settings } = await supabase.from('academy_settings').select('logo_url').single();
+        if (settings?.logo_url) {
+            const oldFileName = settings.logo_url.split('/').pop();
+            if (oldFileName) {
+                await supabase.storage.from('logos').remove([oldFileName]);
+            }
+        }
+
         const { error: uploadError } = await supabase.storage
             .from('logos')
             .upload(filePath, file);
@@ -143,6 +182,7 @@ export async function uploadLogo(formData: FormData) {
         }
         
         revalidatePath('/configuracoes');
+        revalidatePath('/', 'layout');
         return { success: true, message: 'Logo atualizado com sucesso!', logoUrl: publicUrl };
 
     } catch (error) {

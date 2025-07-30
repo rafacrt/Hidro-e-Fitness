@@ -2,6 +2,7 @@ import type { Database } from "@/lib/database.types";
 import { NavContent } from "./nav-content";
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface SidebarProps {
   settings: AcademySettings | null;

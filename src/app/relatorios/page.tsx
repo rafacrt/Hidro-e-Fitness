@@ -10,20 +10,23 @@ import AcoesRapidasRelatorios from '@/components/relatorios/acoes-rapidas-relato
 import ResumoPerformance from '@/components/relatorios/resumo-performance';
 import { getMostUsedReports, getRecentActivities, getReportStats } from './actions';
 import { unstable_noStore as noStore } from 'next/cache';
-import { getAcademySettings } from '../configuracoes/actions';
+import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 
 export default async function RelatoriosPage() {
   noStore();
-  const stats = await getReportStats();
-  const mostUsedReports = await getMostUsedReports();
-  const recentActivities = await getRecentActivities();
-  const academySettings = await getAcademySettings();
+  const [stats, mostUsedReports, recentActivities, academySettings, userProfile] = await Promise.all([
+    getReportStats(),
+    getMostUsedReports(),
+    getRecentActivities(),
+    getAcademySettings(),
+    getUserProfile()
+  ]);
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar settings={academySettings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header settings={academySettings} />
+        <Header settings={academySettings} userProfile={userProfile} />
         <main className="flex-1 p-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>

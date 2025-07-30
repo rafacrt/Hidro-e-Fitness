@@ -3,7 +3,6 @@
 
 import { Bell, Menu, Search, UserPlus, CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -16,16 +15,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { NavContent } from './nav-content';
-import Image from 'next/image';
 import { GlobalSearchDialog } from './global-search-dialog';
 import { logout } from '@/app/auth/actions';
 import Link from 'next/link';
 import type { Database } from '@/lib/database.types';
+import Image from 'next/image';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface HeaderProps {
   settings: AcademySettings | null;
+  userProfile: Profile | null;
 }
 
 const notifications = [
@@ -43,7 +44,17 @@ const notifications = [
     },
 ];
 
-export default function Header({ settings }: HeaderProps) {
+const getInitials = (name: string | null) => {
+  if (!name) return 'U';
+  const names = name.split(' ');
+  if (names.length > 1) {
+    return `${names[0][0]}${names[names.length - 1][0]}`;
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
+
+export default function Header({ settings, userProfile }: HeaderProps) {
   return (
     <header className="flex h-16 items-center gap-4 border-b bg-card px-6 sticky top-0 z-30">
       <Sheet>
@@ -102,12 +113,14 @@ export default function Header({ settings }: HeaderProps) {
           <Button variant="ghost" className="relative h-8 w-auto p-0 rounded-full">
             <div className="flex items-center space-x-2">
               <Avatar className="h-9 w-9">
-                <Image src="https://placehold.co/40x40.png" alt="Admin's avatar" width={40} height={40} data-ai-hint="person portrait" className="object-cover" />
-                <AvatarFallback>AD</AvatarFallback>
+                {userProfile?.avatar_url && (
+                    <Image src={userProfile.avatar_url} alt={userProfile.full_name || 'Avatar'} width={40} height={40} data-ai-hint="person portrait" className="object-cover" />
+                )}
+                <AvatarFallback>{getInitials(userProfile?.full_name || null)}</AvatarFallback>
               </Avatar>
               <div className="text-left hidden sm:block">
-                <p className="text-sm font-medium">Admin Sistema</p>
-                <p className="text-xs text-muted-foreground">Admin</p>
+                <p className="text-sm font-medium">{userProfile?.full_name || 'Usuário'}</p>
+                <p className="text-xs text-muted-foreground">{userProfile?.role || 'Usuário'}</p>
               </div>
             </div>
           </Button>
@@ -122,7 +135,11 @@ export default function Header({ settings }: HeaderProps) {
             <Link href="/configuracoes">Configurações</Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => logout()}>Sair</DropdownMenuItem>
+          <form action={logout}>
+            <button type="submit" className="w-full">
+              <DropdownMenuItem>Sair</DropdownMenuItem>
+            </button>
+          </form>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

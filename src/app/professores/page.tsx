@@ -8,18 +8,21 @@ import ProfessoresFilters from '@/components/professores/professores-filters';
 import { AddProfessorForm } from '@/components/professores/add-professor-form';
 import { getInstructors } from './actions';
 import { unstable_noStore as noStore } from 'next/cache';
-import { getAcademySettings } from '../configuracoes/actions';
+import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 
 export default async function ProfessoresPage() {
   noStore();
-  const instructors = await getInstructors();
-  const academySettings = await getAcademySettings();
+  const [instructors, academySettings, userProfile] = await Promise.all([
+    getInstructors(),
+    getAcademySettings(),
+    getUserProfile()
+  ]);
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar settings={academySettings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header settings={academySettings} />
+        <Header settings={academySettings} userProfile={userProfile} />
         <main className="flex-1 p-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>

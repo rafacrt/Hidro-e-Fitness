@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Camera, Loader2 } from 'lucide-react';
@@ -15,6 +14,13 @@ import { useToast } from '@/hooks/use-toast';
 import { uploadAvatar } from '@/app/configuracoes/actions';
 import { updatePassword } from '@/app/auth/actions';
 import Image from 'next/image';
+import type { Database } from '@/lib/database.types';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
+
+interface ProfileSettingsProps {
+    userProfile: Profile | null;
+}
 
 const updatePasswordSchema = z.object({
     password: z.string().min(6, 'A nova senha deve ter pelo menos 6 caracteres.'),
@@ -22,9 +28,9 @@ const updatePasswordSchema = z.object({
 
 type UpdatePasswordFormValues = z.infer<typeof updatePasswordSchema>;
 
-export default function ProfileSettings() {
+export default function ProfileSettings({ userProfile }: ProfileSettingsProps) {
   const { toast } = useToast();
-  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(userProfile?.avatar_url || null);
   const [isUploading, setIsUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -88,7 +94,7 @@ export default function ProfileSettings() {
         <CardHeader className="items-center text-center p-6 pt-0">
             <div className="relative -mt-12">
                 <Avatar className="h-24 w-24 border-4 border-background">
-                <Image src={avatarUrl || 'https://placehold.co/96x96.png'} alt="Admin's avatar" width={96} height={96} className="object-cover" data-ai-hint="person portrait" />
+                <Image src={avatarUrl || 'https://placehold.co/96x96.png'} alt={userProfile?.full_name || 'Avatar'} width={96} height={96} className="object-cover" data-ai-hint="person portrait" />
                 <AvatarFallback>AD</AvatarFallback>
                 </Avatar>
                 <Button size="icon" className="absolute bottom-0 right-0 rounded-full h-8 w-8" onClick={handleAvatarClick} disabled={isUploading}>
@@ -103,8 +109,8 @@ export default function ProfileSettings() {
                     disabled={isUploading}
                 />
             </div>
-            <CardTitle>Admin Sistema</CardTitle>
-            <CardDescription>admin@hidrofitness.com</CardDescription>
+            <CardTitle>{userProfile?.full_name || 'Admin Sistema'}</CardTitle>
+            <CardDescription>{userProfile?.role || 'Admin'}</CardDescription>
         </CardHeader>
       <CardContent className="space-y-6 px-6 pb-6">
         <Form {...form}>

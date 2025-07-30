@@ -10,18 +10,21 @@ import TableFilters from '@/components/modalidades/table-filters';
 import { getModalities } from './actions';
 import { AddModalityForm } from '@/components/modalidades/add-modality-form';
 import { unstable_noStore as noStore } from 'next/cache';
-import { getAcademySettings } from '../configuracoes/actions';
+import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 
 export default async function ModalidadesPage() {
   noStore();
-  const modalities = await getModalities();
-  const academySettings = await getAcademySettings();
+  const [modalities, academySettings, userProfile] = await Promise.all([
+    getModalities(),
+    getAcademySettings(),
+    getUserProfile()
+  ]);
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar settings={academySettings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header settings={academySettings} />
+        <Header settings={academySettings} userProfile={userProfile} />
         <main className="flex-1 p-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>

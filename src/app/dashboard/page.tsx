@@ -5,18 +5,21 @@ import UpcomingClasses from '@/components/dashboard/upcoming-classes';
 import RecentPayments from '@/components/dashboard/recent-payments';
 import QuickActions from '@/components/dashboard/quick-actions';
 import { Users, Calendar, DollarSign, Percent } from 'lucide-react';
-import { getAcademySettings } from '../configuracoes/actions';
+import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { unstable_noStore as noStore } from 'next/cache';
 
 export default async function DashboardPage() {
   noStore();
-  const academySettings = await getAcademySettings();
+  const [academySettings, userProfile] = await Promise.all([
+    getAcademySettings(),
+    getUserProfile()
+  ]);
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar settings={academySettings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header settings={academySettings} />
+        <Header settings={academySettings} userProfile={userProfile} />
         <main className="flex-1 p-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>

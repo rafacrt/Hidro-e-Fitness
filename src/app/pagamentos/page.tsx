@@ -4,7 +4,7 @@ import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import PagamentosContent from '@/components/pagamentos/pagamentos-content';
 import { getPayments, getPaymentStats } from './actions';
-import { getAcademySettings } from '../configuracoes/actions';
+import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 
 export default async function PagamentosPage({
   searchParams,
@@ -18,15 +18,18 @@ export default async function PagamentosPage({
   const query = searchParams?.query || '';
   const status = searchParams?.status || 'all';
 
-  const payments = await getPayments({ query, status });
-  const stats = await getPaymentStats();
-  const academySettings = await getAcademySettings();
+  const [payments, stats, academySettings, userProfile] = await Promise.all([
+    getPayments({ query, status }),
+    getPaymentStats(),
+    getAcademySettings(),
+    getUserProfile()
+  ]);
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar settings={academySettings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header settings={academySettings} />
+        <Header settings={academySettings} userProfile={userProfile} />
         <main className="flex-1 p-6 space-y-6">
           <PagamentosContent payments={payments} stats={stats} />
         </main>
