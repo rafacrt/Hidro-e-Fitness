@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { EditUserDialog } from './edit-user-dialog';
 
 const users = [
   {
@@ -83,9 +84,11 @@ export default function UsersTable() {
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="icon" disabled={user.role === 'Desenvolvedor'}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  <EditUserDialog user={user}>
+                    <Button variant="ghost" size="icon" disabled={user.role === 'Desenvolvedor'}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </EditUserDialog>
                   <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" disabled={user.role === 'Desenvolvedor'}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
