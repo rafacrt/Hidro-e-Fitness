@@ -35,7 +35,8 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addClass, getInstructors, getModalities } from '@/app/turmas/actions';
+import { updateClass, getInstructors, getModalities } from '@/app/turmas/actions';
+import type { Database } from '@/lib/database.types';
 
 const classFormSchema = z.object({
   name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
@@ -51,7 +52,14 @@ const classFormSchema = z.object({
   status: z.enum(['ativa', 'inativa', 'lotada']).default('ativa'),
 });
 
+
+type ClassRow = Database['public']['Tables']['classes']['Row'];
 type ClassFormValues = z.infer<typeof classFormSchema>;
+
+interface EditClassFormProps {
+    classData: ClassRow;
+    children: React.ReactNode;
+}
 
 const locations = ['Piscina 1', 'Piscina 2', 'Piscina Terapêutica'];
 const weekdays = [
@@ -63,7 +71,7 @@ const weekdays = [
   { id: 'sab', label: 'Sábado' },
 ];
 
-export function AddClassForm({ children }: { children: React.ReactNode }) {
+export function EditClassForm({ classData, children }: EditClassFormProps) {
   const [open, setOpen] = React.useState(false);
   const [instructors, setInstructors] = React.useState<{ id: string; name: string }[]>([]);
   const [modalities, setModalities] = React.useState<{ id: string; name: string }[]>([]);
@@ -76,28 +84,34 @@ export function AddClassForm({ children }: { children: React.ReactNode }) {
       setInstructors(fetchedInstructors);
       setModalities(fetchedModalities);
     }
-    fetchData();
-  }, []);
+    if (open) {
+      fetchData();
+    }
+  }, [open]);
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classFormSchema),
     defaultValues: {
-      name: '',
-      days_of_week: [],
-      max_students: 10,
-      status: 'ativa',
+      name: classData.name || '',
+      modality_id: classData.modality_id || '',
+      instructor_id: classData.instructor_id || '',
+      start_time: classData.start_time,
+      end_time: classData.end_time,
+      days_of_week: classData.days_of_week || [],
+      location: classData.location || '',
+      max_students: classData.max_students || 10,
+      status: classData.status as 'ativa' | 'inativa' | 'lotada' || 'ativa',
     },
   });
 
   const onSubmit = async (data: ClassFormValues) => {
-    const result = await addClass(data);
+    const result = await updateClass(classData.id, data);
     if (result.success) {
       toast({
         title: 'Sucesso!',
         description: result.message,
       });
       setOpen(false);
-      form.reset();
     } else {
       toast({
         title: 'Erro!',
@@ -109,12 +123,12 @@ export function AddClassForm({ children }: { children: React.ReactNode }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger asChild onClick={(e) => { e.stopPropagation(); setOpen(true); }}>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Cadastrar Nova Turma</DialogTitle>
+          <DialogTitle>Editar Turma</DialogTitle>
           <DialogDescription>
-            Preencha os campos abaixo para criar uma nova turma.
+            Atualize os dados da turma.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -282,6 +296,28 @@ export function AddClassForm({ children }: { children: React.ReactNode }) {
                     )}
                     />
             </div>
+            <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                        <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        <SelectItem value="ativa">Ativa</SelectItem>
+                        <SelectItem value="inativa">Inativa</SelectItem>
+                        <SelectItem value="lotada">Lotada</SelectItem>
+                    </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
              <DialogFooter>
                 <DialogClose asChild>
                     <Button type="button" variant="outline">
@@ -290,7 +326,7 @@ export function AddClassForm({ children }: { children: React.ReactNode }) {
                 </DialogClose>
                 <Button type="submit" disabled={form.formState.isSubmitting}>
                     {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Cadastrar Turma
+                    Salvar Alterações
                 </Button>
             </DialogFooter>
           </form>

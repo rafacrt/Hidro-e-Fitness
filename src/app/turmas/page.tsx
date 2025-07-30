@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -32,13 +33,31 @@ import DistribuicaoPorPeriodoDia from '@/components/turmas/distribuicao-por-peri
 import PlaceholderReport from '@/components/turmas/placeholder-report';
 import { AddClassForm } from '@/components/turmas/add-class-form';
 import { SearchClassDialog } from '@/components/turmas/search-class-dialog';
+import { getClasses } from './actions';
+import { unstable_noStore as noStore } from 'next/cache';
+import type { Database } from '@/lib/database.types';
+
+type Instructor = Database['public']['Tables']['instructors']['Row'];
+type Modality = Database['public']['Tables']['modalities']['Row'];
+type ClassRow = Database['public']['Tables']['classes']['Row'] & { instructors: Pick<Instructor, 'name'> | null } & { modalities: Pick<Modality, 'name'> | null };
 
 type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença" | "Relatórios";
 type ActiveReport = 'ocupacao' | 'frequencia' | 'performance' | 'horarios' | null;
 
 export default function TurmasPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
+  noStore();
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Gerenciar Turmas");
   const [activeReport, setActiveReport] = React.useState<ActiveReport>(null);
+  const [classes, setClasses] = React.useState<ClassRow[]>([]);
+
+  React.useEffect(() => {
+    async function loadClasses() {
+      const fetchedClasses = await getClasses();
+      setClasses(fetchedClasses);
+    }
+    loadClasses();
+  }, [activeTab]);
+
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -85,7 +104,7 @@ export default function TurmasPage() {
             <div className='space-y-6'>
               <ManageClassesStatCards />
               <ManageClassesFilters />
-              <ManageClassesTable />
+              <ManageClassesTable classes={classes} />
               <ManageClassesQuickActions />
             </div>
           )}

@@ -1,3 +1,4 @@
+
 import {
   Table,
   TableBody,
@@ -9,100 +10,51 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Clock, MapPin, Edit, User, Trash2 } from 'lucide-react';
+import { Clock, MapPin, Edit, User, Trash2, MoreHorizontal } from 'lucide-react';
 import { Card } from '../ui/card';
 import { cn } from '@/lib/utils';
 import { Progress } from '../ui/progress';
+import type { Database } from '@/lib/database.types';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { DeleteClassAlert } from './delete-class-alert';
+import { EditClassForm } from './edit-class-form';
 
-const classes = [
-  {
-    name: 'Natação Adulto - Iniciante',
-    modality: 'Natação',
-    level: 'Iniciante',
-    professorName: 'Prof. Ana Silva',
-    professorPhone: '(11) 99999-8888',
-    professorAvatar: 'AS',
-    schedule: '08:00 - 09:00',
-    days: ['Segunda', 'Quarta', 'Sexta'],
-    occupancy: '12/15',
-    occupancyRate: 80,
-    occupancyColor: 'bg-yellow-500',
-    location: 'Piscina 1',
-    price: 'R$ 180,00',
-    status: 'Ativa',
-    statusClass: 'bg-green-100 text-green-800 border-green-200',
-  },
-  {
-    name: 'Hidroginástica Matinal',
-    modality: 'Hidroginástica',
-    level: 'Todos os níveis',
-    professorName: 'Prof. Carlos Santos',
-    professorPhone: '(11) 88888-7777',
-    professorAvatar: 'CS',
-    schedule: '09:00 - 10:00',
-    days: ['Segunda', 'Terça', 'Quarta'],
-    occupancy: '20/20',
-    occupancyRate: 100,
-    occupancyColor: 'bg-red-500',
-    location: 'Piscina 2',
-    price: 'R$ 160,00',
-    status: 'Lotada',
-    statusClass: 'bg-red-100 text-red-800 border-red-200',
-  },
-  {
-    name: 'Natação Infantil',
-    modality: 'Natação',
-    level: 'Infantil',
-    professorName: 'Prof. Marina Costa',
-    professorPhone: '(11) 77777-6666',
-    professorAvatar: 'MC',
-    schedule: '16:00 - 17:00',
-    days: ['Terça', 'Quinta'],
-    occupancy: '8/10',
-    occupancyRate: 80,
-    occupancyColor: 'bg-yellow-500',
-    location: 'Piscina 1',
-    price: 'R$ 150,00',
-    status: 'Ativa',
-    statusClass: 'bg-green-100 text-green-800 border-green-200',
-  },
-  {
-    name: 'Aqua Aeróbica',
-    modality: 'Aqua Aeróbica',
-    level: 'Intermediário',
-    professorName: 'Prof. Roberto Lima',
-    professorPhone: '(11) 66666-5555',
-    professorAvatar: 'RL',
-    schedule: '14:00 - 15:00',
-    days: ['Segunda', 'Quarta'],
-    occupancy: '15/18',
-    occupancyRate: 83,
-    occupancyColor: 'bg-orange-500',
-    location: 'Piscina 2',
-    price: 'R$ 140,00',
-    status: 'Ativa',
-    statusClass: 'bg-green-100 text-green-800 border-green-200',
-  },
-  {
-    name: 'Natação Avançada',
-    modality: 'Natação',
-    level: 'Avançado',
-    professorName: 'Prof. Roberto Lima',
-    professorPhone: '(11) 66666-5555',
-    professorAvatar: 'RL',
-    schedule: '07:00 - 08:00',
-    days: ['Quarta', 'Sexta'],
-    occupancy: '0/12',
-    occupancyRate: 0,
-    occupancyColor: 'bg-zinc-300',
-    location: 'Piscina 1',
-    price: 'R$ 220,00',
-    status: 'Inativa',
-    statusClass: 'bg-zinc-100 text-zinc-800 border-zinc-200',
-  },
-];
+type Instructor = Database['public']['Tables']['instructors']['Row'];
+type Modality = Database['public']['Tables']['modalities']['Row'];
+type ClassRow = Database['public']['Tables']['classes']['Row'] & { instructors: Pick<Instructor, 'name'> | null } & { modalities: Pick<Modality, 'name'> | null };
 
-export default function ManageClassesTable() {
+interface ManageClassesTableProps {
+  classes: ClassRow[];
+}
+
+const statusStyles: { [key: string]: string } = {
+  ativa: 'bg-green-100 text-green-800 border-green-200',
+  inativa: 'bg-zinc-100 text-zinc-800 border-zinc-200',
+  lotada: 'bg-red-100 text-red-800 border-red-200',
+};
+
+const getInitials = (name: string | null | undefined) => {
+    if (!name) return '??';
+    const names = name.split(' ');
+    if (names.length > 1) {
+        return `${names[0][0]}${names[names.length - 1][0]}`;
+    }
+    return name.substring(0, 2).toUpperCase();
+}
+
+
+export default function ManageClassesTable({ classes }: ManageClassesTableProps) {
+  if (classes.length === 0) {
+    return (
+        <Card>
+            <div className="p-6 text-center text-muted-foreground">
+                <Users className="mx-auto h-12 w-12 mb-4" />
+                <h3 className="text-lg font-semibold">Nenhuma turma encontrada</h3>
+                <p className="text-sm">Cadastre uma nova turma para começar.</p>
+            </div>
+        </Card>
+    )
+  }
   return (
     <Card>
       <div className="overflow-x-auto">
@@ -114,78 +66,94 @@ export default function ManageClassesTable() {
               <TableHead>Horários</TableHead>
               <TableHead>Ocupação</TableHead>
               <TableHead>Local</TableHead>
-              <TableHead>Valor</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {classes.map((cls, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <p className="font-medium">{cls.name}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Badge variant="secondary" className="font-normal">{cls.modality}</Badge>
-                    <Badge variant="outline" className="font-normal">{cls.level}</Badge>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">{cls.professorAvatar}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium text-sm">{cls.professorName}</p>
-                      <p className="text-xs text-muted-foreground">{cls.professorPhone}</p>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>{cls.schedule}</span>
-                  </div>
-                  <div className="flex items-center gap-1 mt-1">
-                    {cls.days.map(day => <Badge key={day} variant="outline" className="font-normal text-xs">{day}</Badge>)}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{cls.occupancy}</span>
-                    <span className="text-sm text-muted-foreground">({cls.occupancyRate}%)</span>
-                  </div>
-                  <Progress value={cls.occupancyRate} className="h-1.5 mt-1" indicatorClassName={cls.occupancyColor} />
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{cls.location}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <p className="font-medium">{cls.price}</p>
-                  <p className="text-sm text-muted-foreground">por mês</p>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={cn('font-medium', cls.statusClass)}>
-                    {cls.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <User className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {classes.map((cls) => {
+                const occupancy = 0; // TODO: Calculate occupancy
+                const occupancyRate = cls.max_students ? (occupancy / cls.max_students) * 100 : 0;
+                
+                return (
+                    <TableRow key={cls.id}>
+                        <TableCell>
+                        <p className="font-medium">{cls.name}</p>
+                        <div className="flex items-center gap-1 mt-1">
+                            <Badge variant="secondary" className="font-normal">{cls.modalities?.name || 'N/A'}</Badge>
+                        </div>
+                        </TableCell>
+                        <TableCell>
+                        <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                            <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">{getInitials(cls.instructors?.name)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                            <p className="font-medium text-sm">{cls.instructors?.name || 'N/A'}</p>
+                            </div>
+                        </div>
+                        </TableCell>
+                        <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>{cls.start_time} - {cls.end_time}</span>
+                        </div>
+                        <div className="flex items-center gap-1 mt-1 flex-wrap">
+                            {cls.days_of_week.map(day => <Badge key={day} variant="outline" className="font-normal text-xs">{day}</Badge>)}
+                        </div>
+                        </TableCell>
+                        <TableCell>
+                        <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{occupancy}/{cls.max_students}</span>
+                            <span className="text-sm text-muted-foreground">({occupancyRate.toFixed(0)}%)</span>
+                        </div>
+                        <Progress value={occupancyRate} className="h-1.5 mt-1" />
+                        </TableCell>
+                        <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4" />
+                            <span>{cls.location}</span>
+                        </div>
+                        </TableCell>
+                        <TableCell>
+                        <Badge variant="outline" className={cn('font-medium capitalize', statusStyles[cls.status || 'inativa'])}>
+                            {cls.status}
+                        </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Abrir menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <EditClassForm classData={cls}>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Editar
+                                    </DropdownMenuItem>
+                                </EditClassForm>
+                                <DropdownMenuItem>
+                                    <User className="mr-2 h-4 w-4" />
+                                    Ver Alunos
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DeleteClassAlert classId={cls.id}>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Excluir
+                                    </DropdownMenuItem>
+                                </DeleteClassAlert>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                )
+            })}
           </TableBody>
         </Table>
       </div>
