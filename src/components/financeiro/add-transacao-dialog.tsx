@@ -40,15 +40,19 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Textarea } from '../ui/textarea';
+import { addTransaction } from '@/app/financeiro/actions';
+import { IMaskInput } from 'react-imask';
 
 const transactionFormSchema = z.object({
   type: z.enum(['receita', 'despesa'], { required_error: 'Selecione o tipo.' }),
   description: z.string().min(3, 'A descrição deve ter pelo menos 3 caracteres.'),
   amount: z.string().min(1, 'O valor é obrigatório.'),
-  date: z.date({ required_error: 'A data é obrigatória.' }),
+  due_date: z.date({ required_error: 'A data é obrigatória.' }),
   category: z.string().min(1, 'Selecione uma categoria.'),
-  paymentMethod: z.string().optional(),
+  payment_method: z.string().optional(),
+  status: z.enum(['pago', 'pendente', 'vencido']).default('pago'),
 });
+
 
 type TransactionFormValues = z.infer<typeof transactionFormSchema>;
 
@@ -63,18 +67,30 @@ export function AddTransacaoDialog({ children }: { children: React.ReactNode }) 
   const { toast } = useToast();
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
+    defaultValues: {
+      status: 'pago'
+    }
   });
 
   const transactionType = form.watch('type');
 
-  const onSubmit = (data: TransactionFormValues) => {
-    console.log(data);
-    toast({
-        title: "Transação Registrada!",
-        description: `Sua ${data.type} de ${data.amount} foi registrada com sucesso.`,
-    })
-    setOpen(false);
-    form.reset();
+  const onSubmit = async (data: TransactionFormValues) => {
+    const result = await addTransaction(data);
+
+    if (result.success) {
+      toast({
+        title: 'Sucesso!',
+        description: result.message,
+      });
+      setOpen(false);
+      form.reset();
+    } else {
+       toast({
+        title: 'Erro!',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -131,7 +147,24 @@ export function AddTransacaoDialog({ children }: { children: React.ReactNode }) 
                   <FormItem>
                     <FormLabel>Valor</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="R$ 0,00" {...field} />
+                        <IMaskInput
+                            mask="R$ num"
+                            blocks={{
+                                num: {
+                                mask: Number,
+                                radix: ",",
+                                thousandsSeparator: ".",
+                                scale: 2,
+                                padFractionalZeros: true,
+                                normalizeZeros: true,
+                                mapToRadix: ['.'],
+                                }
+                            }}
+                            value={String(field.value) || ''}
+                            onAccept={(value) => field.onChange(value)}
+                            className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
+                            placeholder="R$ 0,00"
+                        />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -139,7 +172,7 @@ export function AddTransacaoDialog({ children }: { children: React.ReactNode }) 
               />
               <FormField
                 control={form.control}
-                name="date"
+                name="due_date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col pt-2">
                     <FormLabel>Data</FormLabel>
@@ -186,7 +219,7 @@ export function AddTransacaoDialog({ children }: { children: React.ReactNode }) 
             />
              <FormField
                 control={form.control}
-                name="paymentMethod"
+                name="payment_method"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Método de Pagamento</FormLabel>
