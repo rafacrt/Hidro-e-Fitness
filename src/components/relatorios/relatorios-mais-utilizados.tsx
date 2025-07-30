@@ -1,51 +1,38 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DollarSign, BarChart2, Users, UserPlus, Download } from 'lucide-react';
+import { DollarSign, BarChart2, Users, FileText, Download } from 'lucide-react';
+import type { Database } from '@/lib/database.types';
+import { format } from 'date-fns';
 
-const reports = [
-  { 
-    title: 'Relatório Financeiro Mensal',
-    description: 'Receitas, despesas e lucro líquido do mês',
-    category: 'Financeiro',
-    lastUsed: '14/01/2024',
-    downloads: 45,
-    icon: DollarSign,
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600',
-  },
-  { 
-    title: 'Frequência por Modalidade',
-    description: 'Análise de presença dos alunos por atividade',
-    category: 'Frequência',
-    lastUsed: '13/01/2024',
-    downloads: 32,
-    icon: BarChart2,
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
-  },
-  { 
-    title: 'Performance dos Professores',
-    description: 'Avaliação e estatísticas dos instrutores',
-    category: 'Performance',
-    lastUsed: '12/01/2024',
-    downloads: 28,
-    icon: Users,
-    iconBg: 'bg-yellow-100',
-    iconColor: 'text-yellow-600',
-  },
-  { 
-    title: 'Cadastro de Novos Alunos',
-    description: 'Relatório de matrículas e crescimento',
-    category: 'Alunos',
-    lastUsed: '11/01/2024',
-    downloads: 21,
-    icon: UserPlus,
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-600',
-  },
-];
+type Report = Database['public']['Tables']['reports']['Row'];
 
-export default function RelatoriosMaisUtilizados() {
+interface RelatoriosMaisUtilizadosProps {
+  reports: Report[];
+}
+
+const iconMap = {
+    'Financeiro': { icon: DollarSign, bg: 'bg-green-100', text: 'text-green-600' },
+    'Frequência': { icon: BarChart2, bg: 'bg-blue-100', text: 'text-blue-600' },
+    'Performance': { icon: Users, bg: 'bg-yellow-100', text: 'text-yellow-600' },
+    'Alunos': { icon: Users, bg: 'bg-purple-100', text: 'text-purple-600' },
+    'Padrão': { icon: FileText, bg: 'bg-zinc-100', text: 'text-zinc-600' }
+}
+
+export default function RelatoriosMaisUtilizados({ reports }: RelatoriosMaisUtilizadosProps) {
+  if (reports.length === 0) {
+    return (
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle>Relatórios Mais Utilizados</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center text-muted-foreground">
+          <FileText className="mx-auto h-12 w-12 mb-4" />
+          <p>Nenhum relatório gerado ainda.</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -53,23 +40,27 @@ export default function RelatoriosMaisUtilizados() {
         <Button variant="link" className="text-sm">Ver todos</Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {reports.map((report, index) => (
-          <div key={index} className="flex items-center gap-4 p-2 rounded-lg hover:bg-secondary/50">
-            <div className={`flex items-center justify-center h-10 w-10 rounded-lg ${report.iconBg}`}>
-              <report.icon className={`h-5 w-5 ${report.iconColor}`} />
+        {reports.map((report) => {
+          const IconInfo = iconMap[report.category as keyof typeof iconMap] || iconMap['Padrão'];
+          const Icon = IconInfo.icon;
+          return (
+            <div key={report.id} className="flex items-center gap-4 p-2 rounded-lg hover:bg-secondary/50">
+              <div className={`flex items-center justify-center h-10 w-10 rounded-lg ${IconInfo.bg}`}>
+                <Icon className={`h-5 w-5 ${IconInfo.text}`} />
+              </div>
+              <div className="flex-grow">
+                <p className="font-semibold text-sm">{report.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  Categoria: {report.category} · Último: {format(new Date(report.last_generated_at), 'dd/MM/yyyy')}
+                </p>
+              </div>
+              <div className="text-right flex items-center gap-2 text-muted-foreground text-sm">
+                  <span>{report.times_generated}</span>
+                  <Download className="h-4 w-4" />
+              </div>
             </div>
-            <div className="flex-grow">
-              <p className="font-semibold text-sm">{report.title}</p>
-              <p className="text-xs text-muted-foreground">
-                Categoria: {report.category} · Último: {report.lastUsed}
-              </p>
-            </div>
-            <div className="text-right flex items-center gap-2 text-muted-foreground text-sm">
-                <span>{report.downloads}</span>
-                <Download className="h-4 w-4" />
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </CardContent>
     </Card>
   );

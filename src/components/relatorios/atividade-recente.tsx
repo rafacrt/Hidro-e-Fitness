@@ -1,42 +1,25 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Download, BarChart2, Eye, File, Clock } from 'lucide-react';
+import { FileText, Download, BarChart2, Eye, Clock } from 'lucide-react';
 
-const activities = [
-  { 
-    title: 'Relatório Financeiro gerado', 
-    author: 'Admin Sistema', 
-    time: '2 horas atrás', 
-    icon: File,
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600'
-  },
-  { 
-    title: 'Relatório de Frequência exportado', 
-    author: 'Prof. Ana Silva', 
-    time: '4 horas atrás', 
-    icon: Download,
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600'
-  },
-  { 
-    title: 'Relatório Personalizado criado', 
-    author: 'Admin Sistema', 
-    time: '1 dia atrás', 
-    icon: BarChart2,
-    iconBg: 'bg-yellow-100',
-    iconColor: 'text-yellow-600'
-  },
-  { 
-    title: 'Relatório de Alunos compartilhado', 
-    author: 'Recepção', 
-    time: '2 dias atrás', 
-    icon: Eye,
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-600'
-  },
-];
+interface Activity {
+  title: string;
+  author: string;
+  time: string;
+  icon: 'File' | 'Download' | 'BarChart2' | 'Eye';
+}
 
-export default function AtividadeRecente() {
+interface AtividadeRecenteProps {
+  activities: Activity[];
+}
+
+const iconMap = {
+    'File': { icon: FileText, bg: 'bg-green-100', text: 'text-green-600' },
+    'Download': { icon: Download, bg: 'bg-blue-100', text: 'text-blue-600' },
+    'BarChart2': { icon: BarChart2, bg: 'bg-yellow-100', text: 'text-yellow-600' },
+    'Eye': { icon: Eye, bg: 'bg-purple-100', text: 'text-purple-600' },
+}
+
+export default function AtividadeRecente({ activities }: AtividadeRecenteProps) {
   return (
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -44,21 +27,25 @@ export default function AtividadeRecente() {
         <FileText className="h-5 w-5 text-muted-foreground" />
       </CardHeader>
       <CardContent className="space-y-4">
-        {activities.map((activity, index) => (
-          <div key={index} className="flex items-center gap-4">
-            <div className={`flex items-center justify-center h-10 w-10 rounded-lg ${activity.iconBg}`}>
-                <activity.icon className={`h-5 w-5 ${activity.iconColor}`} />
+        {activities.map((activity, index) => {
+           const IconInfo = iconMap[activity.icon as keyof typeof iconMap];
+           const Icon = IconInfo.icon;
+           return (
+            <div key={index} className="flex items-center gap-4">
+              <div className={`flex items-center justify-center h-10 w-10 rounded-lg ${IconInfo.bg}`}>
+                  <Icon className={`h-5 w-5 ${IconInfo.text}`} />
+              </div>
+              <div className="flex-grow">
+                <p className="font-semibold text-sm">{activity.title}</p>
+                <p className="text-xs text-muted-foreground">{activity.author}</p>
+              </div>
+              <div className="flex items-center text-xs text-muted-foreground">
+                <Clock className="h-3 w-3 mr-1" />
+                <span>{activity.time}</span>
+              </div>
             </div>
-            <div className="flex-grow">
-              <p className="font-semibold text-sm">{activity.title}</p>
-              <p className="text-xs text-muted-foreground">{activity.author}</p>
-            </div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              <Clock className="h-3 w-3 mr-1" />
-              <span>{activity.time}</span>
-            </div>
-          </div>
-        ))}
+           )
+        })}
       </CardContent>
     </Card>
   );

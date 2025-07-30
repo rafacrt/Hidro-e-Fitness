@@ -8,8 +8,15 @@ import RelatoriosMaisUtilizados from '@/components/relatorios/relatorios-mais-ut
 import AtividadeRecente from '@/components/relatorios/atividade-recente';
 import AcoesRapidasRelatorios from '@/components/relatorios/acoes-rapidas-relatorios';
 import ResumoPerformance from '@/components/relatorios/resumo-performance';
+import { getMostUsedReports, getRecentActivities, getReportStats } from './actions';
+import { unstable_noStore as noStore } from 'next/cache';
 
-export default function RelatoriosPage() {
+export default async function RelatoriosPage() {
+  noStore();
+  const stats = await getReportStats();
+  const mostUsedReports = await getMostUsedReports();
+  const recentActivities = await getRecentActivities();
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar />
@@ -34,11 +41,11 @@ export default function RelatoriosPage() {
           </div>
           
           <RelatoriosFilters />
-          <RelatoriosStats />
+          <RelatoriosStats stats={stats} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <RelatoriosMaisUtilizados />
-            <AtividadeRecente />
+            <RelatoriosMaisUtilizados reports={mostUsedReports} />
+            <AtividadeRecente activities={recentActivities} />
           </div>
 
           <AcoesRapidasRelatorios />

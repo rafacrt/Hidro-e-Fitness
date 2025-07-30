@@ -1,6 +1,18 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { FileText, DollarSign, Users, TrendingUp } from 'lucide-react';
+import type { ReportStats } from '@/app/relatorios/actions';
+
+interface RelatoriosStatsProps {
+  stats: ReportStats;
+}
+
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    }).format(value);
+}
 
 interface StatCardProps {
   title: string;
@@ -30,13 +42,13 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, change, changeType, i
 };
 
 
-export default function RelatoriosStats() {
+export default function RelatoriosStats({ stats }: RelatoriosStatsProps) {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <StatCard 
         title="Relatórios Gerados"
-        value="156"
-        change="+23 Este mês"
+        value={stats.generatedReports.toString()}
+        change="Este mês"
         changeType="increase"
         icon={FileText}
         iconBgColor="bg-blue-100"
@@ -44,8 +56,8 @@ export default function RelatoriosStats() {
       />
       <StatCard 
         title="Receita Total"
-        value="R$ 58.500"
-        change="+12% Janeiro 2024"
+        value={formatCurrency(stats.totalRevenue)}
+        change="Mês atual"
         changeType="increase"
         icon={DollarSign}
         iconBgColor="bg-green-100"
@@ -53,8 +65,8 @@ export default function RelatoriosStats() {
       />
       <StatCard 
         title="Alunos Ativos"
-        value="342"
-        change="+18 Atual"
+        value={stats.activeStudents.toString()}
+        change="Total"
         changeType="increase"
         icon={Users}
         iconBgColor="bg-yellow-100"
@@ -62,8 +74,8 @@ export default function RelatoriosStats() {
       />
       <StatCard 
         title="Taxa de Frequência"
-        value="87.5%"
-        change="+2.3% Média mensal"
+        value={`${stats.attendanceRate.toFixed(1)}%`}
+        change="Média mensal"
         changeType="increase"
         icon={TrendingUp}
         iconBgColor="bg-cyan-100"
