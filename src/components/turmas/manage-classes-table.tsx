@@ -10,7 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Clock, MapPin, Edit, User, Trash2, MoreHorizontal } from 'lucide-react';
+import { Clock, MapPin, Edit, User, Trash2, MoreHorizontal, Users } from 'lucide-react';
 import { Card } from '../ui/card';
 import { cn } from '@/lib/utils';
 import { Progress } from '../ui/progress';
