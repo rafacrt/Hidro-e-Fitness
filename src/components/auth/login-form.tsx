@@ -61,17 +61,9 @@ export default function LoginForm({ settings }: LoginFormProps) {
     setIsLoading(true);
     
     try {
-      console.log('=== TENTATIVA DE LOGIN ===');
-      console.log('E-mail:', data.email);
-      
       const result = await login(data);
       
-      console.log('=== RESULTADO DO LOGIN ===');
-      console.log('Result:', result);
-      
       if (result?.error) {
-        console.error('❌ Erro no login:', result.error);
-        
         let errorMessage = result.error.message;
         let errorTitle = "Erro no Login";
         
@@ -95,8 +87,6 @@ export default function LoginForm({ settings }: LoginFormProps) {
         setIsLoading(false);
         
       } else if (result?.success) {
-        console.log('✅ Login bem-sucedido!');
-        
         toast({
           title: "Login realizado com sucesso!",
           description: "Redirecionando para o dashboard...",
@@ -108,7 +98,6 @@ export default function LoginForm({ settings }: LoginFormProps) {
         }, 1000);
         
       } else {
-        console.error('❌ Resposta inesperada:', result);
         toast({
           title: "Erro Inesperado",
           description: "Resposta inesperada do servidor. Tente novamente.",
@@ -117,8 +106,6 @@ export default function LoginForm({ settings }: LoginFormProps) {
         setIsLoading(false);
       }
     } catch (error) {
-      console.error('💥 Erro inesperado no login:', error);
-      
       toast({
         title: "Erro Inesperado",
         description: "Ocorreu um erro inesperado. Tente novamente.",
@@ -199,13 +186,6 @@ export default function LoginForm({ settings }: LoginFormProps) {
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
         <div className="text-center space-y-2">
-          <p className="text-xs text-muted-foreground">
-            Não tem uma conta?{' '}
-            <Link href="/register" className="font-medium text-primary hover:underline">
-              Cadastre-se
-            </Link>
-          </p>
-          
           {process.env.NODE_ENV === 'development' && (
             <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
               <strong>Para teste:</strong><br />

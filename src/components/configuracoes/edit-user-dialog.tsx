@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -34,22 +33,17 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { Database } from '@/lib/database.types';
 
-interface User {
-    name: string;
-    email: string;
-    role: string;
-    avatar: string;
-}
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface EditUserDialogProps {
-  user: User;
+  user: Profile;
   children: React.ReactNode;
 }
 
 const userFormSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
-  email: z.string().email('E-mail inválido.'),
   role: z.string({ required_error: 'Selecione um perfil.' }),
 });
 
@@ -63,17 +57,16 @@ export function EditUserDialog({ user, children }: EditUserDialogProps) {
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        name: user.full_name || '',
+        role: user.role || '',
     }
   });
 
   const onSubmit = (data: UserFormValues) => {
     console.log(data);
     toast({
-        title: "Usuário Atualizado!",
-        description: `Os dados de ${data.name} foram atualizados.`,
+        title: "Funcionalidade em desenvolvimento",
+        description: `A edição de ${data.name} será implementada em breve.`,
     })
     setOpen(false);
   };
@@ -98,19 +91,6 @@ export function EditUserDialog({ user, children }: EditUserDialogProps) {
                   <FormLabel>Nome Completo</FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: João da Silva" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>E-mail</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="exemplo@email.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

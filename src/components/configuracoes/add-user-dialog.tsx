@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -34,12 +33,19 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { addUser } from '@/app/configuracoes/actions';
+
+const strongPasswordSchema = z.string().min(8, 'A senha deve ter pelo menos 8 caracteres.')
+  .regex(/[a-z]/, 'A senha deve conter pelo menos uma letra minúscula.')
+  .regex(/[A-Z]/, 'A senha deve conter pelo menos uma letra maiúscula.')
+  .regex(/[0-9]/, 'A senha deve conter pelo menos um número.')
+  .regex(/[^a-zA-Z0-9]/, 'A senha deve conter pelo menos um caractere especial.');
 
 const userFormSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
   email: z.string().email('E-mail inválido.'),
   role: z.string({ required_error: 'Selecione um perfil.' }),
-  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.'),
+  password: strongPasswordSchema,
 });
 
 type UserFormValues = z.infer<typeof userFormSchema>;
@@ -53,14 +59,23 @@ export function AddUserDialog({ children }: { children: React.ReactNode }) {
     resolver: zodResolver(userFormSchema),
   });
 
-  const onSubmit = (data: UserFormValues) => {
-    console.log(data);
-    toast({
-        title: "Usuário Criado!",
-        description: `O usuário ${data.name} foi adicionado ao sistema.`,
-    })
-    setOpen(false);
-    form.reset();
+  const onSubmit = async (data: UserFormValues) => {
+    const result = await addUser(data);
+    
+    if (result.success) {
+      toast({
+        title: 'Sucesso!',
+        description: result.message,
+      });
+      setOpen(false);
+      form.reset();
+    } else {
+      toast({
+        title: 'Erro ao criar usuário!',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (

@@ -5,10 +5,18 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
+const strongPasswordSchema = z.string().min(8, 'A senha deve ter pelo menos 8 caracteres.')
+  .regex(/[a-z]/, 'A senha deve conter pelo menos uma letra minúscula.')
+  .regex(/[A-Z]/, 'A senha deve conter pelo menos uma letra maiúscula.')
+  .regex(/[0-9]/, 'A senha deve conter pelo menos um número.')
+  .regex(/[^a-zA-Z0-9]/, 'A senha deve conter pelo menos um caractere especial.');
+
+
 const signupSchema = z.object({
-  name: z.string(),
-  email: z.string().email(),
-  password: z.string().min(6),
+  name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
+  email: z.string().email('E-mail inválido.'),
+  password: strongPasswordSchema,
+  role: z.string().optional(), // Role is optional for public signup
 });
 
 const loginSchema = z.object({
@@ -21,78 +29,84 @@ const forgotPasswordSchema = z.object({
 });
 
 const updatePasswordSchema = z.object({
-    password: z.string().min(6, 'A nova senha deve ter pelo menos 6 caracteres.'),
+    password: strongPasswordSchema,
 });
 
-export async function signup(formData: unknown) {
+
+export async function signup(formData: unknown, adminCreation = false) {
   const parsedData = signupSchema.safeParse(formData);
 
   if (!parsedData.success) {
-    return { error: { message: 'Dados do formulário inválidos' } };
+    return { success: false, message: 'Dados do formulário inválidos.', errors: parsedData.error.flatten().fieldErrors };
   }
   
-  const { name, email, password } = parsedData.data;
+  const { name, email, password, role } = parsedData.data;
   
   try {
     const supabase = await createSupabaseServerClient();
     const headersList = await headers();
     const origin = headersList.get('origin') || 'http://localhost:3000';
 
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: name,
+          role: role || 'user', // Default role if not provided
         },
-        emailRedirectTo: `${origin}/auth/callback`,
+        // Only require email confirmation for public signups
+        emailRedirectTo: adminCreation ? undefined : `${origin}/auth/callback`,
       },
     });
 
-    if (error) {
-      console.error('Erro no signup:', error);
-      return { error: { message: error.message } };
+    if (signUpError) {
+      console.error('Erro no signup:', signUpError);
+      return { success: false, message: signUpError.message };
     }
 
-    return { success: true };
+    if (adminCreation && signUpData.user) {
+      // If admin is creating, update the role in the profiles table immediately
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ role: role || 'user' })
+        .eq('id', signUpData.user.id);
+      
+      if (profileError) {
+        console.error('Erro ao atualizar perfil do usuário criado:', profileError);
+        // Best effort, don't fail the whole signup if this fails
+      }
+    }
+
+
+    const message = adminCreation
+      ? 'Usuário criado com sucesso!'
+      : 'Verifique seu e-mail para confirmar sua conta.';
+
+    return { success: true, message };
   } catch (error) {
     console.error('Erro no signup:', error);
-    return { error: { message: 'Erro interno do servidor' } };
+    return { success: false, message: 'Erro interno do servidor' };
   }
 }
 
 export async function login(formData: unknown) {
-    console.log('🔐 === INICIANDO LOGIN SERVER ACTION ===');
-    
     const parsedData = loginSchema.safeParse(formData);
 
     if (!parsedData.success) {
-      console.error('❌ Dados do formulário inválidos:', parsedData.error);
       return { error: { message: 'Dados do formulário inválidos' } };
     }
 
     const { email, password } = parsedData.data;
     
-    console.log('📧 E-mail:', email);
-    console.log('🔑 Senha fornecida:', password ? 'SIM' : 'NÃO');
-    
     try {
-      console.log('🔧 Criando cliente Supabase...');
       const supabase = await createSupabaseServerClient();
-      
-      console.log('🔄 Tentando autenticar no Supabase...');
       const { data, error } = await supabase.auth.signInWithPassword({
           email: email.toLowerCase().trim(),
           password
       });
 
-      console.log('📊 Resposta do Supabase:');
-      console.log('- Data:', data);
-      console.log('- Error:', error);
-
       if (error) {
-          console.error('❌ Erro do Supabase:', error);
-          
           let errorMessage = 'E-mail ou senha incorretos';
           
           if (error.message.includes('Invalid login credentials')) {
@@ -111,29 +125,19 @@ export async function login(formData: unknown) {
       }
 
       if (data.session && data.user) {
-          console.log('✅ Login realizado com sucesso!');
-          console.log('👤 Usuário:', data.user.email);
-          console.log('🎫 Sessão:', data.session.access_token ? 'Criada' : 'Erro');
-          
-          // MUDANÇA: Não fazer redirect aqui, deixar o frontend lidar com isso
-          console.log('🔄 Login bem-sucedido, retornando sucesso...');
           return { success: true, user: data.user };
       }
 
-      console.error('❌ Falha na autenticação - sem sessão');
       return { error: { message: 'Falha na autenticação' } };
     } catch (error) {
-        console.error('💥 Erro inesperado no login:', error);
         return { error: { message: 'Erro interno do servidor' } };
     }
 }
 
 export async function logout() {
     try {
-        console.log('🚪 Fazendo logout...');
         const supabase = await createSupabaseServerClient();
         await supabase.auth.signOut();
-        console.log('✅ Logout realizado com sucesso');
         redirect('/login');
     } catch (error) {
         console.error('❌ Erro no logout:', error);

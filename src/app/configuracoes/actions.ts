@@ -3,6 +3,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { Database } from '@/lib/database.types';
+import { signup } from '../auth/actions';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -99,13 +100,13 @@ export async function getAcademySettings(): Promise<AcademySettings | null> {
             .single();
 
         if (error) {
-            console.error('Supabase Error:', error);
             if (error.code === 'PGRST116') return null; // No rows found, which is fine
+            console.error('Supabase Error getAcademySettings:', error);
             throw new Error('Não foi possível buscar as configurações da academia.');
         }
         return data;
     } catch (error) {
-        console.error('Unexpected Error:', error);
+        console.error('Unexpected Error getAcademySettings:', error);
         return null;
     }
 }
@@ -148,7 +149,6 @@ export async function uploadLogo(formData: FormData) {
         const fileName = `logo-${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
 
-        // Remove a logo antiga, se existir
         const { data: settings } = await supabase.from('academy_settings').select('logo_url').single();
         if (settings?.logo_url) {
             const oldFileName = settings.logo_url.split('/').pop();
@@ -189,4 +189,33 @@ export async function uploadLogo(formData: FormData) {
         console.error('Unexpected Error:', error);
         return { success: false, message: 'Ocorreu um erro inesperado.' };
     }
+}
+
+// --- User Management Actions ---
+
+export async function getUsers(): Promise<Profile[]> {
+    try {
+        const supabase = await createSupabaseServerClient();
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*');
+
+        if (error) {
+            console.error('Supabase Error getUsers:', error);
+            return [];
+        }
+        return data;
+    } catch (error) {
+        console.error('Unexpected Error getUsers:', error);
+        return [];
+    }
+}
+
+export async function addUser(formData: unknown) {
+    // We use the signup server action, but with adminCreation flag set to true
+    const result = await signup(formData, true);
+    if (result.success) {
+        revalidatePath('/configuracoes');
+    }
+    return result;
 }

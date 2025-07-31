@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -7,39 +6,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { EditUserDialog } from './edit-user-dialog';
+import type { Database } from '@/lib/database.types';
 
-const users = [
-  {
-    name: 'Desenvolvedor',
-    email: 'dev@hidrofitness.com',
-    role: 'Desenvolvedor',
-    avatar: 'https://placehold.co/40x40.png',
-    avatarHint: 'person portrait',
-  },
-  {
-    name: 'Admin Sistema',
-    email: 'admin@hidrofitness.com',
-    role: 'Administrador',
-    avatar: 'https://placehold.co/40x40.png',
-    avatarHint: 'person portrait',
-  },
-  {
-    name: 'Ana Silva',
-    email: 'ana.silva@email.com',
-    role: 'Recepção',
-    avatar: 'https://placehold.co/40x40.png',
-    avatarHint: 'woman portrait',
-  },
-];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
-const getInitials = (name: string) => {
+interface UsersTableProps {
+  users: Profile[];
+}
+
+const getInitials = (name: string | null) => {
+    if (!name) return '??';
     const names = name.split(' ');
     if (names.length > 1) {
         return `${names[0][0]}${names[names.length - 1][0]}`;
@@ -53,7 +36,7 @@ const roleStyles: { [key: string]: string } = {
     'Recepção': 'bg-green-100 text-green-800 border-green-200',
 };
 
-export default function UsersTable() {
+export default function UsersTable({ users }: UsersTableProps) {
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -65,22 +48,24 @@ export default function UsersTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map((user, index) => (
-            <TableRow key={index}>
+          {users.map((user) => (
+            <TableRow key={user.id}>
               <TableCell>
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <Image src={user.avatar} alt={user.name} width={40} height={40} data-ai-hint={user.avatarHint} />
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    {user.avatar_url ? (
+                      <Image src={user.avatar_url} alt={user.full_name || 'Avatar'} width={40} height={40} data-ai-hint="person portrait" />
+                    ) : null}
+                    <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <p className="font-medium">{user.full_name}</p>
+                    {/* <p className="text-sm text-muted-foreground">{user.email}</p> */}
                   </div>
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant="outline" className={cn(roleStyles[user.role])}>{user.role}</Badge>
+                <Badge variant="outline" className={cn(roleStyles[user.role || ''])}>{user.role}</Badge>
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">

@@ -1,11 +1,17 @@
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import UsersTable from './users-table';
 import { AddUserDialog } from './add-user-dialog';
+import type { Database } from '@/lib/database.types';
 
-export default function UserManagement() {
+type Profile = Database['public']['Tables']['profiles']['Row'];
+
+interface UserManagementProps {
+  users: Profile[];
+}
+
+export default function UserManagement({ users }: UserManagementProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -21,7 +27,7 @@ export default function UserManagement() {
         </AddUserDialog>
       </CardHeader>
       <CardContent>
-        <UsersTable />
+        <UsersTable users={users} />
       </CardContent>
     </Card>
   );
