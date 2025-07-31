@@ -5,29 +5,51 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { Database } from '@/lib/database.types';
+import { validateCPF } from '@/lib/utils';
 
 type Student = Database['public']['Tables']['students']['Row'];
 
 const studentFormSchema = z
   .object({
     name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
-    cpf: z.string().refine((cpf) => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(cpf), 'CPF inválido.'),
-    birthDate: z.date({ required_error: 'A data de nascimento é obrigatória.' }),
-    email: z.string().email('E-mail inválido.'),
-    phone: z.string().min(10, 'Telefone inválido.'),
+    cpf: z.string().optional().refine((val) => val ? validateCPF(val) : true, { message: "CPF inválido." }),
+    birthDate: z.date().optional(),
+    email: z.string().email('E-mail inválido.').optional().or(z.literal('')),
+    phone: z.string().optional(),
     isWhatsApp: z.boolean().default(false),
-    cep: z.string().refine((cep) => /^\d{5}-\d{3}$/.test(cep), 'CEP inválido.'),
-    street: z.string().min(1, 'A rua é obrigatória.'),
-    number: z.string().min(1, 'O número é obrigatório.'),
+    cep: z.string().optional(),
+    street: z.string().optional(),
+    number: z.string().optional(),
     complement: z.string().optional(),
-    neighborhood: z.string().min(1, 'O bairro é obrigatório.'),
-    city: z.string().min(1, 'A cidade é obrigatória.'),
-    state: z.string().min(1, 'O estado é obrigatório.'),
+    neighborhood: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
     responsibleName: z.string().optional(),
     responsiblePhone: z.string().optional(),
     medicalObservations: z.string().optional(),
     status: z.enum(['ativo', 'inativo']).default('ativo'),
-  });
+  })
+  .refine(
+    (data) => {
+      if (data.birthDate) {
+        const today = new Date();
+        const birthDate = new Date(data.birthDate);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        if (age < 18) {
+          return !!data.responsibleName && !!data.responsiblePhone;
+        }
+      }
+      return true;
+    },
+    {
+      message: 'Nome e telefone do responsável são obrigatórios para menores de 18 anos.',
+      path: ['responsibleName'],
+    }
+  );
 
 export async function addStudent(formData: unknown) {
   const parsedData = studentFormSchema.safeParse(formData);
@@ -47,12 +69,12 @@ export async function addStudent(formData: unknown) {
       .insert([
         {
           name: parsedData.data.name,
-          cpf: parsedData.data.cpf.replace(/\D/g, ''),
-          birth_date: parsedData.data.birthDate.toISOString(),
+          cpf: parsedData.data.cpf?.replace(/\D/g, ''),
+          birth_date: parsedData.data.birthDate?.toISOString(),
           email: parsedData.data.email,
-          phone: parsedData.data.phone.replace(/\D/g, ''),
+          phone: parsedData.data.phone?.replace(/\D/g, ''),
           is_whatsapp: parsedData.data.isWhatsApp,
-          cep: parsedData.data.cep.replace(/\D/g, ''),
+          cep: parsedData.data.cep?.replace(/\D/g, ''),
           street: parsedData.data.street,
           number: parsedData.data.number,
           complement: parsedData.data.complement,
@@ -97,12 +119,12 @@ export async function updateStudent(id: string, formData: unknown) {
       .from('students')
       .update({
         name: parsedData.data.name,
-        cpf: parsedData.data.cpf.replace(/\D/g, ''),
-        birth_date: parsedData.data.birthDate.toISOString(),
+        cpf: parsedData.data.cpf?.replace(/\D/g, ''),
+        birth_date: parsedData.data.birthDate?.toISOString(),
         email: parsedData.data.email,
-        phone: parsedData.data.phone.replace(/\D/g, ''),
+        phone: parsedData.data.phone?.replace(/\D/g, ''),
         is_whatsapp: parsedData.data.isWhatsApp,
-        cep: parsedData.data.cep.replace(/\D/g, ''),
+        cep: parsedData.data.cep?.replace(/\D/g, ''),
         street: parsedData.data.street,
         number: parsedData.data.number,
         complement: parsedData.data.complement,

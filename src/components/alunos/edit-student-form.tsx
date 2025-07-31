@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { cn, validateCPF } from '@/lib/utils';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -54,18 +54,18 @@ interface EditStudentFormProps {
 const studentFormSchema = z
   .object({
     name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
-    cpf: z.string().refine((cpf) => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(cpf), 'CPF inválido.'),
-    birthDate: z.date({ required_error: 'A data de nascimento é obrigatória.' }),
-    email: z.string().email('E-mail inválido.'),
-    phone: z.string().min(10, 'Telefone inválido.'),
+    cpf: z.string().optional().refine((val) => val ? validateCPF(val) : true, { message: "CPF inválido." }),
+    birthDate: z.date().optional(),
+    email: z.string().email('E-mail inválido.').optional().or(z.literal('')),
+    phone: z.string().optional(),
     isWhatsApp: z.boolean().default(false),
-    cep: z.string().refine((cep) => /^\d{5}-\d{3}$/.test(cep), 'CEP inválido.'),
-    street: z.string().min(1, 'A rua é obrigatória.'),
-    number: z.string().min(1, 'O número é obrigatório.'),
+    cep: z.string().optional(),
+    street: z.string().optional(),
+    number: z.string().optional(),
     complement: z.string().optional(),
-    neighborhood: z.string().min(1, 'O bairro é obrigatório.'),
-    city: z.string().min(1, 'A cidade é obrigatória.'),
-    state: z.string().min(1, 'O estado é obrigatório.'),
+    neighborhood: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
     responsibleName: z.string().optional(),
     responsiblePhone: z.string().optional(),
     medicalObservations: z.string().optional(),
@@ -215,7 +215,7 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
                   name="cpf"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>CPF</FormLabel>
+                      <FormLabel>CPF (Opcional)</FormLabel>
                       <FormControl>
                         <IMaskInput
                           mask="000.000.000-00"
@@ -234,7 +234,7 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
                   name="birthDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Data de Nascimento</FormLabel>
+                      <FormLabel>Data de Nascimento (Opcional)</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -269,7 +269,7 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>E-mail</FormLabel>
+                      <FormLabel>E-mail (Opcional)</FormLabel>
                       <FormControl>
                         <Input type="email" placeholder="exemplo@email.com" {...field} />
                       </FormControl>
@@ -282,7 +282,7 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Telefone</FormLabel>
+                      <FormLabel>Telefone (Opcional)</FormLabel>
                       <FormControl>
                          <IMaskInput
                           mask="(00) 00000-0000"
@@ -352,7 +352,7 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
             </div>
 
             <div className="space-y-4 pt-4 border-t">
-              <h3 className="text-lg font-medium">Endereço</h3>
+              <h3 className="text-lg font-medium">Endereço (Opcional)</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <FormField
                   control={form.control}
@@ -393,7 +393,7 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
                   name="medicalObservations"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Observações Médicas</FormLabel>
+                      <FormLabel>Observações Médicas (Opcional)</FormLabel>
                       <FormControl>
                         <Textarea placeholder="Alergias, condições médicas, etc." className="resize-none" {...field} />
                       </FormControl>
