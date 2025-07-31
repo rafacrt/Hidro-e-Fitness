@@ -94,8 +94,11 @@ export default function ProfileSettings({ userProfile }: ProfileSettingsProps) {
         <CardHeader className="items-center text-center p-6 pt-0">
             <div className="relative -mt-12">
                 <Avatar className="h-24 w-24 border-4 border-background">
-                <Image src={avatarUrl || 'https://placehold.co/96x96.png'} alt={userProfile?.full_name || 'Avatar'} width={96} height={96} className="object-cover" data-ai-hint="person portrait" />
-                <AvatarFallback>AD</AvatarFallback>
+                {avatarUrl ? (
+                    <img src={avatarUrl} alt={userProfile?.full_name || 'Avatar'} className="h-full w-full object-cover" />
+                ) : (
+                    <AvatarFallback>AD</AvatarFallback>
+                )}
                 </Avatar>
                 <Button size="icon" className="absolute bottom-0 right-0 rounded-full h-8 w-8" onClick={handleAvatarClick} disabled={isUploading}>
                     {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}

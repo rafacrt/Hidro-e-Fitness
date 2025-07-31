@@ -55,9 +55,10 @@ export default function UsersTable({ users }: UsersTableProps) {
                 <div className="flex items-center gap-3">
                   <Avatar>
                     {user.avatar_url ? (
-                      <Image src={user.avatar_url} alt={user.full_name || 'Avatar'} width={40} height={40} data-ai-hint="person portrait" />
-                    ) : null}
-                    <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
+                      <img src={user.avatar_url} alt={user.full_name || 'Avatar'} className="h-full w-full object-cover" />
+                    ) : (
+                      <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
+                    )}
                   </Avatar>
                   <div>
                     <p className="font-medium">{user.full_name}</p>
