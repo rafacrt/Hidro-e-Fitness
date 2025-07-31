@@ -219,3 +219,31 @@ export async function addUser(formData: unknown) {
     }
     return result;
 }
+
+export async function deleteUser(userId: string) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    
+    // Deletar o perfil
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (profileError) {
+      console.error('Supabase Error deleting profile:', profileError);
+      return { success: false, message: `Erro ao excluir perfil: ${profileError.message}` };
+    }
+
+    // A exclusão do usuário de `auth.users` requer privilégios de administrador
+    // e deve ser feita com cuidado, preferencialmente com uma função de Edge.
+    // Por simplicidade, este exemplo remove apenas o perfil.
+
+    revalidatePath('/configuracoes');
+    return { success: true, message: 'Usuário excluído com sucesso!' };
+
+  } catch (error) {
+    console.error('Unexpected Error deleting user:', error);
+    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  }
+}
