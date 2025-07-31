@@ -4,6 +4,8 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { Database } from '@/lib/database.types';
 import { signup } from '../auth/actions';
+import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -220,24 +222,71 @@ export async function addUser(formData: unknown) {
     return result;
 }
 
-export async function deleteUser(userId: string) {
+
+const editUserSchema = z.object({
+  name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
+  role: z.string({ required_error: 'Selecione um perfil.' }),
+});
+
+export async function updateUserRole(userId: string, formData: unknown) {
+  const parsedData = editUserSchema.safeParse(formData);
+  if (!parsedData.success) {
+    return { success: false, message: 'Dados inválidos.', errors: parsedData.error.flatten().fieldErrors };
+  }
+
+  const { name, role } = parsedData.data;
+
   try {
     const supabase = await createSupabaseServerClient();
-    
-    // Deletar o perfil
-    const { error: profileError } = await supabase
+    const { error } = await supabase
       .from('profiles')
-      .delete()
+      .update({ full_name: name, role: role })
       .eq('id', userId);
 
-    if (profileError) {
-      console.error('Supabase Error deleting profile:', profileError);
-      return { success: false, message: `Erro ao excluir perfil: ${profileError.message}` };
+    if (error) {
+      console.error('Supabase Update Error:', error);
+      return { success: false, message: `Erro ao atualizar usuário: ${error.message}` };
     }
 
-    // A exclusão do usuário de `auth.users` requer privilégios de administrador
-    // e deve ser feita com cuidado, preferencialmente com uma função de Edge.
-    // Por simplicidade, este exemplo remove apenas o perfil.
+    revalidatePath('/configuracoes');
+    return { success: true, message: 'Usuário atualizado com sucesso!' };
+  } catch (error) {
+    console.error('Unexpected Error:', error);
+    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  }
+}
+
+export async function deleteUser(userId: string) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { success: false, message: 'Variáveis de ambiente do Supabase não configuradas para esta ação.' };
+  }
+
+  try {
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+    if (authError) {
+      console.error('Supabase Admin Error deleting user:', authError);
+      // O perfil pode já ter sido removido por um trigger, então verificamos o erro.
+      // Se não for "User not found", retornamos o erro.
+      if (authError.message !== 'User not found') {
+          return { success: false, message: `Erro ao excluir usuário da autenticação: ${authError.message}` };
+      }
+    }
+    
+    // A exclusão do perfil é feita via trigger no Supabase, mas podemos garantir aqui também.
+    const supabase = await createSupabaseServerClient();
+    const { error: profileError } = await supabase.from('profiles').delete().eq('id', userId);
+    
+    if (profileError) {
+      console.error('Supabase Error deleting profile:', profileError);
+       // Não retornamos erro aqui se a auth foi bem sucedida, pois o trigger pode já ter agido.
+    }
 
     revalidatePath('/configuracoes');
     return { success: true, message: 'Usuário excluído com sucesso!' };

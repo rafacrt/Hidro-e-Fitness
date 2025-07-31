@@ -21,31 +21,10 @@ export default function AcademySettings({ settings }: AcademySettingsProps) {
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = React.useState(false);
-  const [isUploading, setIsUploading] = React.useState(false);
-  const [logoUrl, setLogoUrl] = React.useState(settings?.logo_url || null);
 
-  const handleLogoClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append('logo', file);
-    
-    const result = await uploadLogo(formData);
-
-    if (result.success && result.logoUrl) {
-      setLogoUrl(result.logoUrl);
-      toast({ title: 'Sucesso!', description: result.message });
-    } else {
-      toast({ title: 'Erro!', description: result.message, variant: 'destructive' });
-    }
-    setIsUploading(false);
-  };
+  // We are now using a local logo, so we don't need the upload logic.
+  // const [isUploading, setIsUploading] = React.useState(false);
+  // const [logoUrl, setLogoUrl] = React.useState(settings?.logo_url || '/logo/logo.png');
 
   const handleSaveSettings = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -74,20 +53,9 @@ export default function AcademySettings({ settings }: AcademySettingsProps) {
             <Label>Logo do Sistema</Label>
             <div className="flex items-center gap-4">
               <div className="w-24 h-24 rounded-lg border flex items-center justify-center">
-                 <Image src={logoUrl || "https://placehold.co/64x64.png"} alt="Logo da Academia" width={64} height={64} className="object-contain" data-ai-hint="water fitness" />
+                 <Image src={'/logo/logo.png'} alt="Logo da Academia" width={64} height={64} className="object-contain" data-ai-hint="water fitness" />
               </div>
-              <Button type="button" variant="outline" onClick={handleLogoClick} disabled={isUploading}>
-                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Alterar Logo
-              </Button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept="image/png, image/jpeg, image/gif"
-                disabled={isUploading}
-              />
+              <p className="text-sm text-muted-foreground">Para alterar, substitua o arquivo <br /> <code className="bg-muted px-1 py-0.5 rounded-sm">public/logo/logo.png</code>.</p>
             </div>
           </div>
           <div className="space-y-2">

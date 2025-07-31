@@ -34,6 +34,7 @@ import {
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/lib/database.types';
+import { updateUserRole } from '@/app/configuracoes/actions';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -62,13 +63,21 @@ export function EditUserDialog({ user, children }: EditUserDialogProps) {
     }
   });
 
-  const onSubmit = (data: UserFormValues) => {
-    console.log(data);
-    toast({
-        title: "Funcionalidade em desenvolvimento",
-        description: `A edição de ${data.name} será implementada em breve.`,
-    })
-    setOpen(false);
+  const onSubmit = async (data: UserFormValues) => {
+    const result = await updateUserRole(user.id, data);
+    if (result.success) {
+      toast({
+        title: "Sucesso!",
+        description: result.message,
+      });
+      setOpen(false);
+    } else {
+      toast({
+        title: "Erro!",
+        description: result.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (

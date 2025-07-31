@@ -21,11 +21,7 @@ export function NavContent({ settings }: NavContentProps) {
     <div className="flex flex-col h-full">
       <div className="p-4 border-b">
         <Link href="/" className="flex items-center gap-3 font-bold text-xl text-foreground">
-          {settings?.logo_url ? (
-            <Image src={settings.logo_url} alt="Logo da Academia" width={32} height={32} className="object-contain" />
-          ) : (
-            <Icons.Logo className="h-8 w-8 text-primary" />
-          )}
+            <Image src={'/logo/logo.png'} alt="Logo da Academia" width={32} height={32} className="object-contain" />
           <div className="flex flex-col">
             <span className="leading-tight">{settings?.name || 'Hidro Fitness'}</span>
             <span className="text-xs font-normal text-muted-foreground leading-tight">Sistema de Gestão</span>
