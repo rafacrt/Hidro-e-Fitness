@@ -3,11 +3,10 @@ import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import StatCard from '@/components/dashboard/stat-card';
 import UpcomingClasses from '@/components/dashboard/upcoming-classes';
-import RecentPayments from '@/components/dashboard/recent-payments';
 import QuickActions from '@/components/dashboard/quick-actions';
 import { Users, Calendar, DollarSign, Percent } from 'lucide-react';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
-import { getDashboardStats, getRecentPayments, getUpcomingClasses } from './actions';
+import { getDashboardStats, getUpcomingClasses } from './actions';
 import { unstable_noStore as noStore } from 'next/cache';
 
 const formatCurrency = (value: number) => {
@@ -19,12 +18,11 @@ const formatCurrency = (value: number) => {
 
 export default async function DashboardPage() {
   noStore();
-  const [academySettings, userProfile, stats, upcomingClasses, recentPayments] = await Promise.all([
+  const [academySettings, userProfile, stats, upcomingClasses] = await Promise.all([
     getAcademySettings(),
     getUserProfile(),
     getDashboardStats(),
-    getUpcomingClasses(),
-    getRecentPayments()
+    getUpcomingClasses()
   ]);
 
   return (
@@ -69,7 +67,7 @@ export default async function DashboardPage() {
               value={formatCurrency(stats.monthlyRevenue)}
               change=""
               changeType="increase"
-              period=""
+              period="(mock)"
               icon={DollarSign}
               iconBgColor="bg-green-100"
               iconColor="text-green-600"
@@ -86,13 +84,8 @@ export default async function DashboardPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <UpcomingClasses classes={upcomingClasses} />
-            </div>
-            <div>
-              <RecentPayments payments={recentPayments} />
-            </div>
+          <div className="grid grid-cols-1 gap-6">
+            <UpcomingClasses classes={upcomingClasses} />
           </div>
           
           <QuickActions />

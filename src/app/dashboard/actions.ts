@@ -7,7 +7,6 @@ import { startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
 
 type ClassRow = Database['public']['Tables']['classes']['Row'];
 type Instructor = Database['public']['Tables']['instructors']['Row'];
-type Payment = Database['public']['Tables']['payments']['Row'] & { students: Pick<Database['public']['Tables']['students']['Row'], 'name'> | null };
 
 export interface DashboardStats {
   activeStudents: number;
@@ -20,9 +19,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   try {
     const supabase = await createSupabaseServerClient();
     const today = new Date();
-    const startOfCurrentMonth = startOfMonth(today);
-    const endOfCurrentMonth = endOfMonth(today);
-
+    
     // Alunos Ativos
     const { count: activeStudents, error: studentsError } = await supabase
       .from('students')
@@ -30,18 +27,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .eq('status', 'ativo');
 
     if (studentsError) throw studentsError;
-
-    // Receita Mensal
-    const { data: monthlyPayments, error: paymentsError } = await supabase
-      .from('payments')
-      .select('amount')
-      .eq('type', 'receita')
-      .eq('status', 'pago')
-      .gte('paid_at', startOfCurrentMonth.toISOString())
-      .lte('paid_at', endOfCurrentMonth.toISOString());
-
-    if (paymentsError) throw paymentsError;
-    const monthlyRevenue = monthlyPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
 
     // Turmas Hoje (Lógica simplificada, verifica se o dia da semana corresponde)
     const dayOfWeekMap = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -58,7 +43,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     return {
       activeStudents: activeStudents || 0,
       classesToday: classesToday || 0,
-      monthlyRevenue: monthlyRevenue,
+      monthlyRevenue: 0, // Mockado pois a tabela payments não existe
       attendanceRate: 87, // Frequência mockada por enquanto
     };
   } catch (error) {
@@ -88,7 +73,7 @@ export async function getUpcomingClasses(): Promise<(ClassRow & { instructors: P
         .eq('status', 'ativa')
         .like('days_of_week', `%${currentDayOfWeek}%`)
         .order('start_time', { ascending: true })
-        .limit(3);
+        .limit(5);
 
     if (error) {
         console.error('Error fetching upcoming classes:', error);
@@ -100,33 +85,4 @@ export async function getUpcomingClasses(): Promise<(ClassRow & { instructors: P
     console.error('Unexpected error fetching upcoming classes:', error);
     return [];
   }
-}
-
-export async function getRecentPayments(): Promise<Payment[]> {
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { data, error } = await supabase
-            .from('payments')
-            .select(`*`)
-            .eq('type', 'receita')
-            .order('paid_at', { ascending: false })
-            .limit(3);
-
-        if (error) {
-            console.error('Error fetching recent payments:', error);
-            throw new Error('Não foi possível buscar os pagamentos recentes.');
-        }
-        
-        // Adicionando a propriedade 'students' com valor null para manter a tipagem consistente
-        const dataWithStudents = data.map(payment => ({
-            ...payment,
-            students: null 
-        }));
-
-        return dataWithStudents;
-
-    } catch(error) {
-        console.error('Unexpected error fetching recent payments:', error);
-        return [];
-    }
 }

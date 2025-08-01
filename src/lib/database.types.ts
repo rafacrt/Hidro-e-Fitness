@@ -9,6 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      academy_settings: {
+        Row: {
+          created_at: string
+          id: number
+          logo_url: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          logo_url?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          logo_url?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
       classes: {
         Row: {
           created_at: string
@@ -102,6 +123,45 @@ export type Database = {
           },
         ]
       }
+      equipments: {
+        Row: {
+          brand: string | null
+          category: string
+          created_at: string
+          id: string
+          installation_date: string
+          location: string
+          model: string | null
+          name: string
+          serial_number: string | null
+          status: string
+        }
+        Insert: {
+          brand?: string | null
+          category: string
+          created_at?: string
+          id?: string
+          installation_date: string
+          location: string
+          model?: string | null
+          name: string
+          serial_number?: string | null
+          status: string
+        }
+        Update: {
+          brand?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          installation_date?: string
+          location?: string
+          model?: string | null
+          name?: string
+          serial_number?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       instructors: {
         Row: {
           availability: Json | null
@@ -132,6 +192,56 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_schedules: {
+        Row: {
+          completed_at: string | null
+          cost: number | null
+          created_at: string
+          description: string
+          equipment_id: string
+          id: string
+          priority: string
+          responsible: string | null
+          scheduled_date: string
+          status: string
+          type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          cost?: number | null
+          created_at?: string
+          description: string
+          equipment_id: string
+          id?: string
+          priority?: string
+          responsible?: string | null
+          scheduled_date: string
+          status?: string
+          type?: string
+        }
+        Update: {
+          completed_at?: string | null
+          cost?: number | null
+          created_at?: string
+          description?: string
+          equipment_id?: string
+          id?: string
+          priority?: string
+          responsible?: string | null
+          scheduled_date?: string
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_schedules_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modalities: {
         Row: {
           created_at: string
@@ -155,6 +265,56 @@ export type Database = {
           price?: number | null
         }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number | null
+          category: string | null
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          status: string
+          student_id: string | null
+          type: string
+        }
+        Insert: {
+          amount?: number | null
+          category?: string | null
+          created_at?: string
+          description: string
+          due_date: string
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          student_id?: string | null
+          type?: string
+        }
+        Update: {
+          amount?: number | null
+          category?: string | null
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          student_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -187,6 +347,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reports: {
+        Row: {
+          category: string
+          created_at: string
+          filters: Json | null
+          id: string
+          last_generated_at: string
+          name: string
+          times_generated: number
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          last_generated_at?: string
+          name: string
+          times_generated?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          last_generated_at?: string
+          name?: string
+          times_generated?: number
+        }
+        Relationships: []
       }
       students: {
         Row: {
