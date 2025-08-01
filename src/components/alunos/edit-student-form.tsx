@@ -229,7 +229,8 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
                         <IMaskInput
                           mask="000.000.000-00"
                           value={field.value || ''}
-                          onAccept={field.onChange}
+                          unmask={true}
+                          onAccept={(value) => field.onChange(value)}
                           className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
                           placeholder="000.000.000-00"
                         />
@@ -250,8 +251,9 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
                               <IMaskInput
                                 mask="00/00/0000"
                                 value={field.value ? format(field.value, 'dd/MM/yyyy') : ''}
+                                unmask={true}
                                 onAccept={(value) => {
-                                  const parsedDate = parse(value, 'dd/MM/yyyy', new Date());
+                                  const parsedDate = parse(value as string, 'dd/MM/yyyy', new Date());
                                   if (!isNaN(parsedDate.getTime())) {
                                     form.setValue('birthDate', parsedDate, { shouldValidate: true });
                                   } else if (!value) {
@@ -313,7 +315,8 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
                          <IMaskInput
                           mask="(00) 00000-0000"
                           value={field.value || ''}
-                          onAccept={field.onChange}
+                          unmask={true}
+                          onAccept={(value) => field.onChange(value)}
                           className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
                           placeholder="(99) 99999-9999"
                         />
@@ -363,7 +366,8 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
                                        <IMaskInput
                                           mask="(00) 00000-0000"
                                           value={field.value || ''}
-                                          onAccept={field.onChange}
+                                          unmask={true}
+                                          onAccept={(value) => field.onChange(value)}
                                           className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
                                           placeholder="(99) 99999-9999"
                                         />
@@ -391,9 +395,10 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
                            <IMaskInput
                             mask="00000-000"
                             value={field.value || ''}
-                             onAccept={(value) => {
+                            unmask={true}
+                            onAccept={(value) => {
                                 field.onChange(value);
-                                const cep = value.replace(/\D/g, '');
+                                const cep = (value as string).replace(/\D/g, '');
                                 if (cep.length === 8) {
                                   handleCepChange({ target: { value: cep } } as React.ChangeEvent<HTMLInputElement>);
                                 }
