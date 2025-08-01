@@ -121,7 +121,7 @@ export default function LoginForm({ settings }: LoginFormProps) {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
-            <Image src={'/logo/logo.png'} alt="Logo da Academia" width={48} height={48} className="object-contain" />
+          <Image src={'/logo/logo.png'} alt="Logo da Academia" width={48} height={48} className="object-contain" />
         </div>
         <CardTitle>Bem-vindo ao {settings?.name || 'Hidro Fitness'}</CardTitle>
         <CardDescription>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -78,11 +79,7 @@ export default function ForgotPasswordForm({ settings }: ForgotPasswordFormProps
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
-          {settings?.logo_url ? (
-            <Image src={settings.logo_url} alt="Logo da Academia" width={48} height={48} className="object-contain" />
-          ) : (
-            <Icons.Logo className="h-12 w-12 text-primary" />
-          )}
+          <Image src={'/logo/logo.png'} alt="Logo da Academia" width={48} height={48} className="object-contain" />
         </div>
         <CardTitle>Esqueceu a Senha?</CardTitle>
         <CardDescription>
