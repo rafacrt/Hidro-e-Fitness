@@ -90,8 +90,6 @@ export async function uploadAvatar(formData: FormData) {
   }
 }
 
-// --- Academy Settings Actions ---
-
 export async function getAcademySettings(): Promise<AcademySettings | null> {
     try {
         const supabase = await createSupabaseServerClient();
@@ -102,7 +100,7 @@ export async function getAcademySettings(): Promise<AcademySettings | null> {
             .single();
 
         if (error) {
-            if (error.code === 'PGRST116') return null; // No rows found, which is fine
+            if (error.code === 'PGRST116') return null; 
             console.error('Supabase Error getAcademySettings:', error);
             throw new Error('Não foi possível buscar as configurações da academia.');
         }
@@ -139,62 +137,6 @@ export async function updateAcademySettings(formData: FormData) {
     }
 }
 
-export async function uploadLogo(formData: FormData) {
-    const file = formData.get('logo') as File;
-    if (!file || file.size === 0) {
-        return { success: false, message: 'Nenhum arquivo selecionado.' };
-    }
-
-    try {
-        const supabase = await createSupabaseServerClient();
-        const fileExt = file.name.split('.').pop();
-        const fileName = `logo-${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        const { data: settings } = await supabase.from('academy_settings').select('logo_url').single();
-        if (settings?.logo_url) {
-            const oldFileName = settings.logo_url.split('/').pop();
-            if (oldFileName) {
-                await supabase.storage.from('logos').remove([oldFileName]);
-            }
-        }
-
-        const { error: uploadError } = await supabase.storage
-            .from('logos')
-            .upload(filePath, file);
-
-        if (uploadError) {
-            console.error('Supabase Upload Error:', uploadError);
-            return { success: false, message: `Erro no upload: ${uploadError.message}` };
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-            .from('logos')
-            .getPublicUrl(filePath);
-
-        const { error: updateError } = await supabase
-            .from('academy_settings')
-            .update({ logo_url: publicUrl })
-            .eq('id', 1);
-            
-        if (updateError) {
-            console.error('Supabase Update Error:', updateError);
-            await supabase.storage.from('logos').remove([filePath]);
-            return { success: false, message: `Erro ao atualizar logo: ${updateError.message}` };
-        }
-        
-        revalidatePath('/configuracoes');
-        revalidatePath('/', 'layout');
-        return { success: true, message: 'Logo atualizado com sucesso!', logoUrl: publicUrl };
-
-    } catch (error) {
-        console.error('Unexpected Error:', error);
-        return { success: false, message: 'Ocorreu um erro inesperado.' };
-    }
-}
-
-// --- User Management Actions ---
-
 export async function getUsers(): Promise<Profile[]> {
     try {
         const supabase = await createSupabaseServerClient();
@@ -214,7 +156,6 @@ export async function getUsers(): Promise<Profile[]> {
 }
 
 export async function addUser(formData: unknown) {
-    // We use the signup server action, but with adminCreation flag set to true
     const result = await signup(formData, true);
     if (result.success) {
         revalidatePath('/configuracoes');
@@ -272,20 +213,16 @@ export async function deleteUser(userId: string) {
 
     if (authError) {
       console.error('Supabase Admin Error deleting user:', authError);
-      // O perfil pode já ter sido removido por um trigger, então verificamos o erro.
-      // Se não for "User not found", retornamos o erro.
       if (authError.message !== 'User not found') {
           return { success: false, message: `Erro ao excluir usuário da autenticação: ${authError.message}` };
       }
     }
     
-    // A exclusão do perfil é feita via trigger no Supabase, mas podemos garantir aqui também.
     const supabase = await createSupabaseServerClient();
     const { error: profileError } = await supabase.from('profiles').delete().eq('id', userId);
     
     if (profileError) {
       console.error('Supabase Error deleting profile:', profileError);
-       // Não retornamos erro aqui se a auth foi bem sucedida, pois o trigger pode já ter agido.
     }
 
     revalidatePath('/configuracoes');

@@ -16,7 +16,7 @@ const signupSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
   email: z.string().email('E-mail inválido.'),
   password: strongPasswordSchema,
-  role: z.string().optional(), // Role is optional for public signup
+  role: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -53,9 +53,8 @@ export async function signup(formData: unknown, adminCreation = false) {
       options: {
         data: {
           full_name: name,
-          role: role || 'user', // Default role if not provided
+          role: role || 'Recepção', 
         },
-        // Only require email confirmation for public signups
         emailRedirectTo: adminCreation ? undefined : `${origin}/auth/callback`,
       },
     });
@@ -66,18 +65,15 @@ export async function signup(formData: unknown, adminCreation = false) {
     }
 
     if (adminCreation && signUpData.user) {
-      // If admin is creating, update the role in the profiles table immediately
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ role: role || 'user' })
+        .update({ role: role || 'Recepção' })
         .eq('id', signUpData.user.id);
       
       if (profileError) {
         console.error('Erro ao atualizar perfil do usuário criado:', profileError);
-        // Best effort, don't fail the whole signup if this fails
       }
     }
-
 
     const message = adminCreation
       ? 'Usuário criado com sucesso!'

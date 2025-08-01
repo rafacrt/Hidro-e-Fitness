@@ -50,13 +50,16 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>;
 
-const roles = ['Desenvolvedor', 'Administrador', 'Recepção'];
+const roles = ['Administrador', 'Recepção'];
 
 export function AddUserDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      role: 'Recepção',
+    }
   });
 
   const onSubmit = async (data: UserFormValues) => {
@@ -143,7 +146,7 @@ export function AddUserDialog({ children }: { children: React.ReactNode }) {
                   <FormItem>
                     <FormLabel>Senha</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input type="password" placeholder="••••••••" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
