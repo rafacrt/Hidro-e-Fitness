@@ -64,12 +64,14 @@ export async function addStudent(formData: unknown) {
 
   try {
     const supabase = await createSupabaseServerClient();
+    const cleanCpf = parsedData.data.cpf?.replace(/\D/g, '') || null;
+
     const { error } = await supabase
       .from('students')
       .insert([
         {
           name: parsedData.data.name,
-          cpf: parsedData.data.cpf?.replace(/\D/g, ''),
+          cpf: cleanCpf,
           birth_date: parsedData.data.birthDate?.toISOString(),
           email: parsedData.data.email,
           phone: parsedData.data.phone?.replace(/\D/g, ''),
@@ -118,11 +120,13 @@ export async function updateStudent(id: string, formData: unknown) {
   
   try {
     const supabase = await createSupabaseServerClient();
+    const cleanCpf = parsedData.data.cpf?.replace(/\D/g, '') || null;
+
     const { error } = await supabase
       .from('students')
       .update({
         name: parsedData.data.name,
-        cpf: parsedData.data.cpf?.replace(/\D/g, ''),
+        cpf: cleanCpf,
         birth_date: parsedData.data.birthDate?.toISOString(),
         email: parsedData.data.email,
         phone: parsedData.data.phone?.replace(/\D/g, ''),
