@@ -35,7 +35,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { cn, validateCPF } from '@/lib/utils';
 import { CalendarIcon, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { IMaskInput } from 'react-imask';
 import { WaveSpinner } from '../ui/wave-spinner';
@@ -46,7 +46,14 @@ const studentFormSchema = z
   .object({
     name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
     cpf: z.string().optional().refine((val) => val ? validateCPF(val) : true, { message: "CPF inválido." }),
-    birthDate: z.date().optional(),
+    birthDate: z.date({
+      errorMap: (issue, ctx) => {
+        if (issue.code === 'invalid_date') {
+          return { message: 'Data de nascimento inválida.' };
+        }
+        return { message: ctx.defaultError };
+      },
+    }).optional(),
     email: z.string().email('E-mail inválido.').optional().or(z.literal('')),
     phone: z.string().optional(),
     isWhatsApp: z.boolean().default(false),
@@ -226,40 +233,50 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Data de Nascimento (Opcional)</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, 'PPP', { locale: ptBR })
-                              ) : (
-                                <span>Escolha uma data</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            captionLayout="dropdown-buttons"
-                            fromYear={1920}
-                            toYear={new Date().getFullYear()}
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date('1900-01-01')
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
+                       <Popover>
+                          <div className="relative flex items-center">
+                            <FormControl>
+                              <IMaskInput
+                                mask="00/00/0000"
+                                value={field.value ? format(field.value, 'dd/MM/yyyy') : ''}
+                                onAccept={(value) => {
+                                  const parsedDate = parse(value, 'dd/MM/yyyy', new Date());
+                                  if (!isNaN(parsedDate.getTime())) {
+                                    form.setValue('birthDate', parsedDate, { shouldValidate: true });
+                                  } else if (!value) {
+                                    form.setValue('birthDate', undefined, { shouldValidate: true });
+                                  }
+                                }}
+                                className={cn(
+                                  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
+                                )}
+                                placeholder="dd/mm/aaaa"
+                              />
+                            </FormControl>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className="absolute right-1 h-8 w-8 p-0">
+                                <span className="sr-only">Abrir calendário</span>
+                                <CalendarIcon className="h-4 w-4" />
+                              </Button>
+                            </PopoverTrigger>
+                          </div>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              captionLayout="dropdown-buttons"
+                              fromYear={1920}
+                              toYear={new Date().getFullYear()}
+                              selected={field.value}
+                              onSelect={(date) => {
+                                field.onChange(date);
+                              }}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date('1900-01-01')
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
