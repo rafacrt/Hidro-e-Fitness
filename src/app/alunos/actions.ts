@@ -90,6 +90,9 @@ export async function addStudent(formData: unknown) {
 
     if (error) {
       console.error('Supabase Error:', error);
+      if (error.code === '23505' && error.message.includes('students_cpf_key')) {
+        return { success: false, message: 'Já existe um aluno cadastrado com este CPF.' };
+      }
       return { success: false, message: `Erro ao cadastrar aluno: ${error.message}` };
     }
 
@@ -140,6 +143,9 @@ export async function updateStudent(id: string, formData: unknown) {
 
     if (error) {
       console.error('Supabase Error:', error);
+      if (error.code === '23505' && error.message.includes('students_cpf_key')) {
+        return { success: false, message: 'Já existe um aluno cadastrado com este CPF.' };
+      }
       return { success: false, message: `Erro ao atualizar aluno: ${error.message}` };
     }
 
@@ -172,23 +178,13 @@ export async function deleteStudent(id: string) {
 }
 
 
-export async function getStudents({ query, status }: { query: string; status: string }): Promise<Student[]> {
+export async function getStudents(): Promise<Student[]> {
   try {
     const supabase = await createSupabaseServerClient();
-    let queryBuilder = supabase
+    const { data, error } = await supabase
       .from('students')
       .select('*')
       .order('created_at', { ascending: false });
-
-    if (query) {
-      queryBuilder = queryBuilder.or(`name.ilike.%${query}%,email.ilike.%${query}%,cpf.ilike.%${query}%`);
-    }
-
-    if (status && status !== 'all') {
-      queryBuilder = queryBuilder.eq('status', status);
-    }
-    
-    const { data, error } = await queryBuilder;
 
     if (error) {
       console.error('Supabase Error:', error);

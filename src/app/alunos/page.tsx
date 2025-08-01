@@ -11,6 +11,21 @@ import { AddStudentForm } from '@/components/alunos/add-student-form';
 import { getStudents } from './actions';
 import { unstable_noStore as noStore } from 'next/cache';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
+import type { Database } from '@/lib/database.types';
+
+type Student = Database['public']['Tables']['students']['Row'];
+
+function filterStudents(students: Student[], query: string, status: string): Student[] {
+  return students.filter(student => {
+    const statusMatch = status === 'all' || student.status === status;
+    const queryMatch =
+      !query ||
+      student.name.toLowerCase().includes(query.toLowerCase()) ||
+      (student.email && student.email.toLowerCase().includes(query.toLowerCase())) ||
+      (student.cpf && student.cpf.includes(query));
+    return statusMatch && queryMatch;
+  });
+}
 
 export default async function AlunosPage({
   searchParams,
@@ -24,12 +39,13 @@ export default async function AlunosPage({
   const query = searchParams?.query || '';
   const status = searchParams?.status || 'all';
 
-  const [students, allStudents, academySettings, userProfile] = await Promise.all([
-    getStudents({ query, status }),
-    getStudents({ query: '', status: 'all' }),
+  const [allStudents, academySettings, userProfile] = await Promise.all([
+    getStudents(),
     getAcademySettings(),
     getUserProfile()
   ]);
+
+  const filteredStudents = filterStudents(allStudents, query, status);
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -51,7 +67,7 @@ export default async function AlunosPage({
           </div>
           
           <Filters />
-          <StudentsTable students={students} />
+          <StudentsTable students={filteredStudents} />
           <StudentStats students={allStudents} />
           <QuickActionsAlunos />
 
