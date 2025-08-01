@@ -36,7 +36,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         .from('classes')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'ativa')
-        .like('days_of_week', `%${currentDayOfWeek}%`);
+        .contains('days_of_week', [currentDayOfWeek]);
 
     if (classesError) throw classesError;
 
@@ -71,7 +71,7 @@ export async function getUpcomingClasses(): Promise<(ClassRow & { instructors: P
             instructors ( name )
         `)
         .eq('status', 'ativa')
-        .like('days_of_week', `%${currentDayOfWeek}%`)
+        .contains('days_of_week', [currentDayOfWeek])
         .order('start_time', { ascending: true })
         .limit(5);
 
