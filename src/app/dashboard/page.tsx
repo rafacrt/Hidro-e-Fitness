@@ -1,3 +1,4 @@
+
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import StatCard from '@/components/dashboard/stat-card';
@@ -6,13 +7,24 @@ import RecentPayments from '@/components/dashboard/recent-payments';
 import QuickActions from '@/components/dashboard/quick-actions';
 import { Users, Calendar, DollarSign, Percent } from 'lucide-react';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
+import { getDashboardStats, getRecentPayments, getUpcomingClasses } from './actions';
 import { unstable_noStore as noStore } from 'next/cache';
+
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    }).format(value);
+};
 
 export default async function DashboardPage() {
   noStore();
-  const [academySettings, userProfile] = await Promise.all([
+  const [academySettings, userProfile, stats, upcomingClasses, recentPayments] = await Promise.all([
     getAcademySettings(),
-    getUserProfile()
+    getUserProfile(),
+    getDashboardStats(),
+    getUpcomingClasses(),
+    getRecentPayments()
   ]);
 
   return (
@@ -27,47 +39,47 @@ export default async function DashboardPage() {
               <p className="text-muted-foreground">Visão geral do sistema {academySettings?.name || 'Hidro Fitness'}</p>
             </div>
             <div className="text-sm text-muted-foreground">
-              Última atualização: 25/07/2025, 20:40:45
+              {new Date().toLocaleString('pt-BR')}
             </div>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <StatCard 
               title="Alunos Ativos"
-              value="342"
-              change="+12%"
+              value={stats.activeStudents.toString()}
+              change=""
               changeType="increase"
-              period="vs mês anterior"
+              period=""
               icon={Users}
               iconBgColor="bg-cyan-100"
               iconColor="text-cyan-600"
             />
             <StatCard 
               title="Turmas Hoje"
-              value="18"
-              change="+2%"
+              value={stats.classesToday.toString()}
+              change=""
               changeType="increase"
-              period="vs mês anterior"
+              period=""
               icon={Calendar}
               iconBgColor="bg-blue-100"
               iconColor="text-blue-600"
             />
             <StatCard 
               title="Receita Mensal"
-              value="R$ 42.500"
-              change="+8%"
+              value={formatCurrency(stats.monthlyRevenue)}
+              change=""
               changeType="increase"
-              period="vs mês anterior"
+              period=""
               icon={DollarSign}
               iconBgColor="bg-green-100"
               iconColor="text-green-600"
             />
             <StatCard 
               title="Taxa de Presença"
-              value="87%"
-              change="+3%"
+              value={`${stats.attendanceRate}%`}
+              change=""
               changeType="increase"
-              period="vs mês anterior"
+              period="(mock)"
               icon={Percent}
               iconBgColor="bg-yellow-100"
               iconColor="text-yellow-600"
@@ -76,10 +88,10 @@ export default async function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <UpcomingClasses />
+              <UpcomingClasses classes={upcomingClasses} />
             </div>
             <div>
-              <RecentPayments />
+              <RecentPayments payments={recentPayments} />
             </div>
           </div>
           
