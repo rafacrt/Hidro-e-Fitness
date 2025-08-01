@@ -107,10 +107,7 @@ export async function getRecentPayments(): Promise<Payment[]> {
         const supabase = await createSupabaseServerClient();
         const { data, error } = await supabase
             .from('payments')
-            .select(`
-                *,
-                students ( name )
-            `)
+            .select(`*`)
             .eq('type', 'receita')
             .order('paid_at', { ascending: false })
             .limit(3);
@@ -120,7 +117,14 @@ export async function getRecentPayments(): Promise<Payment[]> {
             throw new Error('Não foi possível buscar os pagamentos recentes.');
         }
         
-        return data;
+        // Adicionando a propriedade 'students' com valor null para manter a tipagem consistente
+        const dataWithStudents = data.map(payment => ({
+            ...payment,
+            students: null 
+        }));
+
+        return dataWithStudents;
+
     } catch(error) {
         console.error('Unexpected error fetching recent payments:', error);
         return [];
