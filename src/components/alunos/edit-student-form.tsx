@@ -53,7 +53,7 @@ interface EditStudentFormProps {
 
 const studentFormSchema = z
   .object({
-    name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
+    name: z.string().min(1, 'O nome é obrigatório.'),
     cpf: z.string().optional().refine((val) => val ? validateCPF(val) : true, { message: "CPF inválido." }),
     birthDate: z.date({
       errorMap: (issue, ctx) => {
@@ -148,27 +148,29 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
     }
   }, [watchBirthDate]);
 
-  const handleCepBlur = async (cep: string) => {
-    const cepValue = cep.replace(/\D/g, '');
-    if (cepValue.length !== 8) return;
+  const handleCepChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const cep = event.target.value.replace(/\D/g, '');
+    form.setValue('cep', cep);
 
-    setIsFetchingCep(true);
-    try {
-      const response = await fetch(`https://viacep.com.br/ws/${cepValue}/json/`);
-      const data = await response.json();
-      if (!data.erro) {
-        form.setValue('street', data.logradouro);
-        form.setValue('neighborhood', data.bairro);
-        form.setValue('city', data.localidade);
-        form.setValue('state', data.uf);
-        form.setFocus('number');
-      } else {
-        form.setError('cep', { message: 'CEP não encontrado.' });
+    if (cep.length === 8) {
+      setIsFetchingCep(true);
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const data = await response.json();
+        if (!data.erro) {
+          form.setValue('street', data.logradouro);
+          form.setValue('neighborhood', data.bairro);
+          form.setValue('city', data.localidade);
+          form.setValue('state', data.uf);
+          form.setFocus('number');
+        } else {
+          toast({ title: 'CEP não encontrado', variant: 'destructive' });
+        }
+      } catch (error) {
+        toast({ title: 'Erro ao buscar CEP', variant: 'destructive' });
+      } finally {
+        setIsFetchingCep(false);
       }
-    } catch (error) {
-      form.setError('cep', { message: 'Erro ao buscar CEP.' });
-    } finally {
-      setIsFetchingCep(false);
     }
   };
 
@@ -389,10 +391,11 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
                            <IMaskInput
                             mask="00000-000"
                             value={field.value || ''}
-                            onAccept={(value) => {
+                             onAccept={(value) => {
                                 field.onChange(value);
-                                if (value.replace(/\D/g, '').length === 8) {
-                                  handleCepBlur(value);
+                                const cep = value.replace(/\D/g, '');
+                                if (cep.length === 8) {
+                                  handleCepChange({ target: { value: cep } } as React.ChangeEvent<HTMLInputElement>);
                                 }
                               }}
                             className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
