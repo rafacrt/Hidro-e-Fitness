@@ -1,3 +1,4 @@
+
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -9,10 +10,13 @@ export async function middleware(request: NextRequest) {
     console.log(`[Middleware] ${request.method} ${pathname}`);
   }
 
-  // Se DEV_MODE estiver ativo, permite todas as rotas sem autenticação
+  // Se DEV_MODE estiver ativo, redireciona para o dashboard se estiver na raiz ou no login
   if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
     if (process.env.NODE_ENV === 'development') {
       console.log('[Middleware] DEV_MODE ativo - permitindo acesso livre');
+    }
+    if (pathname === '/login' || pathname === '/') {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
     }
     return NextResponse.next();
   }
