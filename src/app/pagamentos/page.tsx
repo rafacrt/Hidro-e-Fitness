@@ -30,7 +30,7 @@ export default async function PagamentosPage({
       <Sidebar settings={academySettings} />
       <div className="flex flex-col w-0 flex-1">
         <Header settings={academySettings} userProfile={userProfile} />
-        <main className="flex-1 p-6 space-y-6">
+        <main className="flex-1 p-4 md:p-6 space-y-6">
           <PagamentosContent payments={payments} stats={stats} />
         </main>
       </div>

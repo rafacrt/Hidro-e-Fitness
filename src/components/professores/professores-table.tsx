@@ -65,8 +65,8 @@ export default function ProfessoresTable({ instructors }: ProfessoresTableProps)
           <TableHeader>
             <TableRow>
               <TableHead>Professor</TableHead>
-              <TableHead>Contato</TableHead>
-              <TableHead>Especialidades</TableHead>
+              <TableHead className="hidden md:table-cell">Contato</TableHead>
+              <TableHead className="hidden lg:table-cell">Especialidades</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -81,10 +81,15 @@ export default function ProfessoresTable({ instructors }: ProfessoresTableProps)
                     </Avatar>
                     <div>
                       <p className="font-medium">{prof.name}</p>
+                       <div className="md:hidden mt-1 flex flex-wrap gap-1">
+                          {(prof.specialties as string[])?.slice(0, 2).map(spec => (
+                              <Badge key={spec} variant="secondary" className="font-normal text-xs">{spec}</Badge>
+                          ))}
+                      </div>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden md:table-cell">
                     <div className="space-y-1 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                             <Mail className="h-4 w-4" />
@@ -100,7 +105,7 @@ export default function ProfessoresTable({ instructors }: ProfessoresTableProps)
                         </div>
                     </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden lg:table-cell">
                   <div className="flex flex-wrap gap-1">
                     {(prof.specialties as string[])?.map(spec => (
                       <Badge key={spec} variant="secondary" className="font-normal">{spec}</Badge>

@@ -27,20 +27,20 @@ export default async function RelatoriosPage() {
       <Sidebar settings={academySettings} />
       <div className="flex flex-col w-0 flex-1">
         <Header settings={academySettings} userProfile={userProfile} />
-        <main className="flex-1 p-6 space-y-6">
-          <div className="flex justify-between items-center">
+        <main className="flex-1 p-4 md:p-6 space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-2xl font-bold">Relatórios</h1>
               <p className="text-muted-foreground">Análises e relatórios completos da academia</p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline">
+            <div className="flex gap-2 w-full md:w-auto">
+              <Button variant="outline" className="w-full">
                 <Filter className="mr-2 h-4 w-4" />
-                Filtros Avançados
+                Filtros
               </Button>
-              <Button>
+              <Button className="w-full">
                 <Download className="mr-2 h-4 w-4" />
-                Exportar Relatório
+                Exportar
               </Button>
             </div>
           </div>

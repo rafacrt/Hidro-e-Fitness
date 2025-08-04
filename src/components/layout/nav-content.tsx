@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { Icons } from '@/components/icons';
 import { navItems } from '@/lib/config';
 import { usePathname } from 'next/navigation';
 import type { Database } from '@/lib/database.types';
 import Image from 'next/image';
+import { ScrollArea } from '../ui/scroll-area';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 
@@ -28,23 +28,25 @@ export function NavContent({ settings }: NavContentProps) {
           </div>
         </Link>
       </div>
-      <nav className="flex-1 px-4 py-4 space-y-1">
-        {navItems.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10',
-              (activePath === '/' && item.href === '/') || (item.href !== '/' && activePath.startsWith(item.href))
-                ? 'bg-primary/10 text-primary font-medium'
-                : ''
-            )}
-          >
-            <item.icon className="h-5 w-5" />
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+      <ScrollArea className="flex-1">
+        <nav className="px-4 py-4 space-y-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10',
+                (activePath === '/' && item.href === '/') || (item.href !== '/' && activePath.startsWith(item.href))
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : ''
+              )}
+            >
+              <item.icon className="h-5 w-5" />
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+      </ScrollArea>
     </div>
   );
 }

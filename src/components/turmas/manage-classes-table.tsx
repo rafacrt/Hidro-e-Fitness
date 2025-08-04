@@ -62,10 +62,10 @@ export default function ManageClassesTable({ classes }: ManageClassesTableProps)
           <TableHeader>
             <TableRow>
               <TableHead>Turma</TableHead>
-              <TableHead>Professor</TableHead>
-              <TableHead>Horários</TableHead>
+              <TableHead className="hidden md:table-cell">Professor</TableHead>
+              <TableHead className="hidden lg:table-cell">Horários</TableHead>
               <TableHead>Ocupação</TableHead>
-              <TableHead>Local</TableHead>
+              <TableHead className="hidden md:table-cell">Local</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -82,8 +82,11 @@ export default function ManageClassesTable({ classes }: ManageClassesTableProps)
                         <div className="flex items-center gap-1 mt-1">
                             <Badge variant="secondary" className="font-normal">{cls.modalities?.name || 'N/A'}</Badge>
                         </div>
+                        <div className="text-sm text-muted-foreground mt-1 md:hidden">
+                           {cls.instructors?.name || 'N/A'}
+                        </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-8 w-8">
                             <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">{getInitials(cls.instructors?.name)}</AvatarFallback>
@@ -93,7 +96,7 @@ export default function ManageClassesTable({ classes }: ManageClassesTableProps)
                             </div>
                         </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="h-4 w-4" />
                             <span>{cls.start_time} - {cls.end_time}</span>
@@ -105,11 +108,11 @@ export default function ManageClassesTable({ classes }: ManageClassesTableProps)
                         <TableCell>
                         <div className="flex items-center gap-2">
                             <span className="font-medium text-sm">{occupancy}/{cls.max_students}</span>
-                            <span className="text-sm text-muted-foreground">({occupancyRate.toFixed(0)}%)</span>
+                            <span className="text-sm text-muted-foreground hidden lg:inline">({occupancyRate.toFixed(0)}%)</span>
                         </div>
                         <Progress value={occupancyRate} className="h-1.5 mt-1" />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <MapPin className="h-4 w-4" />
                             <span>{cls.location}</span>

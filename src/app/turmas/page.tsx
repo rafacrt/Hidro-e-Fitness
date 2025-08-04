@@ -71,23 +71,23 @@ export default function TurmasPage() {
       <Sidebar settings={settings} />
       <div className="flex flex-col w-0 flex-1">
         <Header settings={settings} />
-        <main className="flex-1 p-6 space-y-6">
-          <div className="flex justify-between items-center">
+        <main className="flex-1 p-4 md:p-6 space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-2xl font-bold">Turmas</h1>
               <p className="text-muted-foreground">Gestão completa de turmas e horários</p>
             </div>
-            <div className='flex gap-2'>
+            <div className='flex gap-2 w-full md:w-auto'>
                 <SearchClassDialog>
-                  <Button variant="outline">
+                  <Button variant="outline" className="w-full">
                       <Search className="mr-2 h-4 w-4" />
-                      Buscar Turma
+                      Buscar
                   </Button>
                 </SearchClassDialog>
                 <AddClassForm>
-                  <Button>
+                  <Button className="w-full">
                       <PlusCircle className="mr-2 h-4 w-4" />
-                      Nova Turma
+                      Nova
                   </Button>
                 </AddClassForm>
             </div>

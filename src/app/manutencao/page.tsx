@@ -38,11 +38,7 @@ export default function ManutencaoPage() {
       const academySettings = await getAcademySettings();
       setSettings(academySettings);
       
-      if (activeTab === 'Equipamentos') {
-        const fetchedEquipments = await getEquipments();
-        setEquipments(fetchedEquipments);
-      }
-      if (activeTab === 'Agendamentos') {
+      if (activeTab === 'Equipamentos' || activeTab === 'Agendamentos') {
         const [fetchedEquipments, fetchedMaintenances] = await Promise.all([
           getEquipments(),
           getMaintenances()
@@ -60,15 +56,15 @@ export default function ManutencaoPage() {
       <Sidebar settings={settings} />
       <div className="flex flex-col w-0 flex-1">
         <Header settings={settings} />
-        <main className="flex-1 p-6 space-y-6">
-          <div className="flex justify-between items-center">
+        <main className="flex-1 p-4 md:p-6 space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-2xl font-bold">Manutenção</h1>
               <p className="text-muted-foreground">Gestão completa de equipamentos e manutenção</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full md:w-auto">
               <AddManutencaoForm equipments={equipments}>
-                <Button>
+                <Button className="w-full">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Nova Manutenção
                 </Button>
