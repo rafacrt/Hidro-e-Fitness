@@ -243,12 +243,12 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
                               <IMaskInput
                                 mask="00/00/0000"
                                 value={field.value ? format(field.value, 'dd/MM/yyyy') : ''}
-                                unmask={true}
-                                onAccept={(value) => {
-                                  const parsedDate = parse(value as string, 'dd/MM/yyyy', new Date());
-                                  if (!isNaN(parsedDate.getTime())) {
+                                unmask={false} // Mantém a máscara para exibição
+                                onAccept={(_value, mask) => {
+                                  const parsedDate = parse(mask.unmaskedValue, 'ddMMyyyy', new Date());
+                                  if (!isNaN(parsedDate.getTime()) && mask.unmaskedValue.length === 8) {
                                     form.setValue('birthDate', parsedDate, { shouldValidate: true });
-                                  } else if (!value) {
+                                  } else if (!mask.unmaskedValue) {
                                     form.setValue('birthDate', undefined, { shouldValidate: true });
                                   }
                                 }}

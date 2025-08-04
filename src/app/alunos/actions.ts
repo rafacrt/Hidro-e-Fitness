@@ -11,7 +11,7 @@ type Student = Database['public']['Tables']['students']['Row'];
 
 const studentFormSchema = z
   .object({
-    name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
+    name: z.string().min(1, 'O nome é obrigatório.'),
     cpf: z.string().optional().refine((val) => val ? validateCPF(val) : true, { message: "CPF inválido." }),
     birthDate: z.date().optional(),
     email: z.string().email('E-mail inválido.').optional().or(z.literal('')),
