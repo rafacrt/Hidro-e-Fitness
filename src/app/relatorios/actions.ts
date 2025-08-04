@@ -17,7 +17,7 @@ export async function getReportStats(): Promise<ReportStats> {
   try {
     const supabase = await createSupabaseServerClient();
     
-    const { count: generatedReports } = await supabase
+    const { count: generatedReports, error: reportsError } = await supabase
       .from('reports')
       .select('*', { count: 'exact', head: true });
 
@@ -26,11 +26,12 @@ export async function getReportStats(): Promise<ReportStats> {
       .select('amount, type')
       .eq('status', 'pago');
     
-    if (paymentsError) throw paymentsError;
-
-    const totalRevenue = payments
-      .filter(p => p.type === 'receita')
-      .reduce((acc, p) => acc + (p.amount || 0), 0);
+    let totalRevenue = 0;
+    if (!paymentsError && payments) {
+      totalRevenue = payments
+        .filter(p => p.type === 'receita')
+        .reduce((acc, p) => acc + (p.amount || 0), 0);
+    }
 
     const { count: activeStudents } = await supabase
       .from('students')
@@ -41,7 +42,7 @@ export async function getReportStats(): Promise<ReportStats> {
     const attendanceRate = 87.5;
 
     return {
-      generatedReports: generatedReports || 0,
+      generatedReports: reportsError ? 0 : generatedReports || 0,
       totalRevenue: totalRevenue,
       activeStudents: activeStudents || 0,
       attendanceRate: attendanceRate,
