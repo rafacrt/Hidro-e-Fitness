@@ -68,13 +68,12 @@ export async function getMostUsedReports(): Promise<Report[]> {
 
     if (error) {
       // It's possible the table doesn't exist, so we'll just return an empty array
-      console.error('Error fetching most used reports:', error.message);
       return [];
     }
 
     return data;
   } catch (error) {
-    console.error('Unexpected error in getMostUsedReports:', error);
+    // Also catch unexpected errors and return empty
     return [];
   }
 }
