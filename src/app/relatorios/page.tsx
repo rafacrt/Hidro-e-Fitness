@@ -16,6 +16,7 @@ import { getMostUsedReports, getRecentActivities, getReportStats } from './actio
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import type { Database } from '@/lib/database.types';
 import PlaceholderContent from '@/components/relatorios/placeholder-content';
+import FinanceiroReport from '@/components/relatorios/financeiro-report';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -70,6 +71,35 @@ export default function RelatoriosPage() {
     loadData();
   }, []);
 
+  const renderContent = () => {
+    if (loading) {
+      return <p>Carregando...</p>
+    }
+
+    if (!stats) {
+        return <p>Não foi possível carregar os dados.</p>
+    }
+
+    switch (activeTab) {
+        case 'Visão Geral':
+            return (
+                <div className="space-y-6">
+                    <RelatoriosStats stats={stats} />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <RelatoriosMaisUtilizados reports={mostUsedReports} />
+                        <AtividadeRecente activities={recentActivities} />
+                    </div>
+                    <AcoesRapidasRelatorios />
+                    <ResumoPerformance />
+                </div>
+            );
+        case 'Financeiro':
+            return <FinanceiroReport />;
+        default:
+            return <PlaceholderContent title={activeTab} />;
+    }
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar settings={settings} />
@@ -95,26 +125,7 @@ export default function RelatoriosPage() {
           
           <RelatoriosFilters activeTab={activeTab} setActiveTab={setActiveTab} />
           
-          {loading && <p>Carregando...</p>}
-
-          {!loading && stats && (
-             <>
-                {activeTab === 'Visão Geral' && (
-                    <div className="space-y-6">
-                        <RelatoriosStats stats={stats} />
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <RelatoriosMaisUtilizados reports={mostUsedReports} />
-                            <AtividadeRecente activities={recentActivities} />
-                        </div>
-                        <AcoesRapidasRelatorios />
-                        <ResumoPerformance />
-                    </div>
-                )}
-                 {activeTab !== 'Visão Geral' && (
-                    <PlaceholderContent title={activeTab} />
-                )}
-             </>
-          )}
+          {renderContent()}
 
         </main>
       </div>
