@@ -48,7 +48,7 @@ type ActiveReport = 'ocupacao' | 'frequencia' | 'performance' | 'horarios' | nul
 
 export default function TurmasPage() {
   noStore();
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Gerenciar Turmas");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
   const [activeReport, setActiveReport] = React.useState<ActiveReport>(null);
   const [classes, setClasses] = React.useState<ClassRow[]>([]);
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
