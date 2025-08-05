@@ -26,7 +26,7 @@ export default function FiltrosFinanceiro({ activeTab, setActiveTab }: FiltrosFi
             {filters.map((filter, index) => (
                 <Button 
                     key={index} 
-                    variant={activeTab === filter.label ? "default" : "ghost"} 
+                    variant={activeTab === filter.label ? "secondary" : "ghost"} 
                     onClick={() => setActiveTab(filter.label)}
                     className="font-normal text-muted-foreground data-[state=active]:text-foreground data-[state=active]:font-semibold"
                     data-state={activeTab === filter.label ? 'active' : 'inactive'}
