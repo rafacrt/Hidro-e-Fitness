@@ -1,3 +1,7 @@
+
+'use client';
+
+import * as React from 'react';
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
@@ -10,19 +14,35 @@ import AlunosBaixaFrequencia from '@/components/frequencia/alunos-baixa-frequenc
 import AcoesRapidasFrequencia from '@/components/frequencia/acoes-rapidas-frequencia';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { unstable_noStore as noStore } from 'next/cache';
+import type { Database } from '@/lib/database.types';
+import PlaceholderContent from '@/components/relatorios/placeholder-content';
 
-export default async function FrequenciaPage() {
-  noStore();
-  const [academySettings, userProfile] = await Promise.all([
-    getAcademySettings(),
-    getUserProfile()
-  ]);
+type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
+export type ActiveTabFrequencia = "Visão Geral" | "Controle de Presença" | "Histórico";
+
+export default function FrequenciaPage() {
+  const [settings, setSettings] = React.useState<AcademySettings | null>(null);
+  const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
+  const [activeTab, setActiveTab] = React.useState<ActiveTabFrequencia>("Visão Geral");
+
+  React.useEffect(() => {
+    async function loadData() {
+      const [academySettings, profile] = await Promise.all([
+        getAcademySettings(),
+        getUserProfile()
+      ]);
+      setSettings(academySettings);
+      setUserProfile(profile);
+    }
+    loadData();
+  }, []);
   
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar settings={academySettings} />
+      <Sidebar settings={settings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header settings={academySettings} userProfile={userProfile} />
+        <Header settings={settings} userProfile={userProfile} />
         <main className="flex-1 p-4 md:p-6 space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -41,16 +61,27 @@ export default async function FrequenciaPage() {
             </div>
           </div>
           
-          <FrequenciaFilters />
-          <FrequenciaStatsCards />
+          <FrequenciaFilters activeTab={activeTab} setActiveTab={setActiveTab} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <FrequenciaPorModalidade />
-            <AulasDeHojeFrequencia />
-          </div>
+          {activeTab === 'Visão Geral' && (
+            <>
+              <FrequenciaStatsCards />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <FrequenciaPorModalidade />
+                <AulasDeHojeFrequencia />
+              </div>
+              <AlunosBaixaFrequencia />
+              <AcoesRapidasFrequencia />
+            </>
+          )}
 
-          <AlunosBaixaFrequencia />
-          <AcoesRapidasFrequencia />
+          {activeTab === 'Controle de Presença' && (
+            <PlaceholderContent title="Controle de Presença" />
+          )}
+
+          {activeTab === 'Histórico' && (
+            <PlaceholderContent title="Histórico de Frequência" />
+          )}
 
         </main>
       </div>
