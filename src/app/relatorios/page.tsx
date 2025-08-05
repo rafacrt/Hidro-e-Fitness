@@ -18,6 +18,9 @@ import type { Database } from '@/lib/database.types';
 import PlaceholderContent from '@/components/relatorios/placeholder-content';
 import FinanceiroReport from '@/components/relatorios/financeiro-report';
 import AlunosReport from '@/components/relatorios/alunos-report';
+import FrequenciaReport from '@/components/relatorios/frequencia-report';
+import PerformanceReport from '@/components/relatorios/performance-report';
+import PersonalizadosReport from '@/components/relatorios/personalizados-report';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -38,7 +41,7 @@ export type ActiveTab = "Visão Geral" | "Financeiro" | "Alunos" | "Frequência"
 
 
 export default function RelatoriosPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Alunos");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
   const [stats, setStats] = React.useState<ReportStats | null>(null);
@@ -98,6 +101,12 @@ export default function RelatoriosPage() {
             return <FinanceiroReport />;
         case 'Alunos':
             return <AlunosReport />;
+        case 'Frequência':
+            return <FrequenciaReport />;
+        case 'Performance':
+            return <PerformanceReport />;
+        case 'Personalizados':
+            return <PersonalizadosReport />;
         default:
             return <PlaceholderContent title={activeTab} />;
     }
