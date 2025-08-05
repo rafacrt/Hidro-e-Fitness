@@ -1,3 +1,7 @@
+
+'use client';
+
+import * as React from 'react';
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import ModalitiesStatCards from '@/components/modalidades/modalities-stat-cards';
@@ -9,22 +13,63 @@ import { PlusCircle, Search } from 'lucide-react';
 import TableFilters from '@/components/modalidades/table-filters';
 import { getModalities } from './actions';
 import { AddModalityForm } from '@/components/modalidades/add-modality-form';
-import { unstable_noStore as noStore } from 'next/cache';
+import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
+import PlaceholderContent from '@/components/relatorios/placeholder-content';
 
-export default async function ModalidadesPage() {
-  noStore();
-  const [modalities, academySettings, userProfile] = await Promise.all([
-    getModalities(),
-    getAcademySettings(),
-    getUserProfile()
-  ]);
+type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
+type Modality = Database['public']['Tables']['modalities']['Row'];
+
+export type ActiveTabModalities = "Visão Geral" | "Gerenciar Modalidades" | "Preços e Planos" | "Relatórios";
+
+export default function ModalidadesPage() {
+  const [modalities, setModalities] = React.useState<Modality[]>([]);
+  const [settings, setSettings] = React.useState<AcademySettings | null>(null);
+  const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
+  const [activeTab, setActiveTab] = React.useState<ActiveTabModalities>("Visão Geral");
+
+  React.useEffect(() => {
+    async function loadData() {
+      const [
+        fetchedModalities,
+        fetchedSettings,
+        fetchedProfile
+      ] = await Promise.all([
+        getModalities(),
+        getAcademySettings(),
+        getUserProfile()
+      ]);
+      setModalities(fetchedModalities);
+      setSettings(fetchedSettings);
+      setUserProfile(fetchedProfile);
+    }
+    loadData();
+  }, []);
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'Gerenciar Modalidades':
+        return (
+          <>
+            <TableFilters />
+            <ModalitiesTable modalities={modalities} />
+            <QuickActionsModalities />
+          </>
+        );
+      case 'Visão Geral':
+          return <ModalitiesStatCards />;
+      default:
+        return <PlaceholderContent title={activeTab} />;
+    }
+  };
+
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar settings={academySettings} />
+      <Sidebar settings={settings} />
       <div className="flex flex-col w-0 flex-1">
-        <Header settings={academySettings} userProfile={userProfile} />
+        <Header settings={settings} userProfile={userProfile} />
         <main className="flex-1 p-4 md:p-6 space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -45,11 +90,9 @@ export default async function ModalidadesPage() {
             </div>
           </div>
           
-          <ModalitiesFilters />
-          <ModalitiesStatCards />
-          <TableFilters />
-          <ModalitiesTable modalities={modalities} />
-          <QuickActionsModalities />
+          <ModalitiesFilters activeTab={activeTab} setActiveTab={setActiveTab} />
+          
+          {renderContent()}
 
         </main>
       </div>
