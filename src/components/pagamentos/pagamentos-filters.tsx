@@ -26,7 +26,7 @@ export default function PagamentosFilters({ activeTab, setActiveTab }: Pagamento
             {filters.map((filter) => (
                 <Button 
                     key={filter.label} 
-                    variant={activeTab === filter.label ? "default" : "ghost"} 
+                    variant={activeTab === filter.label ? "secondary" : "ghost"} 
                     onClick={() => setActiveTab(filter.label)}
                     className="font-normal text-muted-foreground data-[state=active]:text-foreground data-[state=active]:font-semibold"
                     data-state={activeTab === filter.label ? 'active' : 'inactive'}

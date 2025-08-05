@@ -38,7 +38,7 @@ interface PagamentosContentProps {
 type ActiveTab = "Visão Geral" | "Métodos de Pagamento" | "Planos e Preços" | "Histórico" | "Relatórios";
 
 export default function PagamentosContent({ payments, stats }: PagamentosContentProps) {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Histórico");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
 
   const renderHeaderButtons = () => {
     switch (activeTab) {
@@ -80,12 +80,12 @@ export default function PagamentosContent({ payments, stats }: PagamentosContent
 
   return (
     <>
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold">Pagamentos</h1>
           <p className="text-muted-foreground">Gestão completa de pagamentos e cobrança</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full md:w-auto">
           {renderHeaderButtons()}
         </div>
       </div>
