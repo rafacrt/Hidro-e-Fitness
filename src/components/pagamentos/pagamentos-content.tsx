@@ -19,11 +19,6 @@ import HistoricoStatsCards from '@/components/pagamentos/historico-stats-cards';
 import HistoricoFilters from '@/components/pagamentos/historico-filters';
 import HistoricoTable from '@/components/pagamentos/historico-table';
 import HistoricoTablePagination from '@/components/pagamentos/historico-table-pagination';
-import RelatoriosPagamentosCards from '@/components/pagamentos/relatorios-pagamentos-cards';
-import FiltrosRelatorioPagamentos from '@/components/pagamentos/filtros-relatorio-pagamentos';
-import ReceitaPorMetodoReport from '@/components/pagamentos/receita-por-metodo-report';
-import EvolucaoMensalReport from '@/components/pagamentos/evolucao-mensal-report';
-import ReceitaPorPlanoReport from '@/components/pagamentos/receita-por-plano-report';
 import MetodosPagamentoTab from '@/components/pagamentos/metodos-pagamento-tab';
 import type { Database } from '@/lib/database.types';
 import type { PaymentStats } from '@/app/pagamentos/actions';
@@ -35,7 +30,7 @@ interface PagamentosContentProps {
   stats: PaymentStats;
 }
 
-type ActiveTab = "Visão Geral" | "Métodos de Pagamento" | "Planos e Preços" | "Histórico" | "Relatórios";
+type ActiveTab = "Visão Geral" | "Métodos de Pagamento" | "Planos e Preços" | "Histórico";
 
 export default function PagamentosContent({ payments, stats }: PagamentosContentProps) {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
@@ -50,7 +45,6 @@ export default function PagamentosContent({ payments, stats }: PagamentosContent
           </Button>
         );
       case 'Histórico':
-      case 'Relatórios':
       case 'Métodos de Pagamento':
          return (
             <div className='flex gap-2'>
@@ -139,17 +133,6 @@ export default function PagamentosContent({ payments, stats }: PagamentosContent
         </div>
       )}
 
-      {activeTab === 'Relatórios' && (
-        <div className="space-y-6">
-          <RelatoriosPagamentosCards />
-          <FiltrosRelatorioPagamentos />
-          <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-            <ReceitaPorMetodoReport />
-            <EvolucaoMensalReport />
-          </div>
-          <ReceitaPorPlanoReport />
-        </div>
-      )}
     </>
   );
 }

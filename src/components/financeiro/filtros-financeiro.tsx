@@ -3,16 +3,15 @@
 
 import * as React from 'react';
 import { Button } from "@/components/ui/button";
-import { Eye, ArrowDownToDot, CreditCard, Repeat, FilePieChart } from "lucide-react";
+import { Eye, ArrowDownToDot, CreditCard, Repeat } from "lucide-react";
 
-type ActiveTab = "Visão Geral" | "Recebimentos" | "Pagamentos" | "Fluxo de Caixa" | "Relatórios";
+type ActiveTab = "Visão Geral" | "Recebimentos" | "Pagamentos" | "Fluxo de Caixa";
 
 const filters: { label: ActiveTab; icon: React.ElementType }[] = [
     { label: "Visão Geral", icon: Eye },
     { label: "Recebimentos", icon: ArrowDownToDot },
     { label: "Pagamentos", icon: CreditCard },
     { label: "Fluxo de Caixa", icon: Repeat },
-    { label: "Relatórios", icon: FilePieChart },
 ];
 
 interface FiltrosFinanceiroProps {

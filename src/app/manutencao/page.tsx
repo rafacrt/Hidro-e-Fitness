@@ -16,19 +16,19 @@ import { AddManutencaoForm } from '@/components/manutencao/add-manutencao-form';
 import EquipamentosTab from '@/components/manutencao/equipamentos-tab';
 import AgendamentosTab from '@/components/manutencao/agendamentos-tab';
 import ProdutosQuimicosTab from '@/components/manutencao/produtos-quimicos-tab';
-import RelatoriosManutencaoTab from '@/components/manutencao/relatorios-manutencao-tab';
 import type { Database } from '@/lib/database.types';
 import { getEquipments, getMaintenances } from './actions';
 import { getAcademySettings } from '../configuracoes/actions';
+import PlaceholderContent from '@/components/relatorios/placeholder-content';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Equipment = Database['public']['Tables']['equipments']['Row'];
 type Maintenance = Database['public']['Tables']['maintenance_schedules']['Row'] & { equipments: Pick<Equipment, 'name'> | null };
 
-type ActiveTab = "Visão Geral" | "Equipamentos" | "Agendamentos" | "Produtos Químicos" | "Relatórios";
+type ActiveTab = "Visão Geral" | "Equipamentos" | "Agendamentos" | "Produtos Químicos";
 
 export default function ManutencaoPage() {
-  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Equipamentos");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
   const [equipments, setEquipments] = React.useState<Equipment[]>([]);
   const [maintenances, setMaintenances] = React.useState<Maintenance[]>([]);
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
@@ -38,7 +38,7 @@ export default function ManutencaoPage() {
       const academySettings = await getAcademySettings();
       setSettings(academySettings);
       
-      if (activeTab === 'Equipamentos' || activeTab === 'Agendamentos') {
+      if (activeTab === 'Equipamentos' || activeTab === 'Agendamentos' || activeTab === 'Visão Geral') {
         const [fetchedEquipments, fetchedMaintenances] = await Promise.all([
           getEquipments(),
           getMaintenances()
@@ -91,8 +91,6 @@ export default function ManutencaoPage() {
           {activeTab === 'Agendamentos' && <AgendamentosTab maintenances={maintenances} equipments={equipments} />}
           
           {activeTab === 'Produtos Químicos' && <ProdutosQuimicosTab />}
-
-          {activeTab === 'Relatórios' && <RelatoriosManutencaoTab />}
 
         </main>
       </div>

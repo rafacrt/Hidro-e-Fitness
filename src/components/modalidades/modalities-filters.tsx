@@ -3,14 +3,13 @@
 
 import * as React from 'react';
 import { Button } from "@/components/ui/button";
-import { Eye, Settings, Tag, BarChart } from "lucide-react";
+import { Eye, Settings, Tag } from "lucide-react";
 import type { ActiveTabModalities } from '@/app/modalidades/page';
 
 const filters: { label: ActiveTabModalities; icon: React.ElementType }[] = [
     { label: "Visão Geral", icon: Eye },
     { label: "Gerenciar Modalidades", icon: Settings },
     { label: "Preços e Planos", icon: Tag },
-    { label: "Relatórios", icon: BarChart },
 ];
 
 interface ModalitiesFiltersProps {

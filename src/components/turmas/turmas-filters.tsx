@@ -1,14 +1,17 @@
-import { Button } from "@/components/ui/button"
-import { ClipboardList, BookOpen, UserCheck, BarChart3, Presentation } from "lucide-react"
 
-type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença" | "Relatórios";
+'use client';
+
+import * as React from 'react';
+import { Button } from "@/components/ui/button"
+import { ClipboardList, BookOpen, UserCheck, BarChart3 } from "lucide-react"
+
+type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença";
 
 const filters: { label: ActiveTab; icon: React.ElementType }[] = [
     { label: "Visão Geral", icon: ClipboardList },
     { label: "Grade de Horários", icon: BookOpen },
     { label: "Gerenciar Turmas", icon: UserCheck },
     { label: "Controle de Presença", icon: BarChart3 },
-    { label: "Relatórios", icon: Presentation },
 ];
 
 interface TurmasFiltersProps {

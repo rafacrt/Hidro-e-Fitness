@@ -3,16 +3,15 @@
 
 import * as React from 'react';
 import { Button } from "@/components/ui/button"
-import { Eye, Wrench, Calendar, Beaker, BarChart2 } from "lucide-react"
+import { Eye, Wrench, Calendar, Beaker } from "lucide-react"
 
-type ActiveTab = "Visão Geral" | "Equipamentos" | "Agendamentos" | "Produtos Químicos" | "Relatórios";
+type ActiveTab = "Visão Geral" | "Equipamentos" | "Agendamentos" | "Produtos Químicos";
 
 const filters: { label: ActiveTab; icon: React.ElementType }[] = [
     { label: "Visão Geral", icon: Eye },
     { label: "Equipamentos", icon: Wrench },
     { label: "Agendamentos", icon: Calendar },
     { label: "Produtos Químicos", icon: Beaker },
-    { label: "Relatórios", icon: BarChart2 },
 ]
 
 interface ManutencaoFiltersProps {

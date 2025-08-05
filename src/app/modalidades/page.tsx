@@ -21,7 +21,7 @@ type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Modality = Database['public']['Tables']['modalities']['Row'];
 
-export type ActiveTabModalities = "Visão Geral" | "Gerenciar Modalidades" | "Preços e Planos" | "Relatórios";
+export type ActiveTabModalities = "Visão Geral" | "Gerenciar Modalidades" | "Preços e Planos";
 
 export default function ModalidadesPage() {
   const [modalities, setModalities] = React.useState<Modality[]>([]);
