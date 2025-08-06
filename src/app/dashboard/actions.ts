@@ -45,8 +45,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .select('amount')
       .eq('type', 'receita')
       .eq('status', 'pago')
-      .gte('paid_at', startOfCurrentMonth.toISOString())
-      .lte('paid_at', endOfCurrentMonth.toISOString());
+      .gte('created_at', startOfCurrentMonth.toISOString())
+      .lte('created_at', endOfCurrentMonth.toISOString());
     if (revenueError) throw new Error(`Error fetching monthly revenue: ${revenueError.message}`);
     
     const monthlyRevenue = revenueData ? revenueData.reduce((sum, payment) => sum + (payment.amount || 0), 0) : 0;
@@ -57,8 +57,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       monthlyRevenue: monthlyRevenue,
       attendanceRate: 87, // Frequência mockada por enquanto
     };
-  } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
+  } catch (error: any) {
+    console.error('Error fetching dashboard stats:', error.message);
     return {
       activeStudents: 0,
       classesToday: 0,
