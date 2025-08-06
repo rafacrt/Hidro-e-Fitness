@@ -53,7 +53,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
     if (revenueError) throw revenueError;
     
-    const monthlyRevenue = revenueData.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const monthlyRevenue = revenueData ? revenueData.reduce((sum, payment) => sum + (payment.amount || 0), 0) : 0;
 
     return {
       activeStudents: activeStudents || 0,
