@@ -43,7 +43,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     const { data: revenueData, error: revenueError } = await supabase
       .from('payments')
       .select('amount')
-      .eq('type', 'receita')
+      .gt('amount', 0) // Considerar apenas entradas (valores positivos) como receita
       .eq('status', 'pago')
       .gte('created_at', startOfCurrentMonth.toISOString())
       .lte('created_at', endOfCurrentMonth.toISOString());
