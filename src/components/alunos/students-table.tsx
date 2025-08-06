@@ -40,6 +40,7 @@ import { EditStudentForm } from './edit-student-form';
 import { DeleteStudentAlert } from './delete-student-alert';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
+import { StudentDetailsDialog } from './student-details-dialog';
 
 
 type Student = Database['public']['Tables']['students']['Row'];
@@ -156,7 +157,7 @@ export default function StudentsTable({ students }: StudentsTableProps) {
             {students.map((student) => {
               const ageInfo = calculateAge(student.birth_date);
               return (
-                <EditStudentForm student={student} key={student.id}>
+                <StudentDetailsDialog student={student} key={student.id}>
                   <TableRow className="cursor-pointer">
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -259,7 +260,7 @@ export default function StudentsTable({ students }: StudentsTableProps) {
                         </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                </EditStudentForm>
+                </StudentDetailsDialog>
               )
             })}
           </TableBody>
