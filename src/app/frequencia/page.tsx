@@ -1,7 +1,5 @@
 
-'use client';
-
-import * as React from 'react';
+import { unstable_noStore as noStore } from 'next/cache';
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
@@ -10,32 +8,30 @@ import FrequenciaFilters from '@/components/frequencia/frequencia-filters';
 import FrequenciaStatsCards from '@/components/frequencia/frequencia-stats-cards';
 import AcoesRapidasFrequencia from '@/components/frequencia/acoes-rapidas-frequencia';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
-import type { Database } from '@/lib/database.types';
 import PlaceholderContent from '@/components/relatorios/placeholder-content';
 import AulasDeHojeFrequencia from '@/components/frequencia/aulas-de-hoje-frequencia';
 import AlunosBaixaFrequencia from '@/components/frequencia/alunos-baixa-frequencia';
 import FrequenciaPorModalidade from '@/components/frequencia/frequencia-por-modalidade';
+import { getUpcomingClasses } from '../dashboard/actions';
+import ControlePresencaTab from '@/components/frequencia/controle-presenca-tab';
 
-type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
-type Profile = Database['public']['Tables']['profiles']['Row'];
-export type ActiveTabFrequencia = "Visão Geral" | "Controle de Presença" | "Histórico";
+export type ActiveTabFrequencia = "Controle de Presença" | "Visão Geral" | "Histórico";
 
-export default function FrequenciaPage() {
-  const [settings, setSettings] = React.useState<AcademySettings | null>(null);
-  const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
-  const [activeTab, setActiveTab] = React.useState<ActiveTabFrequencia>("Visão Geral");
-
-  React.useEffect(() => {
-    async function loadData() {
-      const [academySettings, profile] = await Promise.all([
-        getAcademySettings(),
-        getUserProfile()
-      ]);
-      setSettings(academySettings);
-      setUserProfile(profile);
-    }
-    loadData();
-  }, []);
+export default async function FrequenciaPage({
+  searchParams,
+}: {
+  searchParams?: {
+    tab?: string;
+  };
+}) {
+  noStore();
+  const activeTab = (searchParams?.tab || "Controle de Presença") as ActiveTabFrequencia;
+  
+  const [settings, userProfile, upcomingClasses] = await Promise.all([
+    getAcademySettings(),
+    getUserProfile(),
+    getUpcomingClasses()
+  ]);
   
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -53,20 +49,16 @@ export default function FrequenciaPage() {
                 <Download className="mr-2 h-4 w-4" />
                 Exportar
               </Button>
-              <Button className="w-full">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Marcar Presença
-              </Button>
             </div>
           </div>
           
-          <FrequenciaFilters activeTab={activeTab} setActiveTab={setActiveTab} />
+          <FrequenciaFilters activeTab={activeTab} />
 
           {activeTab === 'Visão Geral' && (
             <div className="space-y-6">
               <FrequenciaStatsCards />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <AulasDeHojeFrequencia />
+                <AulasDeHojeFrequencia classes={upcomingClasses} />
                 <FrequenciaPorModalidade />
               </div>
               <AlunosBaixaFrequencia />
@@ -75,7 +67,7 @@ export default function FrequenciaPage() {
           )}
 
           {activeTab === 'Controle de Presença' && (
-            <PlaceholderContent title="Controle de Presença" />
+            <ControlePresencaTab classes={upcomingClasses} />
           )}
 
           {activeTab === 'Histórico' && (
