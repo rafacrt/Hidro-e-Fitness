@@ -16,8 +16,15 @@ import { mockStudents } from '@/lib/mock-data';
 
 type Student = Database['public']['Tables']['students']['Row'];
 
-function filterStudents(students: Student[], query: string, status: string): Student[] {
-  return students.filter(student => {
+function processStudents(
+  students: Student[],
+  query: string,
+  status: string,
+  sort: string | undefined,
+  order: string | undefined
+): Student[] {
+  // 1. Filtering
+  let filteredStudents = students.filter(student => {
     const statusMatch = status === 'all' || student.status === status;
     const queryMatch =
       !query ||
@@ -26,6 +33,28 @@ function filterStudents(students: Student[], query: string, status: string): Stu
       (student.cpf && student.cpf.includes(query));
     return statusMatch && queryMatch;
   });
+
+  // 2. Sorting
+  if (sort) {
+    filteredStudents.sort((a, b) => {
+      let valA: any = a[sort as keyof Student] || '';
+      let valB: any = b[sort as keyof Student] || '';
+
+      if (sort === 'birth_date' || sort === 'created_at') {
+        valA = valA ? new Date(valA).getTime() : 0;
+        valB = valB ? new Date(valB).getTime() : 0;
+      }
+      
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
+      if (valA < valB) return order === 'asc' ? -1 : 1;
+      if (valA > valB) return order === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  return filteredStudents;
 }
 
 export default async function AlunosPage({
@@ -34,11 +63,15 @@ export default async function AlunosPage({
   searchParams?: {
     query?: string;
     status?: string;
+    sort?: string;
+    order?: string;
   };
 }) {
   noStore();
   const query = searchParams?.query || '';
   const status = searchParams?.status || 'all';
+  const sort = searchParams?.sort;
+  const order = searchParams?.order;
 
   const [dbStudents, academySettings, userProfile] = await Promise.all([
     getStudents(),
@@ -50,7 +83,7 @@ export default async function AlunosPage({
     ? mockStudents
     : dbStudents;
 
-  const filteredStudents = filterStudents(allStudents, query, status);
+  const processedStudents = processStudents(allStudents, query, status, sort, order);
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -72,7 +105,7 @@ export default async function AlunosPage({
           </div>
           
           <Filters />
-          <StudentsTable students={filteredStudents} />
+          <StudentsTable students={processedStudents} />
           <StudentStats students={allStudents} />
           <QuickActionsAlunos />
 

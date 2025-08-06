@@ -21,6 +21,8 @@ import {
   Trash2,
   Users,
   MoreHorizontal,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -36,6 +38,8 @@ import type { Database } from '@/lib/database.types';
 import { format } from 'date-fns';
 import { EditStudentForm } from './edit-student-form';
 import { DeleteStudentAlert } from './delete-student-alert';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import React from 'react';
 
 
 type Student = Database['public']['Tables']['students']['Row'];
@@ -86,6 +90,40 @@ const statusStyles: { [key: string]: string } = {
   inativo: 'bg-zinc-100 text-zinc-800 border-zinc-200',
 };
 
+const SortableHeader = ({
+  children,
+  sortKey,
+}: {
+  children: React.ReactNode;
+  sortKey: keyof Student;
+}) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const currentSort = searchParams.get('sort');
+  const currentOrder = searchParams.get('order');
+
+  const isSorted = currentSort === sortKey;
+  const newOrder = isSorted && currentOrder === 'asc' ? 'desc' : 'asc';
+
+  const handleSort = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('sort', sortKey);
+    params.set('order', newOrder);
+    router.replace(`${pathname}?${params.toString()}`);
+  };
+
+  return (
+    <Button variant="ghost" onClick={handleSort} className="px-0 hover:bg-transparent">
+      {children}
+      {isSorted && (
+        currentOrder === 'asc' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
+      )}
+    </Button>
+  );
+};
+
 export default function StudentsTable({ students }: StudentsTableProps) {
   if (students.length === 0) {
     return (
@@ -105,11 +143,11 @@ export default function StudentsTable({ students }: StudentsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Aluno</TableHead>
+              <TableHead><SortableHeader sortKey="name">Aluno</SortableHeader></TableHead>
               <TableHead className="hidden md:table-cell">Contato</TableHead>
-              <TableHead className="hidden md:table-cell">Idade</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="hidden lg:table-cell">Matrícula</TableHead>
+              <TableHead className="hidden md:table-cell"><SortableHeader sortKey="birth_date">Idade</SortableHeader></TableHead>
+              <TableHead><SortableHeader sortKey="status">Status</SortableHeader></TableHead>
+              <TableHead className="hidden lg:table-cell"><SortableHeader sortKey="created_at">Matrícula</SortableHeader></TableHead>
               <TableHead className="hidden md:table-cell">Responsável</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
