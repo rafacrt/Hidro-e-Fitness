@@ -8,8 +8,8 @@ import type { ActiveTabFrequencia } from "@/app/frequencia/page";
 import { usePathname, useRouter } from 'next/navigation';
 
 const filters: { label: ActiveTabFrequencia; icon: React.ElementType }[] = [
-    { label: "Controle de Presença", icon: CheckCircle },
     { label: "Visão Geral", icon: Eye },
+    { label: "Controle de Presença", icon: CheckCircle },
     { label: "Histórico", icon: History },
 ]
 

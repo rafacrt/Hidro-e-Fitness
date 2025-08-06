@@ -15,7 +15,7 @@ import FrequenciaPorModalidade from '@/components/frequencia/frequencia-por-moda
 import { getUpcomingClasses } from '../dashboard/actions';
 import ControlePresencaTab from '@/components/frequencia/controle-presenca-tab';
 
-export type ActiveTabFrequencia = "Controle de Presença" | "Visão Geral" | "Histórico";
+export type ActiveTabFrequencia = "Visão Geral" | "Controle de Presença" | "Histórico";
 
 export default async function FrequenciaPage({
   searchParams,
@@ -25,7 +25,7 @@ export default async function FrequenciaPage({
   };
 }) {
   noStore();
-  const activeTab = (searchParams?.tab || "Controle de Presença") as ActiveTabFrequencia;
+  const activeTab = (searchParams?.tab || "Visão Geral") as ActiveTabFrequencia;
   
   const [settings, userProfile, upcomingClasses] = await Promise.all([
     getAcademySettings(),
@@ -48,6 +48,10 @@ export default async function FrequenciaPage({
               <Button variant="outline" className="w-full">
                 <Download className="mr-2 h-4 w-4" />
                 Exportar
+              </Button>
+               <Button className="w-full">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Marcar Presença
               </Button>
             </div>
           </div>
