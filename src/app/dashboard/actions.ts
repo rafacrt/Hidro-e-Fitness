@@ -16,33 +16,30 @@ export interface DashboardStats {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  try {
-    const supabase = await createSupabaseServerClient();
-    const today = new Date();
-    const startOfCurrentMonth = startOfMonth(today);
-    const endOfCurrentMonth = endOfMonth(today);
+  const supabase = await createSupabaseServerClient();
+  const today = new Date();
 
+  try {
     // Alunos Ativos
     const { count: activeStudents, error: studentsError } = await supabase
       .from('students')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'ativo');
+    if (studentsError) throw new Error(`Error fetching active students: ${studentsError.message}`);
 
-    if (studentsError) throw studentsError;
-
-    // Turmas Hoje (Lógica simplificada, verifica se o dia da semana corresponde)
+    // Turmas Hoje
     const dayOfWeekMap = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const currentDayOfWeek = dayOfWeekMap[today.getDay()];
-    
     const { count: classesToday, error: classesError } = await supabase
-        .from('classes')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'ativa')
-        .contains('days_of_week', [currentDayOfWeek]);
+      .from('classes')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'ativa')
+      .contains('days_of_week', [currentDayOfWeek]);
+    if (classesError) throw new Error(`Error fetching classes today: ${classesError.message}`);
 
-    if (classesError) throw classesError;
-    
     // Receita Mensal
+    const startOfCurrentMonth = startOfMonth(today);
+    const endOfCurrentMonth = endOfMonth(today);
     const { data: revenueData, error: revenueError } = await supabase
       .from('payments')
       .select('amount')
@@ -50,8 +47,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .eq('status', 'pago')
       .gte('paid_at', startOfCurrentMonth.toISOString())
       .lte('paid_at', endOfCurrentMonth.toISOString());
-
-    if (revenueError) throw revenueError;
+    if (revenueError) throw new Error(`Error fetching monthly revenue: ${revenueError.message}`);
     
     const monthlyRevenue = revenueData ? revenueData.reduce((sum, payment) => sum + (payment.amount || 0), 0) : 0;
 
