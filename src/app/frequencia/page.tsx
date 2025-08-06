@@ -12,6 +12,9 @@ import AcoesRapidasFrequencia from '@/components/frequencia/acoes-rapidas-freque
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import type { Database } from '@/lib/database.types';
 import PlaceholderContent from '@/components/relatorios/placeholder-content';
+import AulasDeHojeFrequencia from '@/components/frequencia/aulas-de-hoje-frequencia';
+import AlunosBaixaFrequencia from '@/components/frequencia/alunos-baixa-frequencia';
+import FrequenciaPorModalidade from '@/components/frequencia/frequencia-por-modalidade';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -60,10 +63,15 @@ export default function FrequenciaPage() {
           <FrequenciaFilters activeTab={activeTab} setActiveTab={setActiveTab} />
 
           {activeTab === 'Visão Geral' && (
-            <>
+            <div className="space-y-6">
               <FrequenciaStatsCards />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <AulasDeHojeFrequencia />
+                <FrequenciaPorModalidade />
+              </div>
+              <AlunosBaixaFrequencia />
               <AcoesRapidasFrequencia />
-            </>
+            </div>
           )}
 
           {activeTab === 'Controle de Presença' && (

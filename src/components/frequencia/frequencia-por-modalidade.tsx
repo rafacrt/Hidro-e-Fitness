@@ -2,12 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, BarChart } from "lucide-react";
 
-const modalities = [
-    { name: "Natação Adulto", today: "84/96", weeklyAvg: "85.2%", totalStudents: 96, overallAvg: 87.5, color: "bg-blue-500" },
-    { name: "Hidroginástica", today: "98/108", weeklyAvg: "89.1%", totalStudents: 108, overallAvg: 90.7, color: "bg-green-500" },
-    { name: "Natação Infantil", today: "32/40", weeklyAvg: "82.5%", totalStudents: 40, overallAvg: 80, color: "bg-yellow-500" },
-    { name: "Aqua Aeróbica", today: "39/45", weeklyAvg: "84.3%", totalStudents: 45, overallAvg: 86.7, color: "bg-purple-500" },
-    { name: "Funcional Aquático", today: "16/18", weeklyAvg: "91.2%", totalStudents: 18, overallAvg: 88.9, color: "bg-orange-500" },
+const modalities: any[] = [
+    // Dados removidos para implementação com dados reais
 ];
 
 export default function FrequenciaPorModalidade() {
@@ -18,7 +14,7 @@ export default function FrequenciaPorModalidade() {
                 <BarChart className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent className="space-y-6">
-                {modalities.map((mod, index) => (
+                {modalities.length > 0 ? modalities.map((mod, index) => (
                     <div key={index}>
                         <div className="flex justify-between items-center mb-1">
                             <div className="flex items-center">
@@ -37,7 +33,12 @@ export default function FrequenciaPorModalidade() {
                             <span>Total Alunos: {mod.totalStudents}</span>
                         </div>
                     </div>
-                ))}
+                )) : (
+                    <div className="text-center text-muted-foreground py-10">
+                        <BarChart className="mx-auto h-12 w-12 mb-4" />
+                        <p>Ainda não há dados de frequência para exibir.</p>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );

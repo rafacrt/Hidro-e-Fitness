@@ -4,31 +4,8 @@ import { Progress } from '@/components/ui/progress';
 import { AlertCircle } from 'lucide-react';
 import { Badge } from '../ui/badge';
 
-const students = [
-  { 
-    name: 'João Silva Santos', 
-    modality: 'Natação Adulto',
-    absences: 8,
-    totalClasses: 20,
-    lastPresence: '09/01/2024',
-    presenceRate: 60,
-  },
-  { 
-    name: 'Maria Oliveira', 
-    modality: 'Hidroginástica',
-    absences: 6,
-    totalClasses: 18,
-    lastPresence: '11/01/2024',
-    presenceRate: 66.7,
-  },
-  { 
-    name: 'Pedro Costa', 
-    modality: 'Natação Infantil',
-    absences: 5,
-    totalClasses: 15,
-    lastPresence: '07/01/2024',
-    presenceRate: 66.7,
-  },
+const students: any[] = [
+  // Dados removidos para implementação com dados reais
 ];
 
 export default function AlunosBaixaFrequencia() {
@@ -43,7 +20,7 @@ export default function AlunosBaixaFrequencia() {
         </Button>
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {students.map((student, index) => (
+        {students.length > 0 ? students.map((student, index) => (
           <div key={index} className="p-4 rounded-lg border bg-card shadow-sm">
             <div className="flex justify-between items-start">
                 <div>
@@ -73,7 +50,12 @@ export default function AlunosBaixaFrequencia() {
                 <Button size="sm">Contatar</Button>
             </div>
           </div>
-        ))}
+        )) : (
+            <div className="col-span-1 md:col-span-3 text-center text-muted-foreground py-10">
+                <AlertCircle className="mx-auto h-12 w-12 mb-4" />
+                <p>Nenhum aluno com baixa frequência detectado.</p>
+            </div>
+        )}
       </CardContent>
     </Card>
   );

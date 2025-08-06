@@ -7,39 +7,39 @@ export default function FrequenciaStatsCards() {
       <StatCard 
         title="Taxa de Presença Geral"
         value="87.5%"
-        change="+2.3% Média dos últimos 30 dias"
+        change="Média dos últimos 30 dias"
         changeType="increase"
-        period=""
+        period="(mock)"
         icon={Percent}
         iconBgColor="bg-green-100"
         iconColor="text-green-600"
       />
       <StatCard 
         title="Alunos Presentes Hoje"
-        value="156"
-        change="+12 De 178 alunos programados"
+        value="0"
+        change="De 0 alunos programados"
         changeType="increase"
-        period=""
+        period="(mock)"
         icon={Users}
         iconBgColor="bg-blue-100"
         iconColor="text-blue-600"
       />
       <StatCard 
         title="Faltas Não Justificadas"
-        value="18"
-        change="-5 Redução de 22% vs ontem"
+        value="0"
+        change="vs ontem"
         changeType="decrease"
-        period=""
+        period="(mock)"
         icon={XCircle}
         iconBgColor="bg-red-100"
         iconColor="text-red-600"
       />
       <StatCard 
         title="Aulas Realizadas"
-        value="24"
-        change="0 De 24 aulas programadas"
+        value="0"
+        change="De 0 aulas programadas"
         changeType="increase"
-        period=""
+        period="(mock)"
         icon={Activity}
         iconBgColor="bg-yellow-100"
         iconColor="text-yellow-600"
