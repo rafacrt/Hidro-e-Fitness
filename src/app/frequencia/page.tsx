@@ -8,12 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Download, PlusCircle } from 'lucide-react';
 import FrequenciaFilters from '@/components/frequencia/frequencia-filters';
 import FrequenciaStatsCards from '@/components/frequencia/frequencia-stats-cards';
-import FrequenciaPorModalidade from '@/components/frequencia/frequencia-por-modalidade';
-import AulasDeHojeFrequencia from '@/components/frequencia/aulas-de-hoje-frequencia';
-import AlunosBaixaFrequencia from '@/components/frequencia/alunos-baixa-frequencia';
 import AcoesRapidasFrequencia from '@/components/frequencia/acoes-rapidas-frequencia';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
-import { unstable_noStore as noStore } from 'next/cache';
 import type { Database } from '@/lib/database.types';
 import PlaceholderContent from '@/components/relatorios/placeholder-content';
 
@@ -66,11 +62,6 @@ export default function FrequenciaPage() {
           {activeTab === 'Visão Geral' && (
             <>
               <FrequenciaStatsCards />
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <FrequenciaPorModalidade />
-                <AulasDeHojeFrequencia />
-              </div>
-              <AlunosBaixaFrequencia />
               <AcoesRapidasFrequencia />
             </>
           )}

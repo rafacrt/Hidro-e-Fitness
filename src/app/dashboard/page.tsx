@@ -67,7 +67,7 @@ export default async function DashboardPage() {
               value={formatCurrency(stats.monthlyRevenue)}
               change=""
               changeType="increase"
-              period="(mock)"
+              period=""
               icon={DollarSign}
               iconBgColor="bg-green-100"
               iconColor="text-green-600"

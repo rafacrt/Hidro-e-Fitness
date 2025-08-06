@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Upload } from 'lucide-react';
 import FiltrosFinanceiro from '@/components/financeiro/filtros-financeiro';
 import FinanceiroStatCards from '@/components/financeiro/financeiro-stat-cards';
-import VisaoGeralCharts from '@/components/financeiro/visao-geral-charts';
 import AcoesRapidasFinanceiro from '@/components/financeiro/acoes-rapidas-financeiro';
 import { AddTransacaoDialog } from '@/components/financeiro/add-transacao-dialog';
 import { ExportFinanceiroDialog } from '@/components/financeiro/export-financeiro-dialog';
@@ -66,7 +65,6 @@ export default function FinanceiroPage() {
           {activeTab === 'Visão Geral' && (
             <div className="space-y-6">
               <FinanceiroStatCards />
-              <VisaoGeralCharts />
               <AcoesRapidasFinanceiro />
             </div>
           )}

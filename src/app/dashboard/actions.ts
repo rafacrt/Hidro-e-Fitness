@@ -19,7 +19,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   try {
     const supabase = await createSupabaseServerClient();
     const today = new Date();
-    
+    const startOfCurrentMonth = startOfMonth(today);
+    const endOfCurrentMonth = endOfMonth(today);
+
     // Alunos Ativos
     const { count: activeStudents, error: studentsError } = await supabase
       .from('students')
@@ -39,11 +41,24 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         .contains('days_of_week', [currentDayOfWeek]);
 
     if (classesError) throw classesError;
+    
+    // Receita Mensal
+    const { data: revenueData, error: revenueError } = await supabase
+      .from('payments')
+      .select('amount')
+      .eq('type', 'receita')
+      .eq('status', 'pago')
+      .gte('paid_at', startOfCurrentMonth.toISOString())
+      .lte('paid_at', endOfCurrentMonth.toISOString());
+
+    if (revenueError) throw revenueError;
+    
+    const monthlyRevenue = revenueData.reduce((sum, payment) => sum + (payment.amount || 0), 0);
 
     return {
       activeStudents: activeStudents || 0,
       classesToday: classesToday || 0,
-      monthlyRevenue: 0, // Mockado pois a tabela payments não existe
+      monthlyRevenue: monthlyRevenue,
       attendanceRate: 87, // Frequência mockada por enquanto
     };
   } catch (error) {
