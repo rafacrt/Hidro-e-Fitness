@@ -12,6 +12,7 @@ import { getStudents } from './actions';
 import { unstable_noStore as noStore } from 'next/cache';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import type { Database } from '@/lib/database.types';
+import { mockStudents } from '@/lib/mock-data';
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -39,11 +40,15 @@ export default async function AlunosPage({
   const query = searchParams?.query || '';
   const status = searchParams?.status || 'all';
 
-  const [allStudents, academySettings, userProfile] = await Promise.all([
+  const [dbStudents, academySettings, userProfile] = await Promise.all([
     getStudents(),
     getAcademySettings(),
     getUserProfile()
   ]);
+
+  const allStudents = (process.env.NODE_ENV === 'development' && dbStudents.length === 0)
+    ? mockStudents
+    : dbStudents;
 
   const filteredStudents = filterStudents(allStudents, query, status);
 
