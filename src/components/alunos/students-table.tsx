@@ -107,7 +107,7 @@ export default function StudentsTable({ students }: StudentsTableProps) {
             <TableRow>
               <TableHead>Aluno</TableHead>
               <TableHead className="hidden md:table-cell">Contato</TableHead>
-              <TableHead className="hidden lg:table-cell">Idade</TableHead>
+              <TableHead className="hidden md:table-cell">Idade</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="hidden lg:table-cell">Matrícula</TableHead>
               <TableHead className="hidden md:table-cell">Responsável</TableHead>
@@ -118,108 +118,110 @@ export default function StudentsTable({ students }: StudentsTableProps) {
             {students.map((student) => {
               const ageInfo = calculateAge(student.birth_date);
               return (
-                <TableRow key={student.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback className="bg-cyan-100 text-cyan-700 font-semibold">{getInitials(student.name)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{student.name}</p>
-                        <p className="text-sm text-muted-foreground md:hidden">
-                          {student.email || formatPhone(student.phone)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">CPF: {formatCPF(student.cpf)}</p>
-                        {student.medical_observations && (
-                          <div className="flex items-center text-yellow-600 text-xs mt-1">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            Observações médicas
+                <EditStudentForm student={student} key={student.id}>
+                  <TableRow className="cursor-pointer">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarFallback className="bg-cyan-100 text-cyan-700 font-semibold">{getInitials(student.name)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{student.name}</p>
+                          <p className="text-sm text-muted-foreground md:hidden">
+                            {student.email || formatPhone(student.phone)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">CPF: {formatCPF(student.cpf)}</p>
+                          {student.medical_observations && (
+                            <div className="flex items-center text-yellow-600 text-xs mt-1">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Observações médicas
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          <span>{student.email}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          <span>{formatPhone(student.phone)}</span>
+                        </div>
+                        {student.is_whatsapp && (
+                          <div className="flex items-center gap-2 text-green-600">
+                            <MessageSquare className="h-4 w-4" />
+                            <span>WhatsApp</span>
                           </div>
                         )}
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="space-y-1 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        <span>{student.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        <span>{formatPhone(student.phone)}</span>
-                      </div>
-                      {student.is_whatsapp && (
-                        <div className="flex items-center gap-2 text-green-600">
-                          <MessageSquare className="h-4 w-4" />
-                          <span>WhatsApp</span>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {ageInfo && (
+                        <div className="flex flex-col">
+                          <span>{ageInfo.age} anos</span>
+                          {ageInfo.isMinor && (
+                            <Badge variant="outline" className="mt-1 font-normal bg-yellow-100 text-yellow-800 border-yellow-200 w-fit">
+                                Menor de idade
+                            </Badge>
+                          )}
                         </div>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {ageInfo && (
-                      <div className="flex flex-col">
-                        <span>{ageInfo.age} anos</span>
-                        {ageInfo.isMinor && (
-                          <Badge variant="outline" className="mt-1 font-normal bg-yellow-100 text-yellow-800 border-yellow-200 w-fit">
-                              Menor de idade
-                          </Badge>
-                        )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={cn('font-medium capitalize', statusStyles[student.status || 'inativo'])}>
+                        {student.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>{format(new Date(student.created_at), 'dd/MM/yyyy')}</span>
                       </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={cn('font-medium capitalize', statusStyles[student.status || 'inativo'])}>
-                      {student.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>{format(new Date(student.created_at), 'dd/MM/yyyy')}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {ageInfo?.isMinor ? (
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                          <p className="font-medium text-foreground">{student.responsible_name}</p>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
-                            <span>{formatPhone(student.responsible_phone)}</span>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {ageInfo?.isMinor ? (
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            <p className="font-medium text-foreground">{student.responsible_name}</p>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              <span>{formatPhone(student.responsible_phone)}</span>
+                            </div>
                           </div>
-                        </div>
-                    ) : (
-                        <span className="text-muted-foreground">Maior de idade</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                      <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Abrir menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <EditStudentForm student={student}>
-                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                      <Pencil className="mr-2 h-4 w-4" />
-                                      Editar
-                                  </DropdownMenuItem>
-                              </EditStudentForm>
-                              <DeleteStudentAlert studentId={student.id}>
-                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
-                                      <Trash2 className="mr-2 h-4 w-4" />
-                                      Excluir
-                                  </DropdownMenuItem>
-                              </DeleteStudentAlert>
-                          </DropdownMenuContent>
-                      </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+                      ) : (
+                          <span className="text-muted-foreground">Maior de idade</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+                                <span className="sr-only">Abrir menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <EditStudentForm student={student}>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Editar
+                                    </DropdownMenuItem>
+                                </EditStudentForm>
+                                <DeleteStudentAlert studentId={student.id}>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500" onClick={(e) => e.stopPropagation()}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Excluir
+                                    </DropdownMenuItem>
+                                </DeleteStudentAlert>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                </EditStudentForm>
               )
             })}
           </TableBody>

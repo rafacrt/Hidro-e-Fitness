@@ -190,9 +190,35 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
       });
     }
   };
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+       form.reset({
+        name: student.name,
+        cpf: student.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') || '',
+        birthDate: student.birth_date ? new Date(student.birth_date) : undefined,
+        email: student.email || '',
+        phone: student.phone || '',
+        isWhatsApp: student.is_whatsapp || false,
+        cep: student.cep?.replace(/(\d{5})(\d{3})/, '$1-$2') || '',
+        street: student.street || '',
+        number: student.number || '',
+        complement: student.complement || '',
+        neighborhood: student.neighborhood || '',
+        city: student.city || '',
+        state: student.state || '',
+        responsibleName: student.responsible_name || '',
+        responsiblePhone: student.responsible_phone || '',
+        medicalObservations: student.medical_observations || '',
+        status: student.status === 'ativo' ? 'ativo' : 'inativo',
+    });
+    }
+  }
+
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
