@@ -14,6 +14,7 @@ import AlunosBaixaFrequencia from '@/components/frequencia/alunos-baixa-frequenc
 import FrequenciaPorModalidade from '@/components/frequencia/frequencia-por-modalidade';
 import { getUpcomingClasses } from '../dashboard/actions';
 import ControlePresencaTab from '@/components/frequencia/controle-presenca-tab';
+import { MarkAttendanceDialog } from '@/components/frequencia/mark-attendance-dialog';
 
 export type ActiveTabFrequencia = "Visão Geral" | "Controle de Presença" | "Histórico";
 
@@ -49,10 +50,12 @@ export default async function FrequenciaPage({
                 <Download className="mr-2 h-4 w-4" />
                 Exportar
               </Button>
-               <Button className="w-full">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Marcar Presença
-              </Button>
+               <MarkAttendanceDialog classes={upcomingClasses}>
+                <Button className="w-full">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Marcar Presença
+                </Button>
+              </MarkAttendanceDialog>
             </div>
           </div>
           
@@ -66,7 +69,7 @@ export default async function FrequenciaPage({
                 <FrequenciaPorModalidade />
               </div>
               <AlunosBaixaFrequencia />
-              <AcoesRapidasFrequencia />
+              <AcoesRapidasFrequencia classes={upcomingClasses} />
             </div>
           )}
 
