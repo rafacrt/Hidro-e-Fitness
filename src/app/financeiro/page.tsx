@@ -17,9 +17,11 @@ import FluxoDeCaixaTab from '@/components/financeiro/fluxo-de-caixa-tab';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { NavContent } from '@/components/layout/nav-content';
+import { getTransactions } from './actions';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
+type Payment = Database['public']['Tables']['payments']['Row'];
 
 type ActiveTab = "Visão Geral" | "Recebimentos" | "Pagamentos" | "Fluxo de Caixa";
 
@@ -27,15 +29,24 @@ export default function FinanceiroPage() {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
+  const [recebimentos, setRecebimentos] = React.useState<Payment[]>([]);
+  const [pagamentos, setPagamentos] = React.useState<Payment[]>([]);
 
   React.useEffect(() => {
     async function loadData() {
-      const [academySettings, profile] = await Promise.all([getAcademySettings(), getUserProfile()]);
+      const [academySettings, profile, receitasData, despesasData] = await Promise.all([
+        getAcademySettings(), 
+        getUserProfile(),
+        getTransactions('receita'),
+        getTransactions('despesa'),
+      ]);
       setSettings(academySettings);
       setUserProfile(profile);
+      setRecebimentos(receitasData);
+      setPagamentos(despesasData);
     }
     loadData();
-  }, []);
+  }, [activeTab]);
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -75,9 +86,9 @@ export default function FinanceiroPage() {
             </div>
           )}
 
-          {activeTab === 'Recebimentos' && <RecebimentosTab />}
+          {activeTab === 'Recebimentos' && <RecebimentosTab recebimentos={recebimentos} />}
           
-          {activeTab === 'Pagamentos' && <PagamentosTab />}
+          {activeTab === 'Pagamentos' && <PagamentosTab pagamentos={pagamentos} />}
 
           {activeTab === 'Fluxo de Caixa' && <FluxoDeCaixaTab />}
 

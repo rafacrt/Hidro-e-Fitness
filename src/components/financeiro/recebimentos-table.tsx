@@ -1,3 +1,6 @@
+
+'use client';
+
 import {
   Table,
   TableBody,
@@ -9,63 +12,35 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MessageSquare, Receipt, FileEdit } from 'lucide-react';
+import { MessageSquare, Receipt, FileEdit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import type { Database } from '@/lib/database.types';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { DetalhesTransacaoDialog } from './detalhes-transacao-dialog';
+import { EditTransacaoDialog } from './edit-transacao-dialog';
+import { DeleteTransacaoAlert } from './delete-transacao-alert';
 
+type Payment = Database['public']['Tables']['payments']['Row'];
 
-const receipts = [
-  {
-    studentName: 'Maria Santos Silva',
-    studentPhone: '(11) 99999-8888',
-    studentAvatar: 'MS',
-    description: 'Mensalidade Janeiro 2024',
-    modality: 'Natação Adulto',
-    value: 'R$ 180,00',
-    dueDate: '14/01/2024',
-    paidDate: 'Pago em 14/01/2024',
-    status: 'Pago',
-    statusClass: 'bg-green-100 text-green-800 border-green-200',
-    paymentMethod: 'PIX',
-  },
-  {
-    studentName: 'João Pedro Costa',
-    studentPhone: '(11) 88888-7777',
-    studentAvatar: 'JP',
-    description: 'Mensalidade Janeiro 2024',
-    modality: 'Hidroginástica',
-    value: 'R$ 160,00',
-    dueDate: '09/01/2024',
-    paidDate: '6 dias em atraso',
-    status: 'Vencido',
-    statusClass: 'bg-red-100 text-red-800 border-red-200',
-  },
-  {
-    studentName: 'Ana Clara Oliveira',
-    studentPhone: '(11) 77777-6666',
-    studentAvatar: 'AC',
-    description: 'Mensalidade Janeiro 2024',
-    modality: 'Natação + Hidroginástica',
-    value: 'R$ 200,00',
-    dueDate: '19/01/2024',
-    status: 'Pendente',
-    statusClass: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  },
-  {
-    studentName: 'Carlos Eduardo Lima',
-    studentPhone: '(11) 66666-5555',
-    studentAvatar: 'CE',
-    description: 'Mensalidade Janeiro 2024',
-    modality: 'Natação Infantil',
-    value: 'R$ 150,00',
-    dueDate: '24/01/2024',
-    status: 'Pendente',
-    statusClass: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  },
-];
+interface RecebimentosTableProps {
+  recebimentos: Payment[];
+}
 
-export default function RecebimentosTable() {
+const statusConfig = {
+    pago: { text: 'Pago', class: 'bg-green-100 text-green-800 border-green-200' },
+    pendente: { text: 'Pendente', class: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+    vencido: { text: 'Vencido', class: 'bg-red-100 text-red-800 border-red-200' },
+};
+
+const formatCurrency = (value: number | null) => {
+    if (!value) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+};
+
+export default function RecebimentosTable({ recebimentos }: RecebimentosTableProps) {
   const { toast } = useToast();
   
   const handleActionClick = (description: string) => {
@@ -80,7 +55,6 @@ export default function RecebimentosTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Aluno</TableHead>
             <TableHead>Descrição</TableHead>
             <TableHead>Valor</TableHead>
             <TableHead>Vencimento</TableHead>
@@ -90,76 +64,68 @@ export default function RecebimentosTable() {
         </TableHeader>
         <TableBody>
           <TooltipProvider>
-            {receipts.map((item, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">{item.studentAvatar}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium text-sm">{item.studentName}</p>
-                      <p className="text-xs text-muted-foreground">{item.studentPhone}</p>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <p className="font-medium text-sm">{item.description}</p>
-                  <p className="text-xs text-muted-foreground">{item.modality}</p>
-                </TableCell>
-                <TableCell>
-                  <p className="font-medium text-sm">{item.value}</p>
-                </TableCell>
-                <TableCell>
-                  <p className="font-medium text-sm">{item.dueDate}</p>
-                  {item.paidDate && (
-                      <p className={cn("text-xs", item.status === 'Vencido' ? 'text-red-600' : 'text-green-600')}>
-                          {item.paidDate}
-                      </p>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={cn("font-medium", item.statusClass)}>
-                    {item.status}
-                  </Badge>
-                  {item.paymentMethod && <p className="text-xs text-muted-foreground mt-1">{item.paymentMethod}</p>}
-                </TableCell>
-                <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => handleActionClick('Ver detalhes')}>
-                                <Receipt className="h-4 w-4" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Ver Detalhes</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => handleActionClick('Enviar Lembrete')}>
-                                <MessageSquare className="h-4 w-4" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Enviar Lembrete</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => handleActionClick('Editar')}>
-                              <FileEdit className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Editar</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {recebimentos.map((item) => {
+              const statusInfo = statusConfig[item.status as keyof typeof statusConfig] || statusConfig.pendente;
+              return (
+              <DetalhesTransacaoDialog transacao={item} key={item.id}>
+                <TableRow className="cursor-pointer">
+                  <TableCell>
+                    <p className="font-medium text-sm">{item.description}</p>
+                    <p className="text-xs text-muted-foreground">{item.payment_method}</p>
+                  </TableCell>
+                  <TableCell>
+                    <p className="font-medium text-sm">{formatCurrency(item.amount)}</p>
+                  </TableCell>
+                  <TableCell>
+                    <p className="font-medium text-sm">{format(new Date(item.due_date), 'dd/MM/yyyy', { locale: ptBR })}</p>
+                    {item.paid_at && <p className="text-xs text-muted-foreground">Pago em {format(new Date(item.paid_at), 'dd/MM/yyyy')}</p>}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={cn("font-medium capitalize", statusInfo.class)}>
+                      {statusInfo.text}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" onClick={(e) => {e.stopPropagation(); handleActionClick('Enviar Lembrete')}}>
+                                  <MessageSquare className="h-4 w-4" />
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Enviar Lembrete</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <EditTransacaoDialog transacao={item}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                                  <FileEdit className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Editar</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </EditTransacaoDialog>
+                        <DeleteTransacaoAlert transacaoId={item.id}>
+                          <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={(e) => e.stopPropagation()}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Excluir</p>
+                              </TooltipContent>
+                          </Tooltip>
+                        </DeleteTransacaoAlert>
+                      </div>
+                  </TableCell>
+                </TableRow>
+              </DetalhesTransacaoDialog>
+            )})}
           </TooltipProvider>
         </TableBody>
       </Table>
