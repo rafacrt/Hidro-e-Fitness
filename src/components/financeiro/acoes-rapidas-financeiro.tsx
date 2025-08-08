@@ -1,15 +1,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '../ui/button';
-import { Plus, Download, Upload, FileText } from 'lucide-react';
+import { Plus, Download, Upload } from 'lucide-react';
 import { AddTransacaoDialog } from './add-transacao-dialog';
 import { ExportFinanceiroDialog } from './export-financeiro-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const actions = [
   { label: 'Nova Transação', icon: Plus, component: AddTransacaoDialog },
   { label: 'Exportar Relatório', icon: Download, component: ExportFinanceiroDialog },
   { label: 'Importar Extrato', icon: Upload },
-  { label: 'Conciliação Bancária', icon: FileText },
 ];
 
 const IconWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -19,6 +19,15 @@ const IconWrapper = ({ children }: { children: React.ReactNode }) => (
 )
 
 export default function AcoesRapidasFinanceiro() {
+  const { toast } = useToast();
+
+  const handleActionClick = (label: string) => {
+    toast({
+      title: 'Funcionalidade em desenvolvimento',
+      description: `A ação "${label}" será implementada em breve.`,
+    });
+  };
+
   const buttonContent = (action: (typeof actions)[0]) => (
     <Button variant="outline" className="h-auto flex-col p-6 gap-2 w-full">
         <IconWrapper>
@@ -45,7 +54,7 @@ export default function AcoesRapidasFinanceiro() {
               )
             }
             return (
-              <div key={index} className="w-full cursor-pointer">
+              <div key={index} className="w-full cursor-pointer" onClick={() => handleActionClick(action.label)}>
                 {buttonContent(action)}
               </div>
             )

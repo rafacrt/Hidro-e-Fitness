@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Building, DollarSign, FileEdit } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const payments = [
   {
@@ -74,6 +76,15 @@ const payments = [
 ];
 
 export default function PagamentosTable() {
+  const { toast } = useToast();
+  
+  const handleActionClick = (description: string) => {
+    toast({
+        title: 'Funcionalidade em desenvolvimento',
+        description: `A ação "${description}" será implementada em breve.`,
+    })
+  }
+  
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -89,51 +100,67 @@ export default function PagamentosTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {payments.map((item, index) => (
-            <TableRow key={index}>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm">{item.description}</p>
-                    {item.isRecurring && <Badge variant="outline">Recorrente</Badge>}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Building className="h-4 w-4" />
-                    <span className='text-sm'>{item.supplier}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                 <Badge variant="outline" className={cn("font-normal", item.categoryClass)}>{item.category}</Badge>
-              </TableCell>
-              <TableCell>
-                <p className="font-medium text-sm">{item.value}</p>
-              </TableCell>
-              <TableCell>
-                <p className="font-medium text-sm">{item.dueDate}</p>
-                {item.paidDate && (
-                    <p className={cn("text-xs", item.status === 'Vencido' ? 'text-red-600' : 'text-green-600')}>
-                        {item.paidDate}
-                    </p>
-                )}
-              </TableCell>
-              <TableCell>
-                 <Badge variant="outline" className={cn("font-medium", item.statusClass)}>
-                   {item.status}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon">
-                          <DollarSign className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                          <FileEdit className="h-4 w-4" />
-                      </Button>
+          <TooltipProvider>
+            {payments.map((item, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm">{item.description}</p>
+                      {item.isRecurring && <Badge variant="outline">Recorrente</Badge>}
                   </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                      <Building className="h-4 w-4" />
+                      <span className='text-sm'>{item.supplier}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={cn("font-normal", item.categoryClass)}>{item.category}</Badge>
+                </TableCell>
+                <TableCell>
+                  <p className="font-medium text-sm">{item.value}</p>
+                </TableCell>
+                <TableCell>
+                  <p className="font-medium text-sm">{item.dueDate}</p>
+                  {item.paidDate && (
+                      <p className={cn("text-xs", item.status === 'Vencido' ? 'text-red-600' : 'text-green-600')}>
+                          {item.paidDate}
+                      </p>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={cn("font-medium", item.statusClass)}>
+                    {item.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => handleActionClick('Pagar')}>
+                              <DollarSign className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Pagar</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => handleActionClick('Editar')}>
+                              <FileEdit className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Editar</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TooltipProvider>
         </TableBody>
       </Table>
     </div>

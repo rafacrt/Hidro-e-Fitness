@@ -11,6 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { MessageSquare, Receipt, FileEdit } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+
 
 const receipts = [
   {
@@ -63,6 +66,15 @@ const receipts = [
 ];
 
 export default function RecebimentosTable() {
+  const { toast } = useToast();
+  
+  const handleActionClick = (description: string) => {
+    toast({
+        title: 'Funcionalidade em desenvolvimento',
+        description: `A ação "${description}" será implementada em breve.`,
+    })
+  }
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -77,55 +89,78 @@ export default function RecebimentosTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {receipts.map((item, index) => (
-            <TableRow key={index}>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">{item.studentAvatar}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium text-sm">{item.studentName}</p>
-                    <p className="text-xs text-muted-foreground">{item.studentPhone}</p>
+          <TooltipProvider>
+            {receipts.map((item, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">{item.studentAvatar}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-sm">{item.studentName}</p>
+                      <p className="text-xs text-muted-foreground">{item.studentPhone}</p>
+                    </div>
                   </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <p className="font-medium text-sm">{item.description}</p>
-                <p className="text-xs text-muted-foreground">{item.modality}</p>
-              </TableCell>
-              <TableCell>
-                <p className="font-medium text-sm">{item.value}</p>
-              </TableCell>
-              <TableCell>
-                <p className="font-medium text-sm">{item.dueDate}</p>
-                {item.paidDate && (
-                    <p className={cn("text-xs", item.status === 'Vencido' ? 'text-red-600' : 'text-green-600')}>
-                        {item.paidDate}
-                    </p>
-                )}
-              </TableCell>
-              <TableCell>
-                 <Badge variant="outline" className={cn("font-medium", item.statusClass)}>
-                   {item.status}
-                </Badge>
-                {item.paymentMethod && <p className="text-xs text-muted-foreground mt-1">{item.paymentMethod}</p>}
-              </TableCell>
-              <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon">
-                          <Receipt className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                          <MessageSquare className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                          <FileEdit className="h-4 w-4" />
-                      </Button>
-                  </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+                <TableCell>
+                  <p className="font-medium text-sm">{item.description}</p>
+                  <p className="text-xs text-muted-foreground">{item.modality}</p>
+                </TableCell>
+                <TableCell>
+                  <p className="font-medium text-sm">{item.value}</p>
+                </TableCell>
+                <TableCell>
+                  <p className="font-medium text-sm">{item.dueDate}</p>
+                  {item.paidDate && (
+                      <p className={cn("text-xs", item.status === 'Vencido' ? 'text-red-600' : 'text-green-600')}>
+                          {item.paidDate}
+                      </p>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={cn("font-medium", item.statusClass)}>
+                    {item.status}
+                  </Badge>
+                  {item.paymentMethod && <p className="text-xs text-muted-foreground mt-1">{item.paymentMethod}</p>}
+                </TableCell>
+                <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => handleActionClick('Ver detalhes')}>
+                                <Receipt className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Ver Detalhes</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => handleActionClick('Enviar Lembrete')}>
+                                <MessageSquare className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Enviar Lembrete</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => handleActionClick('Editar')}>
+                              <FileEdit className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Editar</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TooltipProvider>
         </TableBody>
       </Table>
     </div>
