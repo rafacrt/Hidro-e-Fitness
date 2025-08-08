@@ -37,7 +37,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Textarea } from '../ui/textarea';
 import { addTransaction } from '@/app/financeiro/actions';
@@ -174,24 +174,47 @@ export function AddTransacaoDialog({ children }: { children: React.ReactNode }) 
                 control={form.control}
                 name="due_date"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col pt-2">
+                  <FormItem className="flex flex-col">
                     <FormLabel>Data</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={'outline'}
-                            className={cn('pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
-                          >
-                            {field.value ? format(field.value, 'PPP', { locale: ptBR }) : <span>Escolha uma data</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                      </PopoverContent>
-                    </Popover>
+                     <Popover>
+                        <div className="relative flex items-center">
+                          <FormControl>
+                            <IMaskInput
+                              mask="00/00/0000"
+                              value={field.value ? format(field.value, 'dd/MM/yyyy') : ''}
+                              unmask={false}
+                              onAccept={(_value, mask) => {
+                                const parsedDate = parse(mask.unmaskedValue, 'ddMMyyyy', new Date());
+                                if (!isNaN(parsedDate.getTime()) && mask.unmaskedValue.length === 8) {
+                                  form.setValue('due_date', parsedDate, { shouldValidate: true });
+                                } else if (!mask.unmaskedValue) {
+                                  form.setValue('due_date', undefined as any, { shouldValidate: true });
+                                }
+                              }}
+                              className={cn(
+                                'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
+                              )}
+                              placeholder="dd/mm/aaaa"
+                            />
+                          </FormControl>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="absolute right-1 h-8 w-8 p-0">
+                              <span className="sr-only">Abrir calendário</span>
+                              <CalendarIcon className="h-4 w-4" />
+                            </Button>
+                          </PopoverTrigger>
+                        </div>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={(date) => {
+                              field.onChange(date);
+                            }}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
