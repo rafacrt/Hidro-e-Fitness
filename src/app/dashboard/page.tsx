@@ -74,10 +74,10 @@ export default async function DashboardPage() {
             />
             <StatCard 
               title="Taxa de Presença"
-              value={`${stats.attendanceRate}%`}
-              change=""
+              value={`${stats.attendanceRate.toFixed(1)}%`}
+              change="este mês"
               changeType="increase"
-              period="(mock)"
+              period=""
               icon={Percent}
               iconBgColor="bg-yellow-100"
               iconColor="text-yellow-600"

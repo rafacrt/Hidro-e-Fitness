@@ -12,7 +12,7 @@ export interface DashboardStats {
   activeStudents: number;
   classesToday: number;
   monthlyRevenue: number;
-  attendanceRate: number; // Manter mockado por enquanto
+  attendanceRate: number;
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -50,12 +50,29 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     if (revenueError) throw new Error(`Error fetching monthly revenue: ${revenueError.message}`);
     
     const monthlyRevenue = revenueData ? revenueData.reduce((sum, payment) => sum + (payment.amount || 0), 0) : 0;
+    
+    // Taxa de Presença (Mês Corrente)
+    const { data: attendanceData, error: attendanceError } = await supabase
+      .from('attendance')
+      .select('status')
+      .gte('date', startOfCurrentMonth.toISOString())
+      .lte('date', endOfCurrentMonth.toISOString());
+      
+    if (attendanceError) throw new Error(`Error fetching attendance data: ${attendanceError.message}`);
+
+    let attendanceRate = 0;
+    if (attendanceData && attendanceData.length > 0) {
+        const presentCount = attendanceData.filter(a => a.status === 'presente').length;
+        const totalCount = attendanceData.length;
+        attendanceRate = (presentCount / totalCount) * 100;
+    }
+
 
     return {
       activeStudents: activeStudents || 0,
       classesToday: classesToday || 0,
       monthlyRevenue: monthlyRevenue,
-      attendanceRate: 87, // Frequência mockada por enquanto
+      attendanceRate: attendanceRate,
     };
   } catch (error: any) {
     console.error('Error fetching dashboard stats:', error.message);

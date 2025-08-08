@@ -15,6 +15,7 @@ import FrequenciaPorModalidade from '@/components/frequencia/frequencia-por-moda
 import { getUpcomingClasses } from '../dashboard/actions';
 import ControlePresencaTab from '@/components/frequencia/controle-presenca-tab';
 import { MarkAttendanceDialog } from '@/components/frequencia/mark-attendance-dialog';
+import { getAttendanceStats } from './actions';
 
 export type ActiveTabFrequencia = "Visão Geral" | "Controle de Presença" | "Histórico";
 
@@ -28,10 +29,11 @@ export default async function FrequenciaPage({
   noStore();
   const activeTab = (searchParams?.tab || "Visão Geral") as ActiveTabFrequencia;
   
-  const [settings, userProfile, upcomingClasses] = await Promise.all([
+  const [settings, userProfile, upcomingClasses, stats] = await Promise.all([
     getAcademySettings(),
     getUserProfile(),
-    getUpcomingClasses()
+    getUpcomingClasses(),
+    getAttendanceStats(),
   ]);
   
   return (
@@ -63,7 +65,7 @@ export default async function FrequenciaPage({
 
           {activeTab === 'Visão Geral' && (
             <div className="space-y-6">
-              <FrequenciaStatsCards />
+              <FrequenciaStatsCards stats={stats} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <AulasDeHojeFrequencia classes={upcomingClasses} />
                 <FrequenciaPorModalidade />
