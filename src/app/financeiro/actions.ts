@@ -34,12 +34,11 @@ export async function addTransaction(formData: unknown) {
 
     const { error } = await supabase.from('payments').insert([
       {
-        description: parsedData.data.description,
+        description: `${parsedData.data.category} - ${parsedData.data.description}`,
         amount: amountAsNumber,
         type: parsedData.data.type,
         due_date: parsedData.data.due_date.toISOString(),
         paid_at: parsedData.data.status === 'pago' ? new Date().toISOString() : null,
-        category: parsedData.data.category,
         payment_method: parsedData.data.payment_method,
         status: parsedData.data.status,
       },
