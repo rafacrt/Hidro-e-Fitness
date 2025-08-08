@@ -6,6 +6,7 @@ import PagamentosContent from '@/components/pagamentos/pagamentos-content';
 import { getPayments, getPaymentStats } from './actions';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { getStudents } from '../alunos/actions';
+import { NavContent } from '@/components/layout/nav-content';
 
 export default async function PagamentosPage({
   searchParams,
@@ -29,7 +30,9 @@ export default async function PagamentosPage({
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar settings={academySettings} />
+      <Sidebar>
+        <NavContent settings={academySettings} />
+      </Sidebar>
       <div className="flex flex-col w-0 flex-1">
         <Header settings={academySettings} userProfile={userProfile} />
         <main className="flex-1 p-4 md:p-6 space-y-6">

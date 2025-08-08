@@ -21,6 +21,7 @@ import AlunosReport from '@/components/relatorios/alunos-report';
 import FrequenciaReport from '@/components/relatorios/frequencia-report';
 import PerformanceReport from '@/components/relatorios/performance-report';
 import PersonalizadosReport from '@/components/relatorios/personalizados-report';
+import { NavContent } from '@/components/layout/nav-content';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -114,7 +115,9 @@ export default function RelatoriosPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar settings={settings} />
+      <Sidebar>
+        <NavContent settings={settings} />
+      </Sidebar>
       <div className="flex flex-col w-0 flex-1">
         <Header settings={settings} userProfile={userProfile} />
         <main className="flex-1 p-4 md:p-6 space-y-6">

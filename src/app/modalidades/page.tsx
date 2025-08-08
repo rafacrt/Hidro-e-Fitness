@@ -16,6 +16,7 @@ import { AddModalityForm } from '@/components/modalidades/add-modality-form';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import PlaceholderContent from '@/components/relatorios/placeholder-content';
+import { NavContent } from '@/components/layout/nav-content';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -67,7 +68,9 @@ export default function ModalidadesPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar settings={settings} />
+      <Sidebar>
+        <NavContent settings={settings} />
+      </Sidebar>
       <div className="flex flex-col w-0 flex-1">
         <Header settings={settings} userProfile={userProfile} />
         <main className="flex-1 p-4 md:p-6 space-y-6">

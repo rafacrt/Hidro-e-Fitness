@@ -24,9 +24,11 @@ import { SearchClassDialog } from '@/components/turmas/search-class-dialog';
 import { getClasses } from './actions';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Database } from '@/lib/database.types';
-import { getAcademySettings } from '../configuracoes/actions';
+import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
+import { NavContent } from '@/components/layout/nav-content';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 type Instructor = Database['public']['Tables']['instructors']['Row'];
 type Modality = Database['public']['Tables']['modalities']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'] & { instructors: Pick<Instructor, 'name'> | null } & { modalities: Pick<Modality, 'name'> | null };
@@ -38,15 +40,18 @@ export default function TurmasPage() {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
   const [classes, setClasses] = React.useState<ClassRow[]>([]);
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
+  const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
 
   React.useEffect(() => {
     async function loadData() {
-      const [fetchedClasses, fetchedSettings] = await Promise.all([
+      const [fetchedClasses, fetchedSettings, fetchedProfile] = await Promise.all([
         getClasses(),
-        getAcademySettings()
+        getAcademySettings(),
+        getUserProfile(),
       ]);
       setClasses(fetchedClasses);
       setSettings(fetchedSettings);
+      setUserProfile(fetchedProfile);
     }
     loadData();
   }, [activeTab]);
@@ -54,9 +59,11 @@ export default function TurmasPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar settings={settings} />
+      <Sidebar>
+        <NavContent settings={settings} />
+      </Sidebar>
       <div className="flex flex-col w-0 flex-1">
-        <Header settings={settings} />
+        <Header settings={settings} userProfile={userProfile} />
         <main className="flex-1 p-4 md:p-6 space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>

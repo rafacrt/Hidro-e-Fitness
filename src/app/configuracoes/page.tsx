@@ -5,6 +5,7 @@ import AcademySettings from '@/components/configuracoes/academy-settings';
 import UserManagement from '@/components/configuracoes/user-management';
 import { getAcademySettings, getUserProfile, getUsers } from './actions';
 import { unstable_noStore as noStore } from 'next/cache';
+import { NavContent } from '@/components/layout/nav-content';
 
 export default async function ConfiguracoesPage() {
   noStore();
@@ -16,7 +17,9 @@ export default async function ConfiguracoesPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar settings={academySettings} />
+      <Sidebar>
+        <NavContent settings={academySettings} />
+      </Sidebar>
       <div className="flex flex-col w-0 flex-1">
         <Header settings={academySettings} userProfile={userProfile} />
         <main className="flex-1 p-4 md:p-6 space-y-6">

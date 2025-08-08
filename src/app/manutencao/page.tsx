@@ -18,10 +18,12 @@ import AgendamentosTab from '@/components/manutencao/agendamentos-tab';
 import ProdutosQuimicosTab from '@/components/manutencao/produtos-quimicos-tab';
 import type { Database } from '@/lib/database.types';
 import { getEquipments, getMaintenances } from './actions';
-import { getAcademySettings } from '../configuracoes/actions';
+import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import PlaceholderContent from '@/components/relatorios/placeholder-content';
+import { NavContent } from '@/components/layout/nav-content';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 type Equipment = Database['public']['Tables']['equipments']['Row'];
 type Maintenance = Database['public']['Tables']['maintenance_schedules']['Row'] & { equipments: Pick<Equipment, 'name'> | null };
 
@@ -32,11 +34,13 @@ export default function ManutencaoPage() {
   const [equipments, setEquipments] = React.useState<Equipment[]>([]);
   const [maintenances, setMaintenances] = React.useState<Maintenance[]>([]);
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
+  const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
 
   React.useEffect(() => {
     async function loadData() {
-      const academySettings = await getAcademySettings();
+      const [academySettings, profile] = await Promise.all([getAcademySettings(), getUserProfile()]);
       setSettings(academySettings);
+      setUserProfile(profile);
       
       if (activeTab === 'Equipamentos' || activeTab === 'Agendamentos' || activeTab === 'Visão Geral') {
         const [fetchedEquipments, fetchedMaintenances] = await Promise.all([
@@ -53,9 +57,11 @@ export default function ManutencaoPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar settings={settings} />
+      <Sidebar>
+        <NavContent settings={settings} />
+      </Sidebar>
       <div className="flex flex-col w-0 flex-1">
-        <Header settings={settings} />
+        <Header settings={settings} userProfile={userProfile} />
         <main className="flex-1 p-4 md:p-6 space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>

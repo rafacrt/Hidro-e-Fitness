@@ -13,6 +13,7 @@ import { unstable_noStore as noStore } from 'next/cache';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import type { Database } from '@/lib/database.types';
 import { mockStudents } from '@/lib/mock-data';
+import { NavContent } from '@/components/layout/nav-content';
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -87,7 +88,9 @@ export default async function AlunosPage({
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar settings={academySettings} />
+      <Sidebar>
+        <NavContent settings={academySettings} />
+      </Sidebar>
       <div className="flex flex-col w-0 flex-1">
         <Header settings={academySettings} userProfile={userProfile} />
         <main className="flex-1 p-4 md:p-6 space-y-6">

@@ -9,6 +9,7 @@ import { AddProfessorForm } from '@/components/professores/add-professor-form';
 import { getInstructors } from './actions';
 import { unstable_noStore as noStore } from 'next/cache';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
+import { NavContent } from '@/components/layout/nav-content';
 
 export default async function ProfessoresPage() {
   noStore();
@@ -20,7 +21,9 @@ export default async function ProfessoresPage() {
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar settings={academySettings} />
+      <Sidebar>
+        <NavContent settings={academySettings} />
+      </Sidebar>
       <div className="flex flex-col w-0 flex-1">
         <Header settings={academySettings} userProfile={userProfile} />
         <main className="flex-1 p-4 md:p-6 space-y-6">

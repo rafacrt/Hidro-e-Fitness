@@ -16,6 +16,7 @@ import { getUpcomingClasses } from '../dashboard/actions';
 import ControlePresencaTab from '@/components/frequencia/controle-presenca-tab';
 import { MarkAttendanceDialog } from '@/components/frequencia/mark-attendance-dialog';
 import { getAttendanceStats } from './actions';
+import { NavContent } from '@/components/layout/nav-content';
 
 export type ActiveTabFrequencia = "Visão Geral" | "Controle de Presença" | "Histórico";
 
@@ -38,7 +39,9 @@ export default async function FrequenciaPage({
   
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
-      <Sidebar settings={settings} />
+      <Sidebar>
+        <NavContent settings={settings} />
+      </Sidebar>
       <div className="flex flex-col w-0 flex-1">
         <Header settings={settings} userProfile={userProfile} />
         <main className="flex-1 p-4 md:p-6 space-y-6">
