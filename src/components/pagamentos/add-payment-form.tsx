@@ -37,6 +37,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { cn } from '@/lib/utils';
 import { IMaskInput } from 'react-imask';
+import type { Database } from '@/lib/database.types';
+import { getStudents } from '@/app/alunos/actions';
+
+type Student = Database['public']['Tables']['students']['Row'];
 
 const paymentFormSchema = z.object({
   student: z.string().min(1, 'É necessário selecionar um aluno.'),
@@ -48,16 +52,22 @@ const paymentFormSchema = z.object({
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
 const paymentMethods = ['PIX', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto'];
-const students = [
-  { id: '1', name: 'Maria Silva Santos', avatar: 'MS' },
-  { id: '2', name: 'João Pedro Costa', avatar: 'JP' },
-  { id: '3', name: 'Carlos Eduardo Lima', avatar: 'CE' },
-  { id: '4', name: 'Ana Clara Oliveira', avatar: 'AC' },
-];
 
 export function AddPaymentForm({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
+  const [students, setStudents] = React.useState<Student[]>([]);
   const { toast } = useToast();
+  
+  React.useEffect(() => {
+    if (open) {
+      const fetchStudents = async () => {
+        const studentData = await getStudents();
+        setStudents(studentData);
+      };
+      fetchStudents();
+    }
+  }, [open]);
+
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
@@ -67,7 +77,6 @@ export function AddPaymentForm({ children }: { children: React.ReactNode }) {
   });
 
   const onSubmit = (data: PaymentFormValues) => {
-    console.log(data);
     const studentName = students.find(s => s.id === data.student)?.name || 'Aluno';
     toast({
         title: "Pagamento Registrado!",
@@ -75,6 +84,15 @@ export function AddPaymentForm({ children }: { children: React.ReactNode }) {
     })
     setOpen(false);
     form.reset();
+  };
+
+  const getInitials = (name: string | null) => {
+    if (!name) return '';
+    const names = name.split(' ');
+    if (names.length > 1) {
+      return `${names[0][0]}${names[names.length - 1][0]}`;
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -106,7 +124,7 @@ export function AddPaymentForm({ children }: { children: React.ReactNode }) {
                                 <SelectItem key={s.id} value={s.id}>
                                     <div className="flex items-center gap-2">
                                         <Avatar className="h-6 w-6">
-                                            <AvatarFallback className="bg-cyan-100 text-cyan-700 text-xs">{s.avatar}</AvatarFallback>
+                                            <AvatarFallback className="bg-cyan-100 text-cyan-700 text-xs">{getInitials(s.name)}</AvatarFallback>
                                         </Avatar>
                                         <span>{s.name}</span>
                                     </div>

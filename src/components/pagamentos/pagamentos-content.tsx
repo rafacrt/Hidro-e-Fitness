@@ -24,15 +24,17 @@ import type { Database } from '@/lib/database.types';
 import type { PaymentStats } from '@/app/pagamentos/actions';
 
 type Payment = Database['public']['Tables']['payments']['Row'];
+type Student = Database['public']['Tables']['students']['Row'];
 
 interface PagamentosContentProps {
   payments: Payment[];
   stats: PaymentStats;
+  students: Student[];
 }
 
 type ActiveTab = "Visão Geral" | "Métodos de Pagamento" | "Planos e Preços" | "Histórico";
 
-export default function PagamentosContent({ payments, stats }: PagamentosContentProps) {
+export default function PagamentosContent({ payments, stats, students }: PagamentosContentProps) {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
 
   const renderHeaderButtons = () => {
@@ -94,10 +96,10 @@ export default function PagamentosContent({ payments, stats }: PagamentosContent
               <PerformanceMetodos />
             </div>
             <div>
-              <TransacoesRecentes />
+              <TransacoesRecentes payments={payments} students={students} />
             </div>
           </div>
-          <CobrancasPendentes />
+          <CobrancasPendentes payments={payments} students={students} />
           <AcoesRapidasPagamentos />
         </div>
       )}
