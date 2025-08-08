@@ -33,8 +33,8 @@ export async function getAttendanceStats(): Promise<AttendanceStats> {
     const { data: todayAttendance, error: todayError } = await supabase
       .from('attendance')
       .select('status')
-      .gte('date', startOfDay(today).toISOString())
-      .lte('date', endOfDay(today).toISOString());
+      .gte('created_at', startOfDay(today).toISOString())
+      .lte('created_at', endOfDay(today).toISOString());
 
     if (todayError) throw new Error(`Error fetching today's attendance: ${todayError.message}`);
 

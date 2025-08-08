@@ -55,8 +55,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     const { data: attendanceData, error: attendanceError } = await supabase
       .from('attendance')
       .select('status')
-      .gte('date', startOfCurrentMonth.toISOString())
-      .lte('date', endOfCurrentMonth.toISOString());
+      .gte('created_at', startOfCurrentMonth.toISOString())
+      .lte('created_at', endOfCurrentMonth.toISOString());
       
     if (attendanceError) throw new Error(`Error fetching attendance data: ${attendanceError.message}`);
 
