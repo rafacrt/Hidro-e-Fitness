@@ -15,8 +15,8 @@ import { getModalities } from './actions';
 import { AddModalityForm } from '@/components/modalidades/add-modality-form';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
-import PlaceholderContent from '@/components/relatorios/placeholder-content';
 import { NavContent } from '@/components/layout/nav-content';
+import PlanosPrecosTab from '@/components/modalidades/planos-precos-tab';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -59,9 +59,11 @@ export default function ModalidadesPage() {
           </>
         );
       case 'Visão Geral':
-          return <ModalitiesStatCards />;
+          return <ModalitiesStatCards modalities={modalities} />;
+      case 'Preços e Planos':
+          return <PlanosPrecosTab />;
       default:
-        return <PlaceholderContent title={activeTab} />;
+        return <p>Selecione uma aba</p>;
     }
   };
 

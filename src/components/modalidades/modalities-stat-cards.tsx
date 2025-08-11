@@ -1,12 +1,28 @@
+
+'use client';
+
 import StatCard from '@/components/dashboard/stat-card';
 import { Dumbbell, Users, DollarSign, Activity } from 'lucide-react';
+import type { Database } from '@/lib/database.types';
 
-export default function ModalitiesStatCards() {
+type Modality = Database['public']['Tables']['modalities']['Row'];
+
+interface ModalitiesStatCardsProps {
+  modalities: Modality[];
+}
+
+export default function ModalitiesStatCards({ modalities }: ModalitiesStatCardsProps) {
+  // NOTE: Total de Alunos e Receita Total são mockados por enquanto, pois exigem junções complexas.
+  const totalModalities = modalities.length;
+  const activeModalities = modalities.length; // Assuming all are active as there's no status field
+  const totalStudents = 266; // Mock
+  const totalRevenue = 46600; // Mock
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <StatCard 
         title="Total de Modalidades"
-        value="5"
+        value={totalModalities.toString()}
         change=""
         changeType="increase"
         period=""
@@ -16,7 +32,7 @@ export default function ModalitiesStatCards() {
       />
       <StatCard 
         title="Modalidades Ativas"
-        value="4"
+        value={activeModalities.toString()}
         change=""
         changeType="increase"
         period=""
@@ -26,8 +42,8 @@ export default function ModalitiesStatCards() {
       />
       <StatCard 
         title="Total de Alunos"
-        value="266"
-        change=""
+        value={totalStudents.toString()}
+        change="(mock)"
         changeType="increase"
         period=""
         icon={Users}
@@ -36,8 +52,8 @@ export default function ModalitiesStatCards() {
       />
       <StatCard 
         title="Receita Total"
-        value="R$ 46.600"
-        change=""
+        value={totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+        change="(mock)"
         changeType="increase"
         period=""
         icon={DollarSign}
