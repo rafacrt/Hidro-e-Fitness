@@ -41,7 +41,6 @@ export async function addTransaction(formData: unknown) {
         amount: amountAsNumber,
         type: parsedData.data.type,
         due_date: parsedData.data.due_date.toISOString(),
-        paid_at: parsedData.data.status === 'pago' ? new Date().toISOString() : null,
         payment_method: parsedData.data.payment_method,
         status: parsedData.data.status,
       },
@@ -106,7 +105,6 @@ export async function updateTransaction(id: string, formData: unknown) {
                 amount: amountAsNumber,
                 type: parsedData.data.type,
                 due_date: parsedData.data.due_date.toISOString(),
-                paid_at: parsedData.data.status === 'pago' ? new Date().toISOString() : null,
                 payment_method: parsedData.data.payment_method,
                 status: parsedData.data.status,
             })

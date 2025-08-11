@@ -35,7 +35,6 @@ export type Database = {
         Row: {
           class_id: string
           created_at: string
-          date: string
           id: string
           notes: string | null
           student_id: string
@@ -44,7 +43,6 @@ export type Database = {
         Insert: {
           class_id: string
           created_at?: string
-          date: string
           id?: string
           notes?: string | null
           student_id: string
@@ -53,7 +51,6 @@ export type Database = {
         Update: {
           class_id?: string
           created_at?: string
-          date?: string
           id?: string
           notes?: string | null
           student_id?: string
@@ -315,12 +312,10 @@ export type Database = {
       payments: {
         Row: {
           amount: number | null
-          category: string | null
           created_at: string
           description: string
           due_date: string
           id: string
-          paid_at: string | null
           payment_method: string | null
           status: string
           student_id: string | null
@@ -328,12 +323,10 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
-          category?: string | null
           created_at?: string
           description: string
           due_date: string
           id?: string
-          paid_at?: string | null
           payment_method?: string | null
           status?: string
           student_id?: string | null
@@ -341,12 +334,10 @@ export type Database = {
         }
         Update: {
           amount?: number | null
-          category?: string | null
           created_at?: string
           description?: string
           due_date?: string
           id?: string
-          paid_at?: string | null
           payment_method?: string | null
           status?: string
           student_id?: string | null
