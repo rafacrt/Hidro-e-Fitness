@@ -22,7 +22,6 @@ import AttendanceBatchActions from '@/components/turmas/attendance-batch-actions
 import { AddClassForm } from '@/components/turmas/add-class-form';
 import { SearchClassDialog } from '@/components/turmas/search-class-dialog';
 import { getClasses } from './actions';
-import { unstable_noStore as noStore } from 'next/cache';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { NavContent } from '@/components/layout/nav-content';
@@ -36,14 +35,15 @@ type ClassRow = Database['public']['Tables']['classes']['Row'] & { instructors: 
 type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença";
 
 export default function TurmasPage() {
-  noStore();
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
   const [classes, setClasses] = React.useState<ClassRow[]>([]);
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     async function loadData() {
+      setLoading(true);
       const [fetchedClasses, fetchedSettings, fetchedProfile] = await Promise.all([
         getClasses(),
         getAcademySettings(),
@@ -52,9 +52,10 @@ export default function TurmasPage() {
       setClasses(fetchedClasses);
       setSettings(fetchedSettings);
       setUserProfile(fetchedProfile);
+      setLoading(false);
     }
     loadData();
-  }, [activeTab]);
+  }, []);
 
 
   return (
@@ -88,28 +89,30 @@ export default function TurmasPage() {
           
           <TurmasFilters activeTab={activeTab} setActiveTab={setActiveTab} />
           
-          {activeTab === 'Visão Geral' && (
+          {loading && <p>Carregando...</p>}
+
+          {!loading && activeTab === 'Visão Geral' && (
             <div className="space-y-6">
-              <TurmasStatCards />
-              <AulasDeHoje />
+              <TurmasStatCards classes={classes} />
+              <AulasDeHoje classes={classes} />
               <AcoesRapidasTurmas />
             </div>
           )}
 
-          {activeTab === 'Grade de Horários' && (
-            <ScheduleGrid />
+          {!loading && activeTab === 'Grade de Horários' && (
+            <ScheduleGrid classes={classes} />
           )}
           
-          {activeTab === 'Gerenciar Turmas' && (
+          {!loading && activeTab === 'Gerenciar Turmas' && (
             <div className='space-y-6'>
-              <ManageClassesStatCards />
+              <ManageClassesStatCards classes={classes} />
               <ManageClassesFilters />
               <ManageClassesTable classes={classes} />
               <ManageClassesQuickActions />
             </div>
           )}
 
-          {activeTab === 'Controle de Presença' && (
+          {!loading && activeTab === 'Controle de Presença' && (
              <div className="space-y-6">
                 <AttendanceStatCards />
                 <AttendanceFilters />

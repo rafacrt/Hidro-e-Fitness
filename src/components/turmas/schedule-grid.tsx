@@ -6,24 +6,22 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Users, MapPin } from 'lucide-react';
 import { ScheduleLegend } from './schedule-legend';
-import { addDays, subDays, startOfWeek, endOfWeek, format, eachDayOfInterval } from 'date-fns';
+import { addDays, subDays, startOfWeek, endOfWeek, format, eachDayOfInterval, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import type { Database } from '@/lib/database.types';
+
+type ClassRow = Database['public']['Tables']['classes']['Row'];
+type Instructor = Database['public']['Tables']['instructors']['Row'];
+type Modality = Database['public']['Tables']['modalities']['Row'];
+type ClassData = ClassRow & { instructors: Pick<Instructor, 'name'> | null } & { modalities: Pick<Modality, 'name'> | null };
+
+interface ScheduleGridProps {
+  classes: ClassData[];
+}
 
 const times = Array.from({ length: 15 }, (_, i) => `${String(i + 7).padStart(2, '0')}:00`);
 
-const classes = [
-  { day: 'Segunda', start: '08:00', end: '09:00', title: 'Natação Adulto - Iniciante', instructor: 'Prof. Ana Silva', students: '12/15', location: 'Piscina 1', color: 'bg-blue-500', textColor: 'text-white' },
-  { day: 'Segunda', start: '09:00', end: '10:00', title: 'Hidroginástica', instructor: 'Prof. Carlos Santos', students: '18/20', location: 'Piscina 2', color: 'bg-green-500', textColor: 'text-white' },
-  { day: 'Segunda', start: '10:00', end: '11:00', title: 'Natação Infantil', instructor: 'Prof. Marina Costa', students: '8/10', location: 'Piscina 1', color: 'bg-yellow-500', textColor: 'text-white' },
-  { day: 'Segunda', start: '14:00', end: '15:00', title: 'Aqua Aeróbica', instructor: 'Prof. Roberto Lima', students: '11/15', location: 'Piscina 2', color: 'bg-purple-500', textColor: 'text-white' },
-  { day: 'Terça', start: '08:00', end: '09:00', title: 'Natação Adulto - Intermediário', instructor: 'Prof. Ana Silva', students: '14/15', location: 'Piscina 1', color: 'bg-blue-500', textColor: 'text-white' },
-  { day: 'Terça', start: '09:00', end: '10:00', title: 'Hidroginástica', instructor: 'Prof. Carlos Santos', students: '20/20', location: 'Piscina 2', color: 'bg-green-500', textColor: 'text-white' },
-  { day: 'Quarta', start: '07:00', end: '08:30', title: 'Natação Adulto - Avançado', instructor: 'Prof. Roberto Lima', students: '10/10', location: 'Piscina 1', color: 'bg-red-500', textColor: 'text-white' },
-  { day: 'Sexta', start: '15:30', end: '17:00', title: 'Natação Infantil', instructor: 'Prof. Marina Costa', students: '9/10', location: 'Piscina 1', color: 'bg-yellow-500', textColor: 'text-white' },
-];
-
-const dayNames = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 const dayNameMap: { [key: string]: number } = {
   'Domingo': 0,
   'Segunda': 1,
@@ -34,8 +32,27 @@ const dayNameMap: { [key: string]: number } = {
   'Sábado': 6,
 };
 
+const modalityColors: { [key: string]: string } = {
+  'Natação Adulto': 'bg-blue-500 text-white',
+  'Hidroginástica': 'bg-green-500 text-white',
+  'Natação Infantil': 'bg-yellow-500 text-white',
+  'Aqua Aeróbica': 'bg-purple-500 text-white',
+  'Natação Avançado': 'bg-red-500 text-white',
+  'default': 'bg-zinc-500 text-white',
+};
 
-export default function ScheduleGrid() {
+const getModalityColor = (modalityName: string | null | undefined) => {
+  if (!modalityName) return modalityColors.default;
+  for (const key in modalityColors) {
+    if (modalityName.includes(key)) {
+      return modalityColors[key];
+    }
+  }
+  return modalityColors.default;
+};
+
+
+export default function ScheduleGrid({ classes }: ScheduleGridProps) {
   const [currentDate, setCurrentDate] = React.useState(new Date());
 
   const startOfWeekDate = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -52,9 +69,7 @@ export default function ScheduleGrid() {
 
   const calculateRow = (time: string) => {
     const [hour, minute] = time.split(':').map(Number);
-    // Grid starts at 7:00. 1 hour = 4 rows (15 min each)
     const totalMinutes = (hour * 60 + minute) - (7 * 60);
-    // +1 because grid rows are 1-indexed
     return (totalMinutes / 15) + 1;
   };
 
@@ -112,37 +127,39 @@ export default function ScheduleGrid() {
               
               {/* Eventos da Agenda */}
               <div className="col-start-2 col-end-[-1] row-start-2 grid grid-cols-7 grid-rows-[repeat(60,24px)] pointer-events-none">
-                 {classes.map((cls, index) => {
-                    const colStart = dayNameMap[cls.day as keyof typeof dayNameMap];
-                    if (colStart === undefined) return null;
-                    
-                    const rowStart = calculateRow(cls.start);
-                    const rowEnd = calculateRow(cls.end);
+                 {classes.map((cls) => {
+                   return cls.days_of_week.map((day, dayIndex) => {
+                      const colStart = dayNameMap[day as keyof typeof dayNameMap];
+                      if (colStart === undefined) return null;
 
-                    return (
-                        <div
-                        key={index}
-                        className={cn(
-                            `p-2 rounded-lg shadow-md flex flex-col text-xs z-10 m-px overflow-hidden pointer-events-auto`,
-                            cls.color,
-                            cls.textColor
-                        )}
-                        style={{
-                            gridColumnStart: colStart,
-                            gridRow: `${rowStart} / ${rowEnd}`,
-                        }}
-                        >
-                            <p className="font-semibold">{cls.title}</p>
-                            <p className="text-xs opacity-90">{cls.instructor}</p>
-                            <div className="flex-grow"></div>
-                            <div className="flex items-center mt-1">
-                                <Users className="h-3 w-3 mr-1" /> {cls.students}
-                            </div>
-                            <div className="flex items-center">
-                                <MapPin className="h-3 w-3 mr-1" /> {cls.location}
-                            </div>
-                        </div>
-                    );
+                      const rowStart = calculateRow(cls.start_time);
+                      const rowEnd = calculateRow(cls.end_time);
+                      const colorClasses = getModalityColor(cls.modalities?.name);
+
+                      return (
+                          <div
+                          key={`${cls.id}-${dayIndex}`}
+                          className={cn(
+                              `p-2 rounded-lg shadow-md flex flex-col text-xs z-10 m-px overflow-hidden pointer-events-auto`,
+                              colorClasses
+                          )}
+                          style={{
+                              gridColumnStart: colStart + 1, // +1 because grid columns are 1-indexed
+                              gridRow: `${rowStart} / ${rowEnd}`,
+                          }}
+                          >
+                              <p className="font-semibold">{cls.name}</p>
+                              <p className="text-xs opacity-90">{cls.instructors?.name || 'N/A'}</p>
+                              <div className="flex-grow"></div>
+                              <div className="flex items-center mt-1">
+                                  <Users className="h-3 w-3 mr-1" /> 0/{cls.max_students}
+                              </div>
+                              <div className="flex items-center">
+                                  <MapPin className="h-3 w-3 mr-1" /> {cls.location}
+                              </div>
+                          </div>
+                      );
+                   })
                 })}
               </div>
             </div>

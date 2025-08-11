@@ -151,17 +151,26 @@ export async function deleteClass(id: string) {
   }
 }
 
-// TODO: Implementar busca de professores e modalidades
-export async function getInstructors() {
-    return [
-        { id: 'instr1', name: 'Prof. Ana Silva' },
-        { id: 'instr2', name: 'Prof. Carlos Santos' },
-    ];
+export async function getInstructorsForForm(): Promise<{ id: string, name: string }[]> {
+    try {
+        const supabase = await createSupabaseServerClient();
+        const { data, error } = await supabase.from('instructors').select('id, name');
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error("Error fetching instructors for form:", error);
+        return [];
+    }
 }
 
-export async function getModalities() {
-    return [
-        { id: 'mod1', name: 'Natação Adulto' },
-        { id: 'mod2', name: 'Hidroginástica' },
-    ];
+export async function getModalitiesForForm(): Promise<{ id: string, name: string }[]> {
+    try {
+        const supabase = await createSupabaseServerClient();
+        const { data, error } = await supabase.from('modalities').select('id, name');
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error("Error fetching modalities for form:", error);
+        return [];
+    }
 }

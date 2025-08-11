@@ -1,13 +1,29 @@
+
 import StatCard from '@/components/dashboard/stat-card';
 import { Users, Calendar, Percent, TrendingUp } from 'lucide-react';
+import type { Database } from '@/lib/database.types';
 
-export default function TurmasStatCards() {
+type ClassRow = Database['public']['Tables']['classes']['Row'];
+
+interface TurmasStatCardsProps {
+  classes: ClassRow[];
+}
+
+export default function TurmasStatCards({ classes }: TurmasStatCardsProps) {
+  const activeClasses = classes.filter(c => c.status === 'ativa').length;
+  // The following need real enrollment data to be calculated properly
+  const enrolledStudents = 0; // Mock
+  const totalCapacity = classes.reduce((sum, cls) => sum + (cls.max_students || 0), 0);
+  const occupancyRate = totalCapacity > 0 ? (enrolledStudents / totalCapacity) * 100 : 0;
+  const today = new Date().toLocaleString('pt-BR', { weekday: 'long' });
+  const classesToday = classes.filter(cls => cls.days_of_week.some(day => day.toLowerCase() === today.toLowerCase())).length;
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <StatCard 
         title="Turmas Ativas"
-        value="24"
-        change="+2 vs semana anterior"
+        value={activeClasses.toString()}
+        change=""
         changeType="increase"
         period=""
         icon={Calendar}
@@ -16,8 +32,8 @@ export default function TurmasStatCards() {
       />
       <StatCard 
         title="Alunos Matriculados"
-        value="342"
-        change="+12 vs semana anterior"
+        value={enrolledStudents.toString()}
+        change="(mock)"
         changeType="increase"
         period=""
         icon={Users}
@@ -26,8 +42,8 @@ export default function TurmasStatCards() {
       />
       <StatCard 
         title="Taxa de Ocupação"
-        value="87%"
-        change="+3% vs semana anterior"
+        value={`${occupancyRate.toFixed(0)}%`}
+        change="(mock)"
         changeType="increase"
         period=""
         icon={Percent}
@@ -36,8 +52,8 @@ export default function TurmasStatCards() {
       />
       <StatCard 
         title="Aulas Hoje"
-        value="16"
-        change="+8 vs semana anterior"
+        value={classesToday.toString()}
+        change=""
         changeType="increase"
         period=""
         icon={TrendingUp}

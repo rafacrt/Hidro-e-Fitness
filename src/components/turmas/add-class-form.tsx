@@ -35,7 +35,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addClass, getInstructors, getModalities } from '@/app/turmas/actions';
+import { addClass, getInstructorsForForm, getModalitiesForForm } from '@/app/turmas/actions';
 
 const classFormSchema = z.object({
   name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
@@ -55,12 +55,12 @@ type ClassFormValues = z.infer<typeof classFormSchema>;
 
 const locations = ['Piscina 1', 'Piscina 2', 'Piscina Terapêutica'];
 const weekdays = [
-  { id: 'seg', label: 'Segunda' },
-  { id: 'ter', label: 'Terça' },
-  { id: 'qua', label: 'Quarta' },
-  { id: 'qui', label: 'Quinta' },
-  { id: 'sex', label: 'Sexta' },
-  { id: 'sab', label: 'Sábado' },
+  { id: 'Segunda', label: 'Segunda' },
+  { id: 'Terça', label: 'Terça' },
+  { id: 'Quarta', label: 'Quarta' },
+  { id: 'Quinta', label: 'Quinta' },
+  { id: 'Sexta', label: 'Sexta' },
+  { id: 'Sábado', label: 'Sábado' },
 ];
 
 export function AddClassForm({ children }: { children: React.ReactNode }) {
@@ -71,13 +71,17 @@ export function AddClassForm({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     async function fetchData() {
-      const fetchedInstructors = await getInstructors();
-      const fetchedModalities = await getModalities();
+      const [fetchedInstructors, fetchedModalities] = await Promise.all([
+        getInstructorsForForm(),
+        getModalitiesForForm()
+      ]);
       setInstructors(fetchedInstructors);
       setModalities(fetchedModalities);
     }
-    fetchData();
-  }, []);
+    if (open) {
+      fetchData();
+    }
+  }, [open]);
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classFormSchema),

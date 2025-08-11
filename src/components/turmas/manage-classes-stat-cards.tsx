@@ -1,39 +1,54 @@
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, CheckCircle, Users, Percent } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Database } from '@/lib/database.types';
 
-const statCards = [
+type ClassRow = Database['public']['Tables']['classes']['Row'];
+
+interface ManageClassesStatCardsProps {
+  classes: ClassRow[];
+}
+
+export default function ManageClassesStatCards({ classes }: ManageClassesStatCardsProps) {
+  const totalClasses = classes.length;
+  const activeClasses = classes.filter(c => c.status === 'ativa').length;
+  // TODO: Fetch real student count per class to calculate this
+  const totalStudents = 0; 
+  const totalCapacity = classes.reduce((acc, c) => acc + (c.max_students || 0), 0);
+  const occupancyRate = totalCapacity > 0 ? (totalStudents / totalCapacity) * 100 : 0;
+  
+  const statCards = [
     {
         title: "Total de Turmas",
-        value: "5",
+        value: totalClasses.toString(),
         icon: Calendar,
         color: "text-blue-600",
         bgColor: "bg-blue-50"
     },
     {
         title: "Turmas Ativas",
-        value: "3",
+        value: activeClasses.toString(),
         icon: CheckCircle,
         color: "text-green-600",
         bgColor: "bg-green-50"
     },
     {
         title: "Alunos Matriculados",
-        value: "55",
+        value: "0", // Mock
         icon: Users,
         color: "text-orange-600",
         bgColor: "bg-orange-50"
     },
     {
         title: "Taxa de Ocupação",
-        value: "73%",
+        value: `${occupancyRate.toFixed(0)}%`, // Mock
         icon: Percent,
         color: "text-yellow-600",
         bgColor: "bg-yellow-50"
     }
-]
+  ]
 
-export default function ManageClassesStatCards() {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       {statCards.map((card, index) => (
