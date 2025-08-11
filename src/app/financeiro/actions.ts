@@ -33,13 +33,16 @@ export async function addTransaction(formData: unknown) {
     const supabase = await createSupabaseServerClient();
     
     // Convert price string "R$ 180,00" to number 180.00
-    const amountAsNumber = Number(parsedData.data.amount.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
+    let amountAsNumber = Number(parsedData.data.amount.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
+
+    if (parsedData.data.type === 'despesa') {
+      amountAsNumber = -Math.abs(amountAsNumber);
+    }
 
     const { error } = await supabase.from('payments').insert([
       {
         description: `${parsedData.data.category} - ${parsedData.data.description}`,
         amount: amountAsNumber,
-        type: parsedData.data.type,
         due_date: parsedData.data.due_date.toISOString(),
         payment_method: parsedData.data.payment_method,
         status: parsedData.data.status,
@@ -64,11 +67,18 @@ export async function addTransaction(formData: unknown) {
 export async function getTransactions(type: 'receita' | 'despesa'): Promise<Payment[]> {
     try {
         const supabase = await createSupabaseServerClient();
-        const { data, error } = await supabase
+        let query = supabase
             .from('payments')
             .select('*')
-            .eq('type', type)
             .order('created_at', { ascending: false });
+
+        if (type === 'receita') {
+            query = query.gt('amount', 0);
+        } else {
+            query = query.lt('amount', 0);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
             console.error('Supabase Error:', error);
@@ -96,14 +106,17 @@ export async function updateTransaction(id: string, formData: unknown) {
 
     try {
         const supabase = await createSupabaseServerClient();
-        const amountAsNumber = Number(parsedData.data.amount.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
+        let amountAsNumber = Number(parsedData.data.amount.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
+        
+        if (parsedData.data.type === 'despesa') {
+            amountAsNumber = -Math.abs(amountAsNumber);
+        }
 
         const { error } = await supabase
             .from('payments')
             .update({
                 description: `${parsedData.data.category} - ${parsedData.data.description}`,
                 amount: amountAsNumber,
-                type: parsedData.data.type,
                 due_date: parsedData.data.due_date.toISOString(),
                 payment_method: parsedData.data.payment_method,
                 status: parsedData.data.status,
