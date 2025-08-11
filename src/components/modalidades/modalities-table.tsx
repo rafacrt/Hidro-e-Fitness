@@ -25,14 +25,6 @@ interface ModalitiesTableProps {
   modalities: Modality[];
 }
 
-const formatCurrency = (value: number | null) => {
-    if (value === null) return 'N/A';
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
-};
-
 export default function ModalitiesTable({ modalities }: ModalitiesTableProps) {
   
   if (modalities.length === 0) {
@@ -55,7 +47,6 @@ export default function ModalitiesTable({ modalities }: ModalitiesTableProps) {
             <TableRow>
               <TableHead className="w-[40px]"><Checkbox /></TableHead>
               <TableHead>Modalidade</TableHead>
-              <TableHead>Preço</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -73,10 +64,6 @@ export default function ModalitiesTable({ modalities }: ModalitiesTableProps) {
                       <p className="text-sm text-muted-foreground truncate max-w-xs">{mod.description}</p>
                     </div>
                   </div>
-                </TableCell>
-                <TableCell>
-                  <p className="font-medium">{formatCurrency(mod.price)}</p>
-                  <p className="text-sm text-muted-foreground">por mês</p>
                 </TableCell>
                 <TableCell className="text-right">
                     <DropdownMenu>

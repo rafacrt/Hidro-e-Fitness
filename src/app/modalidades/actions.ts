@@ -10,7 +10,6 @@ type Modality = Database['public']['Tables']['modalities']['Row'];
 const modalityFormSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
   description: z.string().optional(),
-  price: z.coerce.number().min(0, 'O preço não pode ser negativo.'),
 });
 
 export async function getModalities(): Promise<Modality[]> {
@@ -50,7 +49,6 @@ export async function addModality(formData: unknown) {
       {
         name: parsedData.data.name,
         description: parsedData.data.description,
-        price: parsedData.data.price,
       },
     ]);
 
@@ -85,7 +83,6 @@ export async function updateModality(id: string, formData: unknown) {
       .update({
         name: parsedData.data.name,
         description: parsedData.data.description,
-        price: parsedData.data.price,
       })
       .eq('id', id);
 
