@@ -17,7 +17,7 @@ import FluxoDeCaixaTab from '@/components/financeiro/fluxo-de-caixa-tab';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { NavContent } from '@/components/layout/nav-content';
-import { getTransactions } from './actions';
+import { getFinancialSummary, getTransactions, type FinancialSummary } from './actions';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -31,19 +31,25 @@ export default function FinanceiroPage() {
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
   const [recebimentos, setRecebimentos] = React.useState<Payment[]>([]);
   const [pagamentos, setPagamentos] = React.useState<Payment[]>([]);
+  const [summary, setSummary] = React.useState<FinancialSummary | null>(null);
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     async function loadData() {
-      const [academySettings, profile, receitasData, despesasData] = await Promise.all([
+      setLoading(true);
+      const [academySettings, profile, receitasData, despesasData, financialSummary] = await Promise.all([
         getAcademySettings(), 
         getUserProfile(),
         getTransactions('receita'),
         getTransactions('despesa'),
+        getFinancialSummary(),
       ]);
       setSettings(academySettings);
       setUserProfile(profile);
       setRecebimentos(receitasData);
       setPagamentos(despesasData);
+      setSummary(financialSummary);
+      setLoading(false);
     }
     loadData();
   }, [activeTab]);
@@ -79,18 +85,20 @@ export default function FinanceiroPage() {
           
           <FiltrosFinanceiro activeTab={activeTab} setActiveTab={setActiveTab} />
 
-          {activeTab === 'Visão Geral' && (
+          {loading && <p>Carregando dados financeiros...</p>}
+
+          {!loading && activeTab === 'Visão Geral' && (
             <div className="space-y-6">
               <FinanceiroStatCards />
               <AcoesRapidasFinanceiro />
             </div>
           )}
 
-          {activeTab === 'Recebimentos' && <RecebimentosTab recebimentos={recebimentos} />}
+          {!loading && activeTab === 'Recebimentos' && <RecebimentosTab recebimentos={recebimentos} />}
           
-          {activeTab === 'Pagamentos' && <PagamentosTab pagamentos={pagamentos} />}
+          {!loading && activeTab === 'Pagamentos' && <PagamentosTab pagamentos={pagamentos} />}
 
-          {activeTab === 'Fluxo de Caixa' && <FluxoDeCaixaTab />}
+          {!loading && activeTab === 'Fluxo de Caixa' && summary && <FluxoDeCaixaTab summary={summary} />}
 
         </main>
       </div>

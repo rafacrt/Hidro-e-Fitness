@@ -8,6 +8,14 @@ import type { Database } from '@/lib/database.types';
 
 type Payment = Database['public']['Tables']['payments']['Row'];
 
+export interface FinancialSummary {
+  totalRevenue: number;
+  totalExpenses: number;
+  netFlow: number;
+  currentBalance: number;
+  transactions: Payment[];
+}
+
 const transactionFormSchema = z.object({
   type: z.enum(['receita', 'despesa'], { required_error: 'Selecione o tipo.' }),
   description: z.string().min(3, 'A descrição deve ter pelo menos 3 caracteres.'),
@@ -63,8 +71,7 @@ export async function addTransaction(formData: unknown) {
   }
 }
 
-
-export async function getTransactions(type: 'receita' | 'despesa'): Promise<Payment[]> {
+export async function getTransactions(type: 'receita' | 'despesa' | 'all'): Promise<Payment[]> {
     try {
         const supabase = await createSupabaseServerClient();
         let query = supabase
@@ -74,7 +81,7 @@ export async function getTransactions(type: 'receita' | 'despesa'): Promise<Paym
 
         if (type === 'receita') {
             query = query.gt('amount', 0);
-        } else {
+        } else if (type === 'despesa') {
             query = query.lt('amount', 0);
         }
 
@@ -90,6 +97,45 @@ export async function getTransactions(type: 'receita' | 'despesa'): Promise<Paym
         console.error('Unexpected Error:', error);
         return [];
     }
+}
+
+export async function getFinancialSummary(): Promise<FinancialSummary> {
+  try {
+    const transactions = await getTransactions('all');
+    
+    const summary = transactions.reduce((acc, t) => {
+      const amount = t.amount || 0;
+      if (amount > 0) {
+        acc.totalRevenue += amount;
+      } else {
+        acc.totalExpenses += amount;
+      }
+      acc.currentBalance += amount;
+      return acc;
+    }, {
+      totalRevenue: 0,
+      totalExpenses: 0,
+      netFlow: 0,
+      currentBalance: 0,
+    });
+
+    summary.netFlow = summary.totalRevenue + summary.totalExpenses;
+
+    return {
+      ...summary,
+      transactions,
+    };
+
+  } catch (error) {
+    console.error('Error in getFinancialSummary:', error);
+    return {
+      totalRevenue: 0,
+      totalExpenses: 0,
+      netFlow: 0,
+      currentBalance: 0,
+      transactions: [],
+    };
+  }
 }
 
 

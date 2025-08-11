@@ -1,21 +1,30 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { FinancialSummary } from "@/app/financeiro/actions";
 
-const analysisItems = [
-    { label: "Taxa de Crescimento:", value: "+12%", color: "text-green-600" },
-    { label: "Margem de Lucro:", value: "56%", color: "text-green-600" },
-    { label: "Maior Entrada:", value: "R$ 15.000,00" },
-    { label: "Maior Saída:", value: "R$ 7.500,00" },
-];
+interface FluxoDeCaixaSummaryProps {
+    summary: FinancialSummary;
+}
 
-const projectionItems = [
-    { label: "Receita Projetada (Fev):", value: "R$ 35.000,00" },
-    { label: "Despesas Projetadas (Fev):", value: "R$ 12.000,00" },
-    { label: "Lucro Projetado (Fev):", value: "R$ 23.000,00" },
-    { label: "Saldo Final Projetado:", value: "R$ 64.830,00" },
-];
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+};
 
-export default function FluxoDeCaixaSummary() {
+export default function FluxoDeCaixaSummary({ summary }: FluxoDeCaixaSummaryProps) {
+    const margin = summary.totalRevenue > 0 ? (summary.netFlow / summary.totalRevenue) * 100 : 0;
+    
+    const analysisItems = [
+        { label: "Margem de Lucro:", value: `${margin.toFixed(1)}%`, color: "text-green-600" },
+        // Outras análises podem ser adicionadas aqui
+    ];
+
+    const projectionItems = [
+        { label: "Receita Projetada (Fev):", value: "R$ 0,00" },
+        { label: "Despesas Projetadas (Fev):", value: "R$ 0,00" },
+        { label: "Lucro Projetado (Fev):", value: "R$ 0,00" },
+        { label: "Saldo Final Projetado:", value: "R$ 0,00" },
+    ];
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>

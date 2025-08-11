@@ -6,11 +6,16 @@ import FluxoDeCaixaSummary from "./fluxo-de-caixa-summary";
 import { Button } from "../ui/button";
 import { BarChart2, Calendar } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import type { FinancialSummary } from "@/app/financeiro/actions";
 
-export default function FluxoDeCaixaTab() {
+interface FluxoDeCaixaTabProps {
+    summary: FinancialSummary;
+}
+
+export default function FluxoDeCaixaTab({ summary }: FluxoDeCaixaTabProps) {
     return (
         <div className="space-y-6">
-            <FluxoDeCaixaStatCards />
+            <FluxoDeCaixaStatCards summary={summary} />
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Fluxo de Caixa Detalhado</CardTitle>
@@ -33,10 +38,10 @@ export default function FluxoDeCaixaTab() {
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                    <FluxoDeCaixaTable />
+                    <FluxoDeCaixaTable transactions={summary.transactions} />
                 </CardContent>
             </Card>
-            <FluxoDeCaixaSummary />
+            <FluxoDeCaixaSummary summary={summary} />
         </div>
     )
 }
