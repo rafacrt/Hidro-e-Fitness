@@ -31,24 +31,25 @@ export default function ModalidadesPage() {
   const [activeTab, setActiveTab] = React.useState<ActiveTabModalities>("Visão Geral");
   const [stats, setStats] = React.useState<{ totalStudents: number, totalRevenue: number }>({ totalStudents: 0, totalRevenue: 0 });
 
+  const loadData = async () => {
+    const [
+      fetchedModalities,
+      fetchedSettings,
+      fetchedProfile,
+      fetchedStats,
+    ] = await Promise.all([
+      getModalities(),
+      getAcademySettings(),
+      getUserProfile(),
+      getModalitiesStats(),
+    ]);
+    setModalities(fetchedModalities);
+    setSettings(fetchedSettings);
+    setUserProfile(fetchedProfile);
+    setStats(fetchedStats);
+  }
+
   React.useEffect(() => {
-    async function loadData() {
-      const [
-        fetchedModalities,
-        fetchedSettings,
-        fetchedProfile,
-        fetchedStats,
-      ] = await Promise.all([
-        getModalities(),
-        getAcademySettings(),
-        getUserProfile(),
-        getModalitiesStats(),
-      ]);
-      setModalities(fetchedModalities);
-      setSettings(fetchedSettings);
-      setUserProfile(fetchedProfile);
-      setStats(fetchedStats);
-    }
     loadData();
   }, []);
 
@@ -90,7 +91,7 @@ export default function ModalidadesPage() {
               <p className="text-muted-foreground">Gestão completa de modalidades e atividades</p>
             </div>
             <div className='flex gap-2 w-full md:w-auto'>
-                <AddModalityForm>
+                <AddModalityForm onSuccess={loadData}>
                     <Button className="w-full">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Nova Modalidade

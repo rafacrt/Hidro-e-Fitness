@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -38,7 +39,12 @@ const modalityFormSchema = z.object({
 
 type ModalityFormValues = z.infer<typeof modalityFormSchema>;
 
-export function AddModalityForm({ children }: { children: React.ReactNode }) {
+interface AddModalityFormProps {
+  children: React.ReactNode;
+  onSuccess: () => void;
+}
+
+export function AddModalityForm({ children, onSuccess }: AddModalityFormProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
 
@@ -60,6 +66,7 @@ export function AddModalityForm({ children }: { children: React.ReactNode }) {
       });
       setOpen(false);
       form.reset();
+      onSuccess(); // Chame a função de sucesso para recarregar os dados
     } else {
       toast({
         title: 'Erro ao cadastrar modalidade!',
