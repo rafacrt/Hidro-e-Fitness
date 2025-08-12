@@ -32,6 +32,32 @@ export async function getModalities(): Promise<Modality[]> {
   }
 }
 
+export async function getModalitiesStats() {
+    const supabase = await createSupabaseServerClient();
+
+    const { count: totalStudents, error: studentsError } = await supabase
+        .from('enrollments')
+        .select('*', { count: 'exact', head: true });
+
+    const { data: revenueData, error: revenueError } = await supabase
+        .from('payments')
+        .select('amount')
+        .gt('amount', 0);
+    
+    if (studentsError || revenueError) {
+        console.error('Error fetching modalities stats:', studentsError || revenueError);
+        return { totalStudents: 0, totalRevenue: 0 };
+    }
+
+    const totalRevenue = revenueData.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    
+    return {
+        totalStudents: totalStudents || 0,
+        totalRevenue: totalRevenue || 0,
+    }
+}
+
+
 export async function addModality(formData: unknown) {
   const parsedData = modalityFormSchema.safeParse(formData);
 

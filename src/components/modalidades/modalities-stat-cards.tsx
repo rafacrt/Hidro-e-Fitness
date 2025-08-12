@@ -9,14 +9,15 @@ type Modality = Database['public']['Tables']['modalities']['Row'];
 
 interface ModalitiesStatCardsProps {
   modalities: Modality[];
+  stats: {
+    totalStudents: number;
+    totalRevenue: number;
+  }
 }
 
-export default function ModalitiesStatCards({ modalities }: ModalitiesStatCardsProps) {
-  // NOTE: Total de Alunos e Receita Total são mockados por enquanto, pois exigem junções complexas.
+export default function ModalitiesStatCards({ modalities, stats }: ModalitiesStatCardsProps) {
   const totalModalities = modalities.length;
   const activeModalities = modalities.length; // Assuming all are active as there's no status field
-  const totalStudents = 266; // Mock
-  const totalRevenue = 46600; // Mock
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -42,8 +43,8 @@ export default function ModalitiesStatCards({ modalities }: ModalitiesStatCardsP
       />
       <StatCard 
         title="Total de Alunos"
-        value={totalStudents.toString()}
-        change="(mock)"
+        value={stats.totalStudents.toString()}
+        change=""
         changeType="increase"
         period=""
         icon={Users}
@@ -52,8 +53,8 @@ export default function ModalitiesStatCards({ modalities }: ModalitiesStatCardsP
       />
       <StatCard 
         title="Receita Total"
-        value={totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-        change="(mock)"
+        value={stats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+        change=""
         changeType="increase"
         period=""
         icon={DollarSign}

@@ -11,7 +11,7 @@ import QuickActionsModalities from '@/components/modalidades/quick-actions-modal
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Search } from 'lucide-react';
 import TableFilters from '@/components/modalidades/table-filters';
-import { getModalities } from './actions';
+import { getModalities, getModalitiesStats } from './actions';
 import { AddModalityForm } from '@/components/modalidades/add-modality-form';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
@@ -29,21 +29,25 @@ export default function ModalidadesPage() {
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
   const [activeTab, setActiveTab] = React.useState<ActiveTabModalities>("Visão Geral");
+  const [stats, setStats] = React.useState<{ totalStudents: number, totalRevenue: number }>({ totalStudents: 0, totalRevenue: 0 });
 
   React.useEffect(() => {
     async function loadData() {
       const [
         fetchedModalities,
         fetchedSettings,
-        fetchedProfile
+        fetchedProfile,
+        fetchedStats,
       ] = await Promise.all([
         getModalities(),
         getAcademySettings(),
-        getUserProfile()
+        getUserProfile(),
+        getModalitiesStats(),
       ]);
       setModalities(fetchedModalities);
       setSettings(fetchedSettings);
       setUserProfile(fetchedProfile);
+      setStats(fetchedStats);
     }
     loadData();
   }, []);
@@ -60,7 +64,7 @@ export default function ModalidadesPage() {
       case 'Visão Geral':
           return (
             <div className="space-y-6">
-              <ModalitiesStatCards modalities={modalities} />
+              <ModalitiesStatCards modalities={modalities} stats={stats} />
               <QuickActionsModalities />
             </div>
           );
@@ -86,10 +90,6 @@ export default function ModalidadesPage() {
               <p className="text-muted-foreground">Gestão completa de modalidades e atividades</p>
             </div>
             <div className='flex gap-2 w-full md:w-auto'>
-                <Button variant="outline" className="w-full">
-                    <Search className="mr-2 h-4 w-4" />
-                    Buscar
-                </Button>
                 <AddModalityForm>
                     <Button className="w-full">
                         <PlusCircle className="mr-2 h-4 w-4" />

@@ -3,10 +3,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Users, BarChart, DollarSign, Receipt } from "lucide-react"
 
 const stats = [
-    { title: "Planos Ativos", value: "6", icon: Receipt },
-    { title: "Total de Alunos", value: "296", icon: Users },
-    { title: "Preço Médio", value: "R$ 350,00", icon: DollarSign },
-    { title: "Receita Total", value: "R$ 73.202", icon: BarChart },
+    { title: "Planos Ativos", value: "0", icon: Receipt },
+    { title: "Total de Alunos", value: "0", icon: Users },
+    { title: "Preço Médio", value: "R$ 0,00", icon: DollarSign },
+    { title: "Receita Total", value: "R$ 0,00", icon: BarChart },
 ]
 
 export default function PlanosPrecosStats() {

@@ -1,101 +1,24 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Check, Edit, Trash2, Copy, AlertCircle, XCircle } from 'lucide-react';
 import { Separator } from "../ui/separator";
 
-const plans = [
-    {
-        title: "Natação Adulto - Mensal",
-        price: "R$ 180,00",
-        period: "por mês",
-        badge: "Mensal",
-        badgeClass: "bg-blue-100 text-blue-800",
-        students: 96,
-        revenue: "R$ 17.280",
-        benefits: ["Aulas ilimitadas", "Acesso à piscina", "Suporte técnico"],
-        restrictions: ["Válido apenas para natação adulto"],
-        highlight: false,
-    },
-    {
-        title: "Natação Adulto - Trimestral",
-        originalPrice: "R$ 540,00",
-        price: "R$ 486,00",
-        period: "por 3 meses",
-        badge: "Trimestral",
-        badgeClass: "bg-green-100 text-green-800",
-        students: 24,
-        revenue: "R$ 11.664",
-        benefits: ["Aulas ilimitadas", "Acesso à piscina", "Suporte técnico", "10% de desconto"],
-        restrictions: ["Válido apenas para natação adulto", "Pagamento à vista"],
-        discount: {
-            percentage: "10% de desconto",
-            saving: "Economia de R$ 54,00"
-        },
-        highlight: true,
-    },
-    {
-        title: "Hidroginástica - Mensal",
-        price: "R$ 160,00",
-        period: "por mês",
-        badge: "Mensal",
-        badgeClass: "bg-blue-100 text-blue-800",
-        students: 108,
-        revenue: "R$ 17.280",
-        benefits: ["Aulas ilimitadas", "Acesso à piscina", "Equipamentos inclusos"],
-        restrictions: ["Válido apenas para hidroginástica"],
-        highlight: false,
-    },
-    {
-        title: "Combo Natação + Hidro",
-        originalPrice: "R$ 340,00",
-        price: "R$ 289,00",
-        period: "por mês",
-        badge: "Mensal",
-        badgeClass: "bg-blue-100 text-blue-800",
-        students: 32,
-        revenue: "R$ 9.248",
-        benefits: ["Acesso a natação e hidroginástica", "Aulas ilimitadas", "Desconto especial"],
-        restrictions: ["Requer matrícula em ambas modalidades"],
-        discount: {
-            percentage: "15% de desconto",
-            saving: "Economia de R$ 51,00"
-        },
-        highlight: true,
-    },
-    {
-        title: "Natação Infantil - Semestral",
-        originalPrice: "R$ 900,00",
-        price: "R$ 765,00",
-        period: "por 6 meses",
-        badge: "Semestral",
-        badgeClass: "bg-purple-100 text-purple-800",
-        students: 18,
-        revenue: "R$ 13.770",
-        benefits: ["Aulas especializadas", "Material didático", "Acompanhamento individual", "15% de desconto"],
-        restrictions: ["Idade entre 3-12 anos", "Pagamento à vista"],
-        discount: {
-            percentage: "15% de desconto",
-            saving: "Economia de R$ 135,00"
-        },
-        highlight: true,
-    },
-    {
-        title: "Funcional Aquático - Premium",
-        price: "R$ 220,00",
-        period: "por mês",
-        badge: "Mensal",
-        badgeClass: "bg-blue-100 text-blue-800",
-        students: 18,
-        revenue: "R$ 3.960",
-        benefits: ["Treinos personalizados", "Equipamentos premium", "Avaliação física"],
-        restrictions: ["Requer avaliação física prévia"],
-        highlight: false,
-    }
-]
+const plans: any[] = []
 
 export default function PlanosList() {
+  if (plans.length === 0) {
+    return (
+        <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+                <h3 className="text-lg font-semibold">Nenhum plano encontrado</h3>
+                <p className="text-sm">Cadastre um novo plano para começar.</p>
+            </CardContent>
+        </Card>
+    )
+  }
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {plans.map((plan, index) => (
@@ -136,7 +59,7 @@ export default function PlanosList() {
                         <div>
                             <h4 className="font-semibold mb-2">Benefícios inclusos:</h4>
                             <ul className="space-y-1.5 text-sm text-muted-foreground">
-                                {plan.benefits.map((benefit, i) => (
+                                {plan.benefits.map((benefit: string, i: number) => (
                                     <li key={i} className="flex items-center gap-2">
                                         <Check className="h-4 w-4 text-green-500" />
                                         <span>{benefit}</span>
@@ -148,7 +71,7 @@ export default function PlanosList() {
                         <div>
                             <h4 className="font-semibold mb-2">Restrições:</h4>
                             <ul className="space-y-1.5 text-sm text-muted-foreground">
-                                {plan.restrictions.map((restriction, i) => (
+                                {plan.restrictions.map((restriction: string, i: number) => (
                                     <li key={i} className="flex items-center gap-2">
                                         <XCircle className="h-4 w-4 text-red-500" />
                                         <span>{restriction}</span>
