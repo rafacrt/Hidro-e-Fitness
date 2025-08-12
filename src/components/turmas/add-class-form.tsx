@@ -46,7 +46,6 @@ const classFormSchema = z.object({
   days_of_week: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'Você deve selecionar pelo menos um dia da semana.',
   }),
-  location: z.string().optional(),
   max_students: z.coerce.number().min(1, 'A turma deve ter pelo menos 1 vaga.'),
   status: z.enum(['ativa', 'inativa', 'lotada']).default('ativa'),
 });
@@ -106,7 +105,7 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
       });
       setOpen(false);
       form.reset();
-      onSuccess?.(); // Chame a função de sucesso para recarregar os dados
+      onSuccess?.();
     } else {
       toast({
         title: 'Erro ao cadastrar turma!',
@@ -148,7 +147,7 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Modalidade</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione..." />
@@ -168,7 +167,7 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Professor (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione..." />
