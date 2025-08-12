@@ -158,7 +158,12 @@ function ClassAttendance({ cls, index }: { cls: UpcomingClass; index: number }) 
 
 
 export default function ControlePresencaTab({ classes }: ControlePresencaTabProps) {
-  if (classes.length === 0) {
+  const today = new Date().toLocaleString('pt-BR', { weekday: 'long' });
+  const todayClasses = classes
+    .filter(cls => cls.days_of_week.some(day => day.toLowerCase() === today.toLowerCase()))
+    .sort((a, b) => a.start_time.localeCompare(b.start_time));
+    
+  if (todayClasses.length === 0) {
     return (
         <Card>
             <CardContent className="h-96 flex flex-col items-center justify-center text-center text-muted-foreground">
@@ -177,7 +182,7 @@ export default function ControlePresencaTab({ classes }: ControlePresencaTabProp
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible className="w-full" defaultValue={`class-0`}>
-          {classes.map((cls, index) => (
+          {todayClasses.map((cls, index) => (
             <ClassAttendance key={cls.id} cls={cls} index={index} />
           ))}
         </Accordion>
