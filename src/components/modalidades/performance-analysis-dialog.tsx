@@ -35,30 +35,34 @@ export function PerformanceAnalysisDialog({ children }: { children: React.ReactN
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4 h-[400px]">
-            <div>
+            <div className="flex flex-col h-full">
                 <h3 className="font-semibold text-center mb-2">Receita por Plano (R$)</h3>
-                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data} layout="vertical" margin={{ left: 100 }}>
-                        <XAxis type="number" hide />
-                        <YAxis dataKey="name" type="category" width={100} tickLine={false} axisLine={false} fontSize={10} />
-                        <Tooltip
-                            cursor={{ fill: 'hsl(var(--muted))' }}
-                            formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
-                        />
-                        <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
+                 <div className="relative h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data} layout="vertical" margin={{ left: 100 }}>
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" width={100} tickLine={false} axisLine={false} fontSize={10} />
+                            <Tooltip
+                                cursor={{ fill: 'hsl(var(--muted))' }}
+                                formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+                            />
+                            <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
-             <div>
+             <div className="flex flex-col h-full">
                 <h3 className="font-semibold text-center mb-2">Alunos por Plano</h3>
-                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data} layout="vertical" margin={{ left: 100 }}>
-                        <XAxis type="number" hide />
-                        <YAxis dataKey="name" type="category" width={100} tickLine={false} axisLine={false} fontSize={10} />
-                        <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} />
-                        <Bar dataKey="students" fill="hsl(var(--primary) / 0.7)" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
+                 <div className="relative h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data} layout="vertical" margin={{ left: 100 }}>
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" width={100} tickLine={false} axisLine={false} fontSize={10} />
+                            <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} />
+                            <Bar dataKey="students" fill="hsl(var(--primary) / 0.7)" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         </div>
         <div className="flex justify-end">
