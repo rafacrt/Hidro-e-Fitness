@@ -121,7 +121,7 @@ export function MatricularAlunoForm({ children, preselectedClassId }: Matricular
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Aluno</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um aluno..." />
@@ -143,7 +143,7 @@ export function MatricularAlunoForm({ children, preselectedClassId }: Matricular
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Turma</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!preselectedClassId}>
+                  <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value} disabled={!!preselectedClassId}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione uma turma..." />
