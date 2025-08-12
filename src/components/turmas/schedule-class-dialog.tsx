@@ -24,14 +24,16 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import type { Database } from '@/lib/database.types';
 
-const classes = [
-  { id: '1', name: 'Natação Adulto - Intermediário' },
-  { id: '2', name: 'Hidroginástica' },
-  { id: '3', name: 'Natação Infantil' },
-];
+type ClassRow = Database['public']['Tables']['classes']['Row'];
 
-export function ScheduleClassDialog({ children }: { children: React.ReactNode }) {
+interface ScheduleClassDialogProps {
+  children: React.ReactNode;
+  classes: ClassRow[];
+}
+
+export function ScheduleClassDialog({ children, classes }: ScheduleClassDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedClass, setSelectedClass] = React.useState<string | null>(null);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());

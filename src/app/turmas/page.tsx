@@ -93,7 +93,7 @@ export default function TurmasPage() {
             <div className="space-y-6">
               <TurmasStatCards classes={classes} enrollments={enrollments} />
               <AulasDeHoje classes={classes} />
-              <AcoesRapidasTurmas classes={classes} />
+              <AcoesRapidasTurmas classes={classes} onSuccess={loadData} />
             </div>
           )}
 

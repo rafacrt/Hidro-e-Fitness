@@ -16,6 +16,7 @@ type ClassRow = Database['public']['Tables']['classes']['Row'];
 
 interface AcoesRapidasTurmasProps {
   classes: ClassRow[];
+  onSuccess: () => void;
 }
 
 const actions = [
@@ -31,7 +32,7 @@ const IconWrapper = ({ children }: { children: React.ReactNode }) => (
     </div>
 )
 
-export default function AcoesRapidasTurmas({ classes }: AcoesRapidasTurmasProps) {
+export default function AcoesRapidasTurmas({ classes, onSuccess }: AcoesRapidasTurmasProps) {
   const { toast } = useToast();
 
   const handleActionClick = (label: string) => {
@@ -61,7 +62,14 @@ export default function AcoesRapidasTurmas({ classes }: AcoesRapidasTurmasProps)
             const ActionComponent = action.component;
 
             if (ActionComponent) {
-              if (action.label === 'Marcar Presença') {
+              if (action.label === 'Nova Turma') {
+                return (
+                  <ActionComponent key={index} onSuccess={onSuccess}>
+                    {buttonContent}
+                  </ActionComponent>
+                );
+              }
+              if (action.label === 'Agendar Aula' || action.label === 'Marcar Presença') {
                 return (
                   <ActionComponent key={index} classes={classes}>
                     {buttonContent}
