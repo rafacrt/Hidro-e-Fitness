@@ -4,25 +4,25 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '../ui/button';
-import { PlusCircle, CheckCircle, DollarSign, CalendarPlus } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { PlusCircle, DollarSign } from 'lucide-react';
 import { AddModalityForm } from './add-modality-form';
+import type { ActiveTabModalities } from '@/app/modalidades/page';
 
 const actions = [
-  { label: 'Nova Modalidade', icon: PlusCircle, component: AddModalityForm },
-  { label: 'Ativar Selecionadas', icon: CheckCircle },
-  { label: 'Ajustar Preços', icon: DollarSign },
-  { label: 'Criar Turmas', icon: CalendarPlus },
+  { label: 'Nova Modalidade', icon: PlusCircle, component: AddModalityForm, action: 'add' },
+  { label: 'Ajustar Preços', icon: DollarSign, action: 'prices' },
 ];
 
-export default function QuickActionsModalities() {
-  const { toast } = useToast();
+interface QuickActionsModalitiesProps {
+    setActiveTab: (tab: ActiveTabModalities) => void;
+}
 
-  const handleActionClick = (label: string) => {
-    toast({
-      title: 'Funcionalidade em desenvolvimento',
-      description: `A ação "${label}" será implementada em breve.`,
-    });
+export default function QuickActionsModalities({ setActiveTab }: QuickActionsModalitiesProps) {
+
+  const handleActionClick = (action: 'add' | 'prices') => {
+    if (action === 'prices') {
+      setActiveTab('Preços e Planos');
+    }
   };
 
   return (
@@ -52,7 +52,7 @@ export default function QuickActionsModalities() {
             }
 
             return (
-                <div key={index} onClick={() => handleActionClick(action.label)} className="w-full cursor-pointer">
+                <div key={index} onClick={() => handleActionClick(action.action as 'prices')} className="w-full cursor-pointer">
                     {buttonContent}
                 </div>
             )

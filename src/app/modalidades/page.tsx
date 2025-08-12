@@ -9,7 +9,7 @@ import ModalitiesFilters from '@/components/modalidades/modalities-filters';
 import ModalitiesTable from '@/components/modalidades/modalities-table';
 import QuickActionsModalities from '@/components/modalidades/quick-actions-modalities';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import TableFilters from '@/components/modalidades/table-filters';
 import { getModalities, getModalitiesStats } from './actions';
 import { AddModalityForm } from '@/components/modalidades/add-modality-form';
@@ -65,7 +65,7 @@ export default function ModalidadesPage() {
           return (
             <div className="space-y-6">
               <ModalitiesStatCards modalities={modalities} stats={stats} />
-              <QuickActionsModalities />
+              <QuickActionsModalities setActiveTab={setActiveTab} />
             </div>
           );
       case 'Preços e Planos':
@@ -93,7 +93,7 @@ export default function ModalidadesPage() {
                 <AddModalityForm>
                     <Button className="w-full">
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Nova
+                        Nova Modalidade
                     </Button>
                 </AddModalityForm>
             </div>

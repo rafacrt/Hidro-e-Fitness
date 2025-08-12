@@ -5,6 +5,9 @@ import PlanosPrecosStats from './planos-precos-stats';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PlanosList from './planos-list';
 import PlanosPrecosActions from './planos-precos-actions';
+import { Button } from '../ui/button';
+import { PlusCircle } from 'lucide-react';
+import { AddPlanForm } from './add-plan-form';
 
 export default function PlanosPrecosTab() {
     return (
