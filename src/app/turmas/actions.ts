@@ -10,6 +10,8 @@ type ClassRow = Database['public']['Tables']['classes']['Row'];
 type Instructor = Database['public']['Tables']['instructors']['Row'];
 type Modality = Database['public']['Tables']['modalities']['Row'];
 type Enrollment = Database['public']['Tables']['enrollments']['Row'];
+type Student = Database['public']['Tables']['students']['Row'];
+
 
 const classFormSchema = z.object({
   name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
@@ -246,6 +248,30 @@ export async function getEnrollments(): Promise<Enrollment[]> {
     return data;
   } catch (error) {
     console.error('Unexpected Error fetching enrollments:', error);
+    return [];
+  }
+}
+
+export async function getEnrolledStudents(classId: string): Promise<Pick<Student, 'id' | 'name'>[]> {
+  if (!classId) return [];
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from('enrollments')
+      .select('students (id, name)')
+      .eq('class_id', classId);
+
+    if (error) {
+      console.error('Error fetching enrolled students:', error);
+      return [];
+    }
+
+    // A estrutura do retorno é [{ students: { id, name } }, ...]
+    // Precisamos extrair o objeto student de cada item.
+    return data.map(item => item.students).filter((student): student is Pick<Student, 'id' | 'name'> => student !== null);
+
+  } catch (error) {
+    console.error('Unexpected error fetching enrolled students:', error);
     return [];
   }
 }

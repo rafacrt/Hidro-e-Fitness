@@ -78,7 +78,7 @@ export default function TurmasPage() {
                 <AddClassForm>
                   <Button className="w-full">
                       <PlusCircle className="mr-2 h-4 w-4" />
-                      Nova
+                      Nova Turma
                   </Button>
                 </AddClassForm>
             </div>
@@ -92,7 +92,7 @@ export default function TurmasPage() {
             <div className="space-y-6">
               <TurmasStatCards classes={classes} enrollments={enrollments} />
               <AulasDeHoje classes={classes} />
-              <AcoesRapidasTurmas />
+              <AcoesRapidasTurmas classes={classes} />
             </div>
           )}
 

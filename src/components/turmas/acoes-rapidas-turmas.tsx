@@ -10,6 +10,13 @@ import { AddClassForm } from './add-class-form';
 import { MatricularAlunoForm } from './matricular-aluno-form';
 import { ScheduleClassDialog } from './schedule-class-dialog';
 import { MarkAttendanceDialog } from './mark-attendance-dialog';
+import type { Database } from '@/lib/database.types';
+
+type ClassRow = Database['public']['Tables']['classes']['Row'];
+
+interface AcoesRapidasTurmasProps {
+  classes: ClassRow[];
+}
 
 const actions = [
   { label: 'Nova Turma', icon: CalendarPlus, component: AddClassForm },
@@ -24,7 +31,7 @@ const IconWrapper = ({ children }: { children: React.ReactNode }) => (
     </div>
 )
 
-export default function AcoesRapidasTurmas() {
+export default function AcoesRapidasTurmas({ classes }: AcoesRapidasTurmasProps) {
   const { toast } = useToast();
 
   const handleActionClick = (label: string) => {
@@ -54,6 +61,13 @@ export default function AcoesRapidasTurmas() {
             const ActionComponent = action.component;
 
             if (ActionComponent) {
+              if (action.label === 'Marcar Presença') {
+                return (
+                  <ActionComponent key={index} classes={classes}>
+                    {buttonContent}
+                  </ActionComponent>
+                )
+              }
               return (
                  <ActionComponent key={index}>
                    {buttonContent}
