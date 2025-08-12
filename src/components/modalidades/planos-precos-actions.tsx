@@ -38,7 +38,6 @@ export default function PlanosPrecosActions() {
           {actions.map((action, index) => {
              const buttonContent = (
               <Button
-                key={index}
                 variant={action.variant as any}
                 className="h-auto p-4 flex items-center justify-center gap-2 w-full"
               >
