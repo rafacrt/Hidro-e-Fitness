@@ -6,7 +6,7 @@ import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import TurmasFilters from '@/components/turmas/turmas-filters';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import TurmasStatCards from '@/components/turmas/turmas-stat-cards';
 import AulasDeHoje from '@/components/turmas/aulas-de-hoje';
 import AcoesRapidasTurmas from '@/components/turmas/acoes-rapidas-turmas';
@@ -20,7 +20,6 @@ import AttendanceFilters from '@/components/turmas/attendance-filters';
 import AttendanceTable from '@/components/turmas/attendance-table';
 import AttendanceBatchActions from '@/components/turmas/attendance-batch-actions';
 import { AddClassForm } from '@/components/turmas/add-class-form';
-import { SearchClassDialog } from '@/components/turmas/search-class-dialog';
 import { getClasses } from './actions';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
@@ -72,12 +71,6 @@ export default function TurmasPage() {
               <p className="text-muted-foreground">Gestão completa de turmas e horários</p>
             </div>
             <div className='flex gap-2 w-full md:w-auto'>
-                <SearchClassDialog>
-                  <Button variant="outline" className="w-full">
-                      <Search className="mr-2 h-4 w-4" />
-                      Buscar
-                  </Button>
-                </SearchClassDialog>
                 <AddClassForm>
                   <Button className="w-full">
                       <PlusCircle className="mr-2 h-4 w-4" />
