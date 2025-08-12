@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -6,10 +7,11 @@ import { Button } from '../ui/button';
 import { CalendarPlus, UserPlus, CalendarCheck, BarChart2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AddClassForm } from './add-class-form';
+import { MatricularAlunoForm } from './matricular-aluno-form';
 
 const actions = [
   { label: 'Nova Turma', icon: CalendarPlus, component: AddClassForm },
-  { label: 'Matricular Aluno', icon: UserPlus },
+  { label: 'Matricular Aluno', icon: UserPlus, component: MatricularAlunoForm },
   { label: 'Agendar Aula', icon: CalendarCheck },
   { label: 'Marcar Presença', icon: BarChart2 },
 ];
@@ -47,11 +49,13 @@ export default function AcoesRapidasTurmas() {
                 </Button>
             );
 
-            if (action.label === 'Nova Turma') {
+            const ActionComponent = action.component;
+
+            if (ActionComponent) {
               return (
-                 <AddClassForm key={index}>
+                 <ActionComponent key={index}>
                    {buttonContent}
-                </AddClassForm>
+                </ActionComponent>
               )
             }
 

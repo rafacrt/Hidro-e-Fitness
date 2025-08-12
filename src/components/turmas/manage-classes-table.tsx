@@ -10,7 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Clock, MapPin, Edit, User, Trash2, MoreHorizontal, Users } from 'lucide-react';
+import { Clock, MapPin, Edit, User, Trash2, MoreHorizontal, Users, UserPlus } from 'lucide-react';
 import { Card } from '../ui/card';
 import { cn } from '@/lib/utils';
 import { Progress } from '../ui/progress';
@@ -18,6 +18,7 @@ import type { Database } from '@/lib/database.types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { DeleteClassAlert } from './delete-class-alert';
 import { EditClassForm } from './edit-class-form';
+import { MatricularAlunoForm } from './matricular-aluno-form';
 
 type Instructor = Database['public']['Tables']['instructors']['Row'];
 type Modality = Database['public']['Tables']['modalities']['Row'];
@@ -134,16 +135,22 @@ export default function ManageClassesTable({ classes }: ManageClassesTableProps)
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
+                                <MatricularAlunoForm preselectedClassId={cls.id}>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                        <UserPlus className="mr-2 h-4 w-4" />
+                                        Matricular Aluno
+                                    </DropdownMenuItem>
+                                </MatricularAlunoForm>
+                                <DropdownMenuItem>
+                                    <User className="mr-2 h-4 w-4" />
+                                    Ver Alunos
+                                </DropdownMenuItem>
                                 <EditClassForm classData={cls}>
                                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                         <Edit className="mr-2 h-4 w-4" />
                                         Editar
                                     </DropdownMenuItem>
                                 </EditClassForm>
-                                <DropdownMenuItem>
-                                    <User className="mr-2 h-4 w-4" />
-                                    Ver Alunos
-                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DeleteClassAlert classId={cls.id}>
                                     <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">

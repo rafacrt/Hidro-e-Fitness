@@ -133,19 +133,19 @@ export type Database = {
       enrollments: {
         Row: {
           class_id: string
-          enrollment_date: string
+          created_at: string
           id: string
           student_id: string
         }
         Insert: {
           class_id: string
-          enrollment_date?: string
+          created_at?: string
           id?: string
           student_id: string
         }
         Update: {
           class_id?: string
-          enrollment_date?: string
+          created_at?: string
           id?: string
           student_id?: string
         }
@@ -313,10 +313,11 @@ export type Database = {
           description: string
           due_date: string
           id: string
+          paid_at: string | null
           payment_method: string | null
           status: string
           student_id: string | null
-          paid_at: string | null
+          type: string | null
         }
         Insert: {
           amount?: number | null
@@ -324,10 +325,11 @@ export type Database = {
           description: string
           due_date: string
           id?: string
+          paid_at?: string | null
           payment_method?: string | null
           status?: string
           student_id?: string | null
-          paid_at?: string | null
+          type?: string | null
         }
         Update: {
           amount?: number | null
@@ -335,10 +337,11 @@ export type Database = {
           description?: string
           due_date?: string
           id?: string
+          paid_at?: string | null
           payment_method?: string | null
           status?: string
           student_id?: string | null
-          paid_at?: string | null
+          type?: string | null
         }
         Relationships: [
           {
@@ -352,34 +355,34 @@ export type Database = {
       }
       plans: {
         Row: {
+          benefits: string[] | null
+          created_at: string
           id: string
-          name: string
           modality_id: string
+          name: string
           price: number
           recurrence: string
-          benefits: string[] | null
           status: string
-          created_at: string
         }
         Insert: {
+          benefits?: string[] | null
+          created_at?: string
           id?: string
-          name: string
           modality_id: string
+          name: string
           price: number
           recurrence: string
-          benefits?: string[] | null
           status?: string
-          created_at?: string
         }
         Update: {
+          benefits?: string[] | null
+          created_at?: string
           id?: string
-          name?: string
           modality_id?: string
+          name?: string
           price?: number
           recurrence?: string
-          benefits?: string[] | null
           status?: string
-          created_at?: string
         }
         Relationships: [
           {
@@ -388,7 +391,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "modalities"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       profiles: {

@@ -24,6 +24,11 @@ const classFormSchema = z.object({
   status: z.enum(['ativa', 'inativa', 'lotada']).default('ativa'),
 });
 
+const enrollStudentSchema = z.object({
+  student_id: z.string({ required_error: 'Selecione um aluno.' }),
+  class_id: z.string({ required_error: 'Selecione uma turma.' }),
+});
+
 
 export async function getClasses(): Promise<(ClassRow & { instructors: Pick<Instructor, 'name'> | null } & { modalities: Pick<Modality, 'name'> | null })[]> {
   try {
@@ -173,4 +178,54 @@ export async function getModalitiesForForm(): Promise<{ id: string, name: string
         console.error("Error fetching modalities for form:", error);
         return [];
     }
+}
+
+export async function enrollStudent(formData: unknown) {
+  const parsedData = enrollStudentSchema.safeParse(formData);
+
+  if (!parsedData.success) {
+    return {
+      success: false,
+      message: 'Dados inválidos.',
+      errors: parsedData.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    const supabase = await createSupabaseServerClient();
+
+    // Check if enrollment already exists
+    const { data: existingEnrollment, error: checkError } = await supabase
+      .from('enrollments')
+      .select('id')
+      .eq('student_id', parsedData.data.student_id)
+      .eq('class_id', parsedData.data.class_id)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is 'No rows found'
+      throw checkError;
+    }
+    if (existingEnrollment) {
+      return { success: false, message: 'Este aluno já está matriculado nesta turma.' };
+    }
+
+    // Create new enrollment
+    const { error } = await supabase
+      .from('enrollments')
+      .insert({
+        student_id: parsedData.data.student_id,
+        class_id: parsedData.data.class_id,
+      });
+    
+    if (error) {
+      throw error;
+    }
+
+    revalidatePath('/turmas');
+    return { success: true, message: 'Aluno matriculado com sucesso!' };
+
+  } catch (error: any) {
+    console.error('Enrollment Error:', error);
+    return { success: false, message: `Erro ao matricular aluno: ${error.message}` };
+  }
 }
