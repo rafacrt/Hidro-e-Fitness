@@ -53,6 +53,11 @@ const classFormSchema = z.object({
 
 type ClassFormValues = z.infer<typeof classFormSchema>;
 
+interface AddClassFormProps {
+  children: React.ReactNode;
+  onSuccess?: () => void;
+}
+
 const weekdays = [
   { id: 'Segunda', label: 'Segunda' },
   { id: 'Terça', label: 'Terça' },
@@ -62,7 +67,7 @@ const weekdays = [
   { id: 'Sábado', label: 'Sábado' },
 ];
 
-export function AddClassForm({ children }: { children: React.ReactNode }) {
+export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
   const [open, setOpen] = React.useState(false);
   const [instructors, setInstructors] = React.useState<{ id: string; name: string }[]>([]);
   const [modalities, setModalities] = React.useState<{ id: string; name: string }[]>([]);
@@ -101,6 +106,7 @@ export function AddClassForm({ children }: { children: React.ReactNode }) {
       });
       setOpen(false);
       form.reset();
+      onSuccess?.(); // Chame a função de sucesso para recarregar os dados
     } else {
       toast({
         title: 'Erro ao cadastrar turma!',

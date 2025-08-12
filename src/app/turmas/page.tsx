@@ -42,23 +42,24 @@ export default function TurmasPage() {
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
   const [loading, setLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      const [fetchedClasses, fetchedEnrollments, fetchedSettings, fetchedProfile] = await Promise.all([
-        getClasses(),
-        getEnrollments(),
-        getAcademySettings(),
-        getUserProfile(),
-      ]);
-      setClasses(fetchedClasses);
-      setEnrollments(fetchedEnrollments);
-      setSettings(fetchedSettings);
-      setUserProfile(fetchedProfile);
-      setLoading(false);
-    }
-    loadData();
+  const loadData = React.useCallback(async () => {
+    setLoading(true);
+    const [fetchedClasses, fetchedEnrollments, fetchedSettings, fetchedProfile] = await Promise.all([
+      getClasses(),
+      getEnrollments(),
+      getAcademySettings(),
+      getUserProfile(),
+    ]);
+    setClasses(fetchedClasses);
+    setEnrollments(fetchedEnrollments);
+    setSettings(fetchedSettings);
+    setUserProfile(fetchedProfile);
+    setLoading(false);
   }, []);
+
+  React.useEffect(() => {
+    loadData();
+  }, [loadData]);
 
 
   return (
@@ -75,7 +76,7 @@ export default function TurmasPage() {
               <p className="text-muted-foreground">Gestão completa de turmas e horários</p>
             </div>
             <div className='flex gap-2 w-full md:w-auto'>
-                <AddClassForm>
+                <AddClassForm onSuccess={loadData}>
                   <Button className="w-full">
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Nova Turma
