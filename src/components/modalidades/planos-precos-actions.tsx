@@ -7,12 +7,15 @@ import { Button } from '../ui/button';
 import { Plus, Copy, Tag, BarChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AddPlanForm } from './add-plan-form';
+import { DuplicatePlanDialog } from './duplicate-plan-dialog';
+import { AdjustPricesDialog } from './adjust-prices-dialog';
+import { PerformanceAnalysisDialog } from './performance-analysis-dialog';
 
 const actions = [
   { label: 'Novo Plano', icon: Plus, variant: 'default', component: AddPlanForm },
-  { label: 'Duplicar Plano', icon: Copy, variant: 'secondary' },
-  { label: 'Ajustar Preços', icon: Tag, variant: 'secondary' },
-  { label: 'Análise de Performance', icon: BarChart, variant: 'secondary' },
+  { label: 'Duplicar Plano', icon: Copy, variant: 'secondary', component: DuplicatePlanDialog },
+  { label: 'Ajustar Preços', icon: Tag, variant: 'secondary', component: AdjustPricesDialog },
+  { label: 'Análise de Performance', icon: BarChart, variant: 'secondary', component: PerformanceAnalysisDialog },
 ];
 
 export default function PlanosPrecosActions() {
@@ -33,8 +36,9 @@ export default function PlanosPrecosActions() {
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {actions.map((action, index) => {
-            const buttonContent = (
+             const buttonContent = (
               <Button
+                key={index}
                 variant={action.variant as any}
                 className="h-auto p-4 flex items-center justify-center gap-2 w-full"
               >
