@@ -8,12 +8,14 @@ import { CalendarPlus, UserPlus, CalendarCheck, BarChart2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AddClassForm } from './add-class-form';
 import { MatricularAlunoForm } from './matricular-aluno-form';
+import { ScheduleClassDialog } from './schedule-class-dialog';
+import { MarkAttendanceDialog } from './mark-attendance-dialog';
 
 const actions = [
   { label: 'Nova Turma', icon: CalendarPlus, component: AddClassForm },
   { label: 'Matricular Aluno', icon: UserPlus, component: MatricularAlunoForm },
-  { label: 'Agendar Aula', icon: CalendarCheck },
-  { label: 'Marcar Presença', icon: BarChart2 },
+  { label: 'Agendar Aula', icon: CalendarCheck, component: ScheduleClassDialog },
+  { label: 'Marcar Presença', icon: BarChart2, component: MarkAttendanceDialog },
 ];
 
 const IconWrapper = ({ children }: { children: React.ReactNode }) => (
