@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getClasses, enrollStudent } from '@/app/turmas/actions';
+import { getClasses } from '@/app/turmas/actions';
 import { getStudents } from '@/app/alunos/actions';
 import type { Database } from '@/lib/database.types';
 
@@ -86,21 +86,21 @@ export function MatricularAlunoForm({ children, preselectedClassId }: Matricular
   }, [preselectedClassId, form]);
 
   const onSubmit = async (data: EnrollStudentFormValues) => {
-    const result = await enrollStudent(data);
-    if (result.success) {
-      toast({
-        title: 'Sucesso!',
-        description: result.message,
-      });
-      setOpen(false);
-      form.reset();
-    } else {
-      toast({
-        title: 'Erro!',
-        description: result.message,
-        variant: 'destructive',
-      });
-    }
+    // const result = await enrollStudent(data);
+    // if (result.success) {
+    //   toast({
+    //     title: 'Sucesso!',
+    //     description: result.message,
+    //   });
+    //   setOpen(false);
+    //   form.reset();
+    // } else {
+    //   toast({
+    //     title: 'Erro!',
+    //     description: result.message,
+    //     variant: 'destructive',
+    //   });
+    // }
   };
 
   return (

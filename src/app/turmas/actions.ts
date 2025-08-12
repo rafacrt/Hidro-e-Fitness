@@ -32,6 +32,10 @@ const enrollStudentSchema = z.object({
   class_id: z.string({ required_error: 'Selecione uma turma.' }),
 });
 
+const enrollStudentsSchema = z.object({
+  class_id: z.string(),
+  student_ids: z.array(z.string()),
+});
 
 export async function getClasses(): Promise<(ClassRow & { instructors: Pick<Instructor, 'name'> | null } & { modalities: Pick<Modality, 'name'> | null })[]> {
   try {
@@ -183,53 +187,65 @@ export async function getModalitiesForForm(): Promise<{ id: string, name: string
     }
 }
 
-export async function enrollStudent(formData: unknown) {
-  const parsedData = enrollStudentSchema.safeParse(formData);
+export async function enrollStudents(formData: unknown) {
+  const parsedData = enrollStudentsSchema.safeParse(formData);
 
   if (!parsedData.success) {
-    return {
-      success: false,
-      message: 'Dados inválidos.',
-      errors: parsedData.error.flatten().fieldErrors,
-    };
+    return { success: false, message: 'Dados inválidos.' };
+  }
+
+  const { class_id, student_ids } = parsedData.data;
+  if (student_ids.length === 0) {
+    return { success: true, message: 'Nenhum aluno selecionado para matricular.' };
   }
 
   try {
     const supabase = await createSupabaseServerClient();
+    const enrollments = student_ids.map(student_id => ({
+      class_id,
+      student_id,
+    }));
 
-    // Check if enrollment already exists
-    const { data: existingEnrollment, error: checkError } = await supabase
-      .from('enrollments')
-      .select('id')
-      .eq('student_id', parsedData.data.student_id)
-      .eq('class_id', parsedData.data.class_id)
-      .single();
+    const { error } = await supabase.from('enrollments').insert(enrollments);
 
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is 'No rows found'
-      throw checkError;
-    }
-    if (existingEnrollment) {
-      return { success: false, message: 'Este aluno já está matriculado nesta turma.' };
-    }
-
-    // Create new enrollment
-    const { error } = await supabase
-      .from('enrollments')
-      .insert({
-        student_id: parsedData.data.student_id,
-        class_id: parsedData.data.class_id,
-      });
-    
     if (error) {
+      if (error.code === '23505') { // unique_violation
+        return { success: false, message: 'Um ou mais alunos selecionados já estão matriculados nesta turma.' };
+      }
       throw error;
     }
-
+    
     revalidatePath('/turmas');
-    return { success: true, message: 'Aluno matriculado com sucesso!' };
+    return { success: true, message: `${student_ids.length} aluno(s) matriculado(s) com sucesso!` };
 
   } catch (error: any) {
     console.error('Enrollment Error:', error);
-    return { success: false, message: `Erro ao matricular aluno: ${error.message}` };
+    return { success: false, message: `Erro ao matricular alunos: ${error.message}` };
+  }
+}
+
+export async function unenrollStudents(class_id: string, student_ids: string[]) {
+    if (student_ids.length === 0) {
+    return { success: true, message: 'Nenhum aluno selecionado para desmatricular.' };
+  }
+  
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase
+        .from('enrollments')
+        .delete()
+        .eq('class_id', class_id)
+        .in('student_id', student_ids);
+
+     if (error) {
+      throw error;
+    }
+    
+    revalidatePath('/turmas');
+    return { success: true, message: `${student_ids.length} aluno(s) desmatriculado(s) com sucesso!` };
+  } catch (error: any) {
+    console.error('Unenrollment Error:', error);
+    return { success: false, message: `Erro ao desmatricular alunos: ${error.message}` };
   }
 }
 

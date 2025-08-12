@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import { CalendarPlus, UserPlus, CalendarCheck, BarChart2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AddClassForm } from './add-class-form';
-import { MatricularAlunoForm } from './matricular-aluno-form';
+import { EnrollStudentsDialog } from './enroll-students-dialog';
 import { ScheduleClassDialog } from './schedule-class-dialog';
 import { MarkAttendanceDialog } from './mark-attendance-dialog';
 import type { Database } from '@/lib/database.types';
@@ -21,7 +21,7 @@ interface AcoesRapidasTurmasProps {
 
 const actions = [
   { label: 'Nova Turma', icon: CalendarPlus, component: AddClassForm },
-  { label: 'Matricular Aluno', icon: UserPlus, component: MatricularAlunoForm },
+  { label: 'Matricular Aluno', icon: UserPlus, component: EnrollStudentsDialog },
   { label: 'Agendar Aula', icon: CalendarCheck, component: ScheduleClassDialog },
   { label: 'Marcar Presença', icon: BarChart2, component: MarkAttendanceDialog },
 ];
@@ -69,9 +69,9 @@ export default function AcoesRapidasTurmas({ classes, onSuccess }: AcoesRapidasT
                   </ActionComponent>
                 );
               }
-              if (action.label === 'Agendar Aula' || action.label === 'Marcar Presença') {
+              if (action.label === 'Agendar Aula' || action.label === 'Marcar Presença' || action.label === 'Matricular Aluno') {
                 return (
-                  <ActionComponent key={index} classes={classes}>
+                  <ActionComponent key={index} classes={classes as any}>
                     {buttonContent}
                   </ActionComponent>
                 )

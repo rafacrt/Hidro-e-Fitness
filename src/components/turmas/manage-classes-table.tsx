@@ -18,7 +18,7 @@ import type { Database } from '@/lib/database.types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { DeleteClassAlert } from './delete-class-alert';
 import { EditClassForm } from './edit-class-form';
-import { MatricularAlunoForm } from './matricular-aluno-form';
+import { EnrollStudentsDialog } from './enroll-students-dialog';
 
 type Instructor = Database['public']['Tables']['instructors']['Row'];
 type Modality = Database['public']['Tables']['modalities']['Row'];
@@ -135,12 +135,12 @@ export default function ManageClassesTable({ classes }: ManageClassesTableProps)
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <MatricularAlunoForm preselectedClassId={cls.id}>
+                                <EnrollStudentsDialog classes={classes} preselectedClassId={cls.id}>
                                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                         <UserPlus className="mr-2 h-4 w-4" />
                                         Matricular Aluno
                                     </DropdownMenuItem>
-                                </MatricularAlunoForm>
+                                </EnrollStudentsDialog>
                                 <DropdownMenuItem>
                                     <User className="mr-2 h-4 w-4" />
                                     Ver Alunos
