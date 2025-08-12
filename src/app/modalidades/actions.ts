@@ -1,3 +1,4 @@
+
 'use server';
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -10,6 +11,15 @@ type Modality = Database['public']['Tables']['modalities']['Row'];
 const modalityFormSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
   description: z.string().optional(),
+});
+
+const planFormSchema = z.object({
+  name: z.string().min(3, 'O nome do plano deve ter pelo menos 3 caracteres.'),
+  modality_id: z.string({ required_error: 'Selecione uma modalidade.' }),
+  price: z.string().min(1, 'O preço é obrigatório.'),
+  recurrence: z.enum(['mensal', 'trimestral', 'semestral', 'anual']),
+  benefits: z.string().optional(),
+  status: z.enum(['ativo', 'inativo']).default('ativo'),
 });
 
 export async function getModalities(): Promise<Modality[]> {
@@ -142,3 +152,46 @@ export async function deleteModality(id: string) {
     return { success: false, message: 'Ocorreu um erro inesperado.' };
   }
 }
+
+
+export async function addPlan(formData: unknown) {
+  const parsedData = planFormSchema.safeParse(formData);
+
+  if (!parsedData.success) {
+    return {
+      success: false,
+      message: 'Dados do formulário inválidos.',
+      errors: parsedData.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const priceAsNumber = Number(parsedData.data.price.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
+    const benefitsArray = parsedData.data.benefits?.split(',').map(b => b.trim()).filter(b => b) || [];
+
+    const { error } = await supabase.from('plans').insert([
+      {
+        name: parsedData.data.name,
+        modality_id: parsedData.data.modality_id,
+        price: priceAsNumber,
+        recurrence: parsedData.data.recurrence,
+        benefits: benefitsArray,
+        status: parsedData.data.status,
+      },
+    ]);
+
+    if (error) {
+      console.error('Supabase Error:', error);
+      return { success: false, message: `Erro ao cadastrar plano: ${error.message}` };
+    }
+
+    revalidatePath('/modalidades');
+    return { success: true, message: 'Plano cadastrado com sucesso!' };
+  } catch (error) {
+    console.error('Unexpected Error:', error);
+    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  }
+}
+
+    

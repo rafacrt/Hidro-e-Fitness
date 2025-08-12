@@ -291,21 +291,18 @@ export type Database = {
           description: string | null
           id: string
           name: string
-          price: number | null
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
           name: string
-          price?: number | null
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
           name?: string
-          price?: number | null
         }
         Relationships: []
       }
@@ -319,7 +316,7 @@ export type Database = {
           payment_method: string | null
           status: string
           student_id: string | null
-          type: string
+          paid_at: string | null
         }
         Insert: {
           amount?: number | null
@@ -330,7 +327,7 @@ export type Database = {
           payment_method?: string | null
           status?: string
           student_id?: string | null
-          type?: string
+          paid_at?: string | null
         }
         Update: {
           amount?: number | null
@@ -341,7 +338,7 @@ export type Database = {
           payment_method?: string | null
           status?: string
           student_id?: string | null
-          type?: string
+          paid_at?: string | null
         }
         Relationships: [
           {
@@ -351,6 +348,47 @@ export type Database = {
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      plans: {
+        Row: {
+          id: string
+          name: string
+          modality_id: string
+          price: number
+          recurrence: string
+          benefits: string[] | null
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          modality_id: string
+          price: number
+          recurrence: string
+          benefits?: string[] | null
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          modality_id?: string
+          price?: number
+          recurrence?: string
+          benefits?: string[] | null
+          status?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plans_modality_id_fkey"
+            columns: ["modality_id"]
+            isOneToOne: false
+            referencedRelation: "modalities"
+            referencedColumns: ["id"]
+          }
         ]
       }
       profiles: {
@@ -578,3 +616,5 @@ export type Enums<
   : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
     ? PublicSchema["Enums"][PublicEnumNameOrOptions]
     : never
+
+    
