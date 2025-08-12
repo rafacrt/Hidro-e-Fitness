@@ -40,7 +40,7 @@ const statusClasses = {
   present: 'bg-green-100 hover:bg-green-200',
   absent: 'bg-red-100 hover:bg-red-200',
   justified: 'bg-yellow-100 hover:bg-yellow-200',
-  pending: 'bg-zinc-100 hover:bg-zinc-200',
+  pending: 'bg-transparent',
 };
 
 const getInitials = (name: string | null) => {
@@ -58,7 +58,7 @@ function ClassAttendance({ cls, index }: { cls: UpcomingClass; index: number }) 
   const { toast } = useToast();
   const [attendance, setAttendance] = React.useState<Record<string, StudentStatus>>({});
 
-  const handleFetchStudents = async () => {
+  const handleFetchStudents = React.useCallback(async () => {
     if (isFetched) return;
     setIsLoading(true);
     try {
@@ -74,7 +74,7 @@ function ClassAttendance({ cls, index }: { cls: UpcomingClass; index: number }) 
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [cls.id, isFetched, toast]);
 
   const handleStatusChange = (studentId: string, status: StudentStatus) => {
     setAttendance(prev => ({
@@ -99,7 +99,7 @@ function ClassAttendance({ cls, index }: { cls: UpcomingClass; index: number }) 
             </p>
           </div>
           <div className="text-sm text-muted-foreground mr-4">
-            {presentCount}/{students.length} presentes
+            {isFetched ? `${presentCount}/${students.length} presentes` : ''}
           </div>
         </div>
       </AccordionTrigger>
@@ -190,3 +190,4 @@ export default function ControlePresencaTab({ classes }: ControlePresencaTabProp
     </Card>
   );
 }
+
