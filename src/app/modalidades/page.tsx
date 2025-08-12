@@ -55,11 +55,15 @@ export default function ModalidadesPage() {
           <>
             <TableFilters />
             <ModalitiesTable modalities={modalities} />
-            <QuickActionsModalities />
           </>
         );
       case 'Visão Geral':
-          return <ModalitiesStatCards modalities={modalities} />;
+          return (
+            <div className="space-y-6">
+              <ModalitiesStatCards modalities={modalities} />
+              <QuickActionsModalities />
+            </div>
+          );
       case 'Preços e Planos':
           return <PlanosPrecosTab />;
       default:
