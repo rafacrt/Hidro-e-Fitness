@@ -13,13 +13,13 @@ type Modality = Database['public']['Tables']['modalities']['Row'];
 const classFormSchema = z.object({
   name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
   modality_id: z.string({ required_error: 'Selecione uma modalidade.' }),
-  instructor_id: z.string({ required_error: 'Selecione um professor.' }),
+  instructor_id: z.string().optional(),
   start_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido.'),
   end_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido.'),
   days_of_week: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'Você deve selecionar pelo menos um dia da semana.',
   }),
-  location: z.string({ required_error: 'Selecione um local.' }),
+  location: z.string().optional(),
   max_students: z.coerce.number().min(1, 'A turma deve ter pelo menos 1 vaga.'),
   status: z.enum(['ativa', 'inativa', 'lotada']).default('ativa'),
 });
@@ -66,11 +66,11 @@ export async function addClass(formData: unknown) {
       {
         name: parsedData.data.name,
         modality_id: parsedData.data.modality_id,
-        instructor_id: parsedData.data.instructor_id,
+        instructor_id: parsedData.data.instructor_id || null,
         start_time: parsedData.data.start_time,
         end_time: parsedData.data.end_time,
         days_of_week: parsedData.data.days_of_week,
-        location: parsedData.data.location,
+        location: parsedData.data.location || null,
         max_students: parsedData.data.max_students,
         status: parsedData.data.status,
       },

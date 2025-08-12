@@ -40,20 +40,19 @@ import { addClass, getInstructorsForForm, getModalitiesForForm } from '@/app/tur
 const classFormSchema = z.object({
   name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
   modality_id: z.string({ required_error: 'Selecione uma modalidade.' }),
-  instructor_id: z.string({ required_error: 'Selecione um professor.' }),
+  instructor_id: z.string().optional(),
   start_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido.'),
   end_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido.'),
   days_of_week: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'Você deve selecionar pelo menos um dia da semana.',
   }),
-  location: z.string({ required_error: 'Selecione um local.' }),
+  location: z.string().optional(),
   max_students: z.coerce.number().min(1, 'A turma deve ter pelo menos 1 vaga.'),
   status: z.enum(['ativa', 'inativa', 'lotada']).default('ativa'),
 });
 
 type ClassFormValues = z.infer<typeof classFormSchema>;
 
-const locations = ['Piscina 1', 'Piscina 2', 'Piscina Terapêutica'];
 const weekdays = [
   { id: 'Segunda', label: 'Segunda' },
   { id: 'Terça', label: 'Terça' },
@@ -162,7 +161,7 @@ export function AddClassForm({ children }: { children: React.ReactNode }) {
                 name="instructor_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Professor</FormLabel>
+                    <FormLabel>Professor (Opcional)</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -252,26 +251,6 @@ export function AddClassForm({ children }: { children: React.ReactNode }) {
                 )}
                 />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Local</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                            <SelectValue placeholder="Selecione..." />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                           {locations.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-                        </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
                  <FormField
                     control={form.control}
                     name="max_students"
