@@ -110,3 +110,16 @@ export const mockStudents: Student[] = [
     created_at: new Date().toISOString(),
   },
 ];
+
+
+export const mockModalities = [
+  { id: '1', name: 'Natação Adulto (Mock)' },
+  { id: '2', name: 'Hidroginástica (Mock)' },
+  { id: '3', name: 'Natação Infantil (Mock)' },
+];
+
+export const mockInstructors = [
+  { id: '1', name: 'Prof. Ana Silva (Mock)' },
+  { id: '2', name: 'Prof. Carlos Santos (Mock)' },
+  { id: '3', name: 'Prof. Beatriz Lima (Mock)' },
+];

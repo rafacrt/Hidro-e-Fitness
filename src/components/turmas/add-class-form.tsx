@@ -36,6 +36,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { addClass, getInstructorsForForm, getModalitiesForForm } from '@/app/turmas/actions';
+import { mockInstructors, mockModalities } from '@/lib/mock-data';
 
 const classFormSchema = z.object({
   name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
@@ -74,12 +75,18 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
 
   React.useEffect(() => {
     async function fetchData() {
-      const [fetchedInstructors, fetchedModalities] = await Promise.all([
-        getInstructorsForForm(),
-        getModalitiesForForm()
-      ]);
-      setInstructors(fetchedInstructors);
-      setModalities(fetchedModalities);
+       if (process.env.NODE_ENV === 'development') {
+        console.log("Using mock data for instructors and modalities in development.");
+        setInstructors(mockInstructors);
+        setModalities(mockModalities);
+      } else {
+        const [fetchedInstructors, fetchedModalities] = await Promise.all([
+          getInstructorsForForm(),
+          getModalitiesForForm()
+        ]);
+        setInstructors(fetchedInstructors);
+        setModalities(fetchedModalities);
+      }
     }
     if (open) {
       fetchData();
@@ -147,7 +154,7 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Modalidade</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione..." />
@@ -167,7 +174,7 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Professor (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione..." />
