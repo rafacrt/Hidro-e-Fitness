@@ -4,15 +4,16 @@ import { Users, Calendar, Percent, TrendingUp } from 'lucide-react';
 import type { Database } from '@/lib/database.types';
 
 type ClassRow = Database['public']['Tables']['classes']['Row'];
+type Enrollment = Database['public']['Tables']['enrollments']['Row'];
 
 interface TurmasStatCardsProps {
   classes: ClassRow[];
+  enrollments: Enrollment[];
 }
 
-export default function TurmasStatCards({ classes }: TurmasStatCardsProps) {
+export default function TurmasStatCards({ classes, enrollments }: TurmasStatCardsProps) {
   const activeClasses = classes.filter(c => c.status === 'ativa').length;
-  // The following need real enrollment data to be calculated properly
-  const enrolledStudents = 0; // Mock
+  const enrolledStudents = enrollments.length;
   const totalCapacity = classes.reduce((sum, cls) => sum + (cls.max_students || 0), 0);
   const occupancyRate = totalCapacity > 0 ? (enrolledStudents / totalCapacity) * 100 : 0;
   const today = new Date().toLocaleString('pt-BR', { weekday: 'long' });
@@ -33,7 +34,7 @@ export default function TurmasStatCards({ classes }: TurmasStatCardsProps) {
       <StatCard 
         title="Alunos Matriculados"
         value={enrolledStudents.toString()}
-        change="(mock)"
+        change=""
         changeType="increase"
         period=""
         icon={Users}
@@ -43,7 +44,7 @@ export default function TurmasStatCards({ classes }: TurmasStatCardsProps) {
       <StatCard 
         title="Taxa de Ocupação"
         value={`${occupancyRate.toFixed(0)}%`}
-        change="(mock)"
+        change=""
         changeType="increase"
         period=""
         icon={Percent}

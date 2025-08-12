@@ -9,6 +9,7 @@ import type { Database } from '@/lib/database.types';
 type ClassRow = Database['public']['Tables']['classes']['Row'];
 type Instructor = Database['public']['Tables']['instructors']['Row'];
 type Modality = Database['public']['Tables']['modalities']['Row'];
+type Enrollment = Database['public']['Tables']['enrollments']['Row'];
 
 const classFormSchema = z.object({
   name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
@@ -227,5 +228,24 @@ export async function enrollStudent(formData: unknown) {
   } catch (error: any) {
     console.error('Enrollment Error:', error);
     return { success: false, message: `Erro ao matricular aluno: ${error.message}` };
+  }
+}
+
+export async function getEnrollments(): Promise<Enrollment[]> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from('enrollments')
+      .select('*');
+
+    if (error) {
+      console.error('Supabase Error fetching enrollments:', error);
+      throw new Error('Não foi possível buscar as matrículas.');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected Error fetching enrollments:', error);
+    return [];
   }
 }

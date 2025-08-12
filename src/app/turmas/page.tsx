@@ -20,7 +20,7 @@ import AttendanceFilters from '@/components/turmas/attendance-filters';
 import AttendanceTable from '@/components/turmas/attendance-table';
 import AttendanceBatchActions from '@/components/turmas/attendance-batch-actions';
 import { AddClassForm } from '@/components/turmas/add-class-form';
-import { getClasses } from './actions';
+import { getClasses, getEnrollments } from './actions';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { NavContent } from '@/components/layout/nav-content';
@@ -30,12 +30,14 @@ type Profile = Database['public']['Tables']['profiles']['Row'];
 type Instructor = Database['public']['Tables']['instructors']['Row'];
 type Modality = Database['public']['Tables']['modalities']['Row'];
 type ClassRow = Database['public']['Tables']['classes']['Row'] & { instructors: Pick<Instructor, 'name'> | null } & { modalities: Pick<Modality, 'name'> | null };
+type Enrollment = Database['public']['Tables']['enrollments']['Row'];
 
 type ActiveTab = "Visão Geral" | "Grade de Horários" | "Gerenciar Turmas" | "Controle de Presença";
 
 export default function TurmasPage() {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
   const [classes, setClasses] = React.useState<ClassRow[]>([]);
+  const [enrollments, setEnrollments] = React.useState<Enrollment[]>([]);
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -43,12 +45,14 @@ export default function TurmasPage() {
   React.useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const [fetchedClasses, fetchedSettings, fetchedProfile] = await Promise.all([
+      const [fetchedClasses, fetchedEnrollments, fetchedSettings, fetchedProfile] = await Promise.all([
         getClasses(),
+        getEnrollments(),
         getAcademySettings(),
         getUserProfile(),
       ]);
       setClasses(fetchedClasses);
+      setEnrollments(fetchedEnrollments);
       setSettings(fetchedSettings);
       setUserProfile(fetchedProfile);
       setLoading(false);
@@ -86,7 +90,7 @@ export default function TurmasPage() {
 
           {!loading && activeTab === 'Visão Geral' && (
             <div className="space-y-6">
-              <TurmasStatCards classes={classes} />
+              <TurmasStatCards classes={classes} enrollments={enrollments} />
               <AulasDeHoje classes={classes} />
               <AcoesRapidasTurmas />
             </div>
