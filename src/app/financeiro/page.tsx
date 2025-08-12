@@ -18,6 +18,7 @@ import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { NavContent } from '@/components/layout/nav-content';
 import { getFinancialSummary, getTransactions, type FinancialSummary } from './actions';
+import { Loader2 } from 'lucide-react';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -34,25 +35,26 @@ export default function FinanceiroPage() {
   const [summary, setSummary] = React.useState<FinancialSummary | null>(null);
   const [loading, setLoading] = React.useState(true);
 
+  const loadData = React.useCallback(async () => {
+    setLoading(true);
+    const [academySettings, profile, receitasData, despesasData, financialSummary] = await Promise.all([
+      getAcademySettings(), 
+      getUserProfile(),
+      getTransactions('receita'),
+      getTransactions('despesa'),
+      getFinancialSummary(),
+    ]);
+    setSettings(academySettings);
+    setUserProfile(profile);
+    setRecebimentos(receitasData);
+    setPagamentos(despesasData);
+    setSummary(financialSummary);
+    setLoading(false);
+  }, []);
+
   React.useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      const [academySettings, profile, receitasData, despesasData, financialSummary] = await Promise.all([
-        getAcademySettings(), 
-        getUserProfile(),
-        getTransactions('receita'),
-        getTransactions('despesa'),
-        getFinancialSummary(),
-      ]);
-      setSettings(academySettings);
-      setUserProfile(profile);
-      setRecebimentos(receitasData);
-      setPagamentos(despesasData);
-      setSummary(financialSummary);
-      setLoading(false);
-    }
     loadData();
-  }, [activeTab]);
+  }, [loadData]);
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -85,11 +87,15 @@ export default function FinanceiroPage() {
           
           <FiltrosFinanceiro activeTab={activeTab} setActiveTab={setActiveTab} />
 
-          {loading && <p>Carregando dados financeiros...</p>}
+          {loading && (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
 
-          {!loading && activeTab === 'Visão Geral' && (
+          {!loading && activeTab === 'Visão Geral' && summary && (
             <div className="space-y-6">
-              <FinanceiroStatCards />
+              <FinanceiroStatCards summary={summary} />
               <AcoesRapidasFinanceiro />
             </div>
           )}

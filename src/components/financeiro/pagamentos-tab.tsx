@@ -15,7 +15,7 @@ interface PagamentosTabProps {
 export default function PagamentosTab({ pagamentos }: PagamentosTabProps) {
     return (
         <div className="space-y-6">
-            <PagamentosStatCards />
+            <PagamentosStatCards pagamentos={pagamentos} />
             <Card>
                 <PagamentosFilters />
                 <CardContent className="p-0">

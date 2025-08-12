@@ -15,7 +15,7 @@ interface RecebimentosTabProps {
 export default function RecebimentosTab({ recebimentos }: RecebimentosTabProps) {
     return (
         <div className="space-y-6">
-            <RecebimentosStatCards />
+            <RecebimentosStatCards recebimentos={recebimentos} />
             <Card>
                 <RecebimentosFilters />
                 <CardContent className="p-0">

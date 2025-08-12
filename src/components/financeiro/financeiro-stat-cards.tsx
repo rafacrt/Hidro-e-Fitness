@@ -1,14 +1,30 @@
 
+'use client';
+
+import * as React from 'react';
 import StatCard from '@/components/dashboard/stat-card';
 import { DollarSign, TrendingUp, TrendingDown, Users } from 'lucide-react';
+import type { FinancialSummary } from '@/app/financeiro/actions';
 
-export default function FinanceiroStatCards() {
+interface FinanceiroStatCardsProps {
+  summary: FinancialSummary;
+}
+
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+};
+
+export default function FinanceiroStatCards({ summary }: FinanceiroStatCardsProps) {
+  const pendingAmount = summary.transactions
+    .filter(t => t.status === 'pendente' || t.status === 'vencido')
+    .reduce((acc, t) => acc + (t.amount || 0), 0);
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       <StatCard 
         title="Receita do Mês"
-        value="R$ 42.500"
-        change="+8% vs mês anterior"
+        value={formatCurrency(summary.totalRevenue)}
+        change=""
         changeType="increase"
         period=""
         icon={DollarSign}
@@ -17,8 +33,8 @@ export default function FinanceiroStatCards() {
       />
       <StatCard 
         title="Despesas do Mês"
-        value="R$ 18.200"
-        change="+5% vs mês anterior"
+        value={formatCurrency(summary.totalExpenses)}
+        change=""
         changeType="increase"
         period=""
         icon={TrendingDown}
@@ -27,8 +43,8 @@ export default function FinanceiroStatCards() {
       />
       <StatCard 
         title="Lucro Líquido"
-        value="R$ 24.300"
-        change="+12% vs mês anterior"
+        value={formatCurrency(summary.netFlow)}
+        change=""
         changeType="increase"
         period=""
         icon={TrendingUp}
@@ -37,8 +53,8 @@ export default function FinanceiroStatCards() {
       />
       <StatCard 
         title="Inadimplência"
-        value="R$ 1.850"
-        change="-3% vs mês anterior"
+        value={formatCurrency(pendingAmount)}
+        change=""
         changeType="decrease"
         period=""
         icon={Users}
