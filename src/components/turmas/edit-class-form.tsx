@@ -35,7 +35,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updateClass, getInstructors, getModalities } from '@/app/turmas/actions';
+import { updateClass, getInstructorsForForm, getModalitiesForForm } from '@/app/turmas/actions';
 import type { Database } from '@/lib/database.types';
 
 const classFormSchema = z.object({
@@ -63,12 +63,12 @@ interface EditClassFormProps {
 
 const locations = ['Piscina 1', 'Piscina 2', 'Piscina Terapêutica'];
 const weekdays = [
-  { id: 'seg', label: 'Segunda' },
-  { id: 'ter', label: 'Terça' },
-  { id: 'qua', label: 'Quarta' },
-  { id: 'qui', label: 'Quinta' },
-  { id: 'sex', label: 'Sexta' },
-  { id: 'sab', label: 'Sábado' },
+  { id: 'Segunda', label: 'Segunda' },
+  { id: 'Terça', label: 'Terça' },
+  { id: 'Quarta', label: 'Quarta' },
+  { id: 'Quinta', label: 'Quinta' },
+  { id: 'Sexta', label: 'Sexta' },
+  { id: 'Sábado', label: 'Sábado' },
 ];
 
 export function EditClassForm({ classData, children }: EditClassFormProps) {
@@ -79,8 +79,8 @@ export function EditClassForm({ classData, children }: EditClassFormProps) {
 
   React.useEffect(() => {
     async function fetchData() {
-      const fetchedInstructors = await getInstructors();
-      const fetchedModalities = await getModalities();
+      const fetchedInstructors = await getInstructorsForForm();
+      const fetchedModalities = await getModalitiesForForm();
       setInstructors(fetchedInstructors);
       setModalities(fetchedModalities);
     }
