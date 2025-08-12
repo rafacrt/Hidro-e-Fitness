@@ -31,9 +31,9 @@ export default function PlanosPrecosActions() {
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {actions.map((action, index) => (
-            <Button 
-              key={index} 
-              variant={action.variant as any} 
+            <Button
+              key={index}
+              variant={action.variant as any}
               className="h-auto p-4 flex items-center justify-center gap-2"
               onClick={() => handleActionClick(action.label)}
             >
