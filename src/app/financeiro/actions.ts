@@ -5,6 +5,8 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { Database } from '@/lib/database.types';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 type Payment = Database['public']['Tables']['payments']['Row'];
 
@@ -194,4 +196,79 @@ export async function deleteTransaction(id: string) {
     } catch (error) {
         return { success: false, message: 'Ocorreu um erro inesperado.' };
     }
+}
+
+export async function generateMonthlyPayments(month: Date) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const monthStart = startOfMonth(month);
+    const monthEnd = endOfMonth(month);
+    const monthName = format(month, 'MMMM yyyy', { locale: ptBR });
+    const dueDate = new Date(month.getFullYear(), month.getMonth(), 10); // Vencimento dia 10
+
+    // 1. Buscar todas as matrículas ativas com detalhes
+    const { data: enrollments, error: enrollmentsError } = await supabase
+      .from('enrollments')
+      .select(`
+        student_id,
+        students ( name, status ),
+        classes (
+          modalities (
+            plans ( name, price, recurrence )
+          )
+        )
+      `)
+      .eq('students.status', 'ativo');
+      
+    if (enrollmentsError) throw new Error(`Erro ao buscar matrículas: ${enrollmentsError.message}`);
+
+    // 2. Buscar pagamentos já existentes para o mês
+    const { data: existingPayments, error: paymentsError } = await supabase
+      .from('payments')
+      .select('student_id')
+      .gte('due_date', monthStart.toISOString())
+      .lte('due_date', monthEnd.toISOString())
+      .like('description', `%Mensalidade%`);
+
+    if (paymentsError) throw new Error(`Erro ao buscar pagamentos existentes: ${paymentsError.message}`);
+
+    const billedStudentIds = new Set(existingPayments.map(p => p.student_id));
+    const newPayments: any[] = [];
+    let processedStudents = 0;
+
+    for (const enrollment of enrollments) {
+      if (!enrollment.students || enrollment.students.status !== 'ativo' || billedStudentIds.has(enrollment.student_id)) {
+        continue;
+      }
+
+      // Simplificação: Assume o primeiro plano mensal encontrado para a modalidade da turma
+      const plan = (enrollment.classes?.modalities?.plans || []).find(p => p.recurrence === 'mensal');
+      
+      if (plan) {
+        newPayments.push({
+          student_id: enrollment.student_id,
+          description: `Mensalidade - ${plan.name} - ${monthName}`,
+          amount: plan.price,
+          due_date: dueDate.toISOString(),
+          status: 'pendente',
+          category: 'Mensalidades',
+          type: 'receita',
+        });
+        billedStudentIds.add(enrollment.student_id); // Garante que não será cobrado de novo no mesmo lote
+        processedStudents++;
+      }
+    }
+
+    if (newPayments.length > 0) {
+      const { error: insertError } = await supabase.from('payments').insert(newPayments);
+      if (insertError) throw new Error(`Erro ao inserir novos pagamentos: ${insertError.message}`);
+    }
+
+    revalidatePath('/financeiro');
+    return { success: true, message: `${processedStudents} mensalidades geradas com sucesso!` };
+
+  } catch (error: any) {
+    console.error('Erro ao gerar mensalidades:', error);
+    return { success: false, message: error.message || 'Ocorreu um erro inesperado.' };
+  }
 }

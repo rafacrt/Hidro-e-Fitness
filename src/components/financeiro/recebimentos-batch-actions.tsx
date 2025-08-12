@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { QrCode, MessageSquare, PlusCircle } from "lucide-react";
+import { GerarMensalidadesDialog } from "./gerar-mensalidades-dialog";
 
 export default function RecebimentosBatchActions() {
     return (
@@ -15,10 +16,12 @@ export default function RecebimentosBatchActions() {
                     <MessageSquare className="mr-2 h-4 w-4" />
                     Enviar Lembrete WhatsApp
                 </Button>
-                <Button variant="default" className="bg-orange-500 hover:bg-orange-600">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Gerar Mensalidades
-                </Button>
+                <GerarMensalidadesDialog>
+                    <Button variant="default" className="bg-orange-500 hover:bg-orange-600">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Gerar Mensalidades
+                    </Button>
+                </GerarMensalidadesDialog>
             </div>
         </div>
     )
