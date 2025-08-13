@@ -10,6 +10,7 @@ import PagamentosBatchActions from "./pagamentos-batch-actions";
 import type { Database } from "@/lib/database.types";
 import { getTransactions } from '@/app/financeiro/actions';
 import { useToast } from '@/hooks/use-toast';
+import { mockPayments } from '@/lib/mock-data';
 
 type Payment = Database['public']['Tables']['payments']['Row'];
 
@@ -25,7 +26,11 @@ export default function PagamentosTab({ pagamentos: initialPagamentos }: Pagamen
     const refreshData = async () => {
         try {
             const freshData = await getTransactions('despesa');
-            setPagamentos(freshData);
+            if (process.env.NODE_ENV === 'development' && freshData.length === 0) {
+              setPagamentos(mockPayments);
+            } else {
+              setPagamentos(freshData);
+            }
             setSelectedPayments([]); // Limpa a seleção após a ação
         } catch (error) {
             toast({
@@ -46,6 +51,7 @@ export default function PagamentosTab({ pagamentos: initialPagamentos }: Pagamen
                         pagamentos={pagamentos} 
                         selectedPayments={selectedPayments}
                         setSelectedPayments={setSelectedPayments}
+                        onSuccess={refreshData}
                     />
                 </CardContent>
                 <PagamentosBatchActions 

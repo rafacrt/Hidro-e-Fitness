@@ -48,6 +48,7 @@ type Payment = Database['public']['Tables']['payments']['Row'];
 interface EditTransacaoDialogProps {
     transacao: Payment;
     children: React.ReactNode;
+    onSuccess: () => void;
 }
 
 const transactionFormSchema = z.object({
@@ -83,13 +84,16 @@ const extractCategoryAndDescription = (fullDescription: string) => {
 
 const formatCurrencyForInput = (value: number | null) => {
     if (value === null || typeof value === 'undefined') return '';
+    // Use Math.abs because the input handles only positive numbers
+    const absValue = Math.abs(value);
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
-    }).format(value);
+    }).format(absValue).replace('R$', 'R$ ');
 }
 
-export function EditTransacaoDialog({ children, transacao }: EditTransacaoDialogProps) {
+
+export function EditTransacaoDialog({ children, transacao, onSuccess }: EditTransacaoDialogProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
   
@@ -118,6 +122,7 @@ export function EditTransacaoDialog({ children, transacao }: EditTransacaoDialog
         title: 'Sucesso!',
         description: result.message,
       });
+      onSuccess();
       setOpen(false);
     } else {
        toast({

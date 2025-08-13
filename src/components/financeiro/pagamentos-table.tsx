@@ -30,6 +30,7 @@ interface PagamentosTableProps {
   pagamentos: Payment[];
   selectedPayments: string[];
   setSelectedPayments: React.Dispatch<React.SetStateAction<string[]>>;
+  onSuccess: () => void;
 }
 
 const statusConfig = {
@@ -43,7 +44,7 @@ const formatCurrency = (value: number | null) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
-export default function PagamentosTable({ pagamentos, selectedPayments, setSelectedPayments }: PagamentosTableProps) {
+export default function PagamentosTable({ pagamentos, selectedPayments, setSelectedPayments, onSuccess }: PagamentosTableProps) {
   const { toast } = useToast();
   
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
@@ -110,7 +111,7 @@ export default function PagamentosTable({ pagamentos, selectedPayments, setSelec
                     </TableCell>
                     <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <EditTransacaoDialog transacao={item}>
+                          <EditTransacaoDialog transacao={item} onSuccess={onSuccess}>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
@@ -122,7 +123,7 @@ export default function PagamentosTable({ pagamentos, selectedPayments, setSelec
                               </TooltipContent>
                             </Tooltip>
                           </EditTransacaoDialog>
-                          <DeleteTransacaoAlert transacaoId={item.id}>
+                          <DeleteTransacaoAlert transacaoId={item.id} onSuccess={onSuccess}>
                              <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={(e) => e.stopPropagation()}>

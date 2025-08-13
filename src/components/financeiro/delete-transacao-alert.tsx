@@ -20,11 +20,13 @@ import { Loader2 } from 'lucide-react';
 interface DeleteTransacaoAlertProps {
   transacaoId: string;
   children: React.ReactNode;
+  onSuccess: () => void;
 }
 
-export function DeleteTransacaoAlert({ transacaoId, children }: DeleteTransacaoAlertProps) {
+export function DeleteTransacaoAlert({ transacaoId, children, onSuccess }: DeleteTransacaoAlertProps) {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -34,6 +36,8 @@ export function DeleteTransacaoAlert({ transacaoId, children }: DeleteTransacaoA
         title: 'Sucesso!',
         description: result.message,
       });
+      onSuccess();
+      setOpen(false);
     } else {
       toast({
         title: 'Erro!',
@@ -45,8 +49,8 @@ export function DeleteTransacaoAlert({ transacaoId, children }: DeleteTransacaoA
   };
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild onClick={(e) => { e.stopPropagation(); setOpen(true); }}>{children}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
