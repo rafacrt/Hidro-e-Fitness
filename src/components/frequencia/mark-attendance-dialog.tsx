@@ -28,6 +28,7 @@ type UpcomingClass = ClassRow & { instructors: Pick<Instructor, 'name'> | null }
 interface MarkAttendanceDialogProps {
   classes: UpcomingClass[];
   children: React.ReactNode;
+  onSuccess: () => void;
 }
 
 // Mock student data for demonstration
@@ -51,7 +52,7 @@ const statusClasses: Record<StudentStatus, string> = {
 };
 
 
-export function MarkAttendanceDialog({ classes, children }: MarkAttendanceDialogProps) {
+export function MarkAttendanceDialog({ classes, children, onSuccess }: MarkAttendanceDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedClassId, setSelectedClassId] = React.useState<string | null>(null);
   const [attendance, setAttendance] = React.useState<Record<string, StudentStatus>>({});
@@ -82,6 +83,7 @@ export function MarkAttendanceDialog({ classes, children }: MarkAttendanceDialog
         setOpen(false);
         setSelectedClassId(null);
         setAttendance({});
+        onSuccess();
     }, 1000)
   };
 

@@ -1,5 +1,7 @@
 
-import { unstable_noStore as noStore } from 'next/cache';
+'use client';
+
+import * as React from 'react';
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
@@ -15,27 +17,55 @@ import FrequenciaPorModalidade from '@/components/frequencia/frequencia-por-moda
 import { getUpcomingClasses } from '../dashboard/actions';
 import ControlePresencaTab from '@/components/frequencia/controle-presenca-tab';
 import { MarkAttendanceDialog } from '@/components/frequencia/mark-attendance-dialog';
-import { getAttendanceStats } from './actions';
+import { getAttendanceStats, type AttendanceStats } from './actions';
 import { NavContent } from '@/components/layout/nav-content';
+import type { Database } from '@/lib/database.types';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+
+type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
+type ClassRow = Database['public']['Tables']['classes']['Row'];
+type Instructor = Database['public']['Tables']['instructors']['Row'];
+type UpcomingClass = ClassRow & { instructors: Pick<Instructor, 'name'> | null };
+
 
 export type ActiveTabFrequencia = "Visão Geral" | "Controle de Presença" | "Histórico";
 
-export default async function FrequenciaPage({
-  searchParams,
-}: {
-  searchParams?: {
-    tab?: string;
-  };
-}) {
-  noStore();
-  const activeTab = (searchParams?.tab || "Visão Geral") as ActiveTabFrequencia;
+export default function FrequenciaPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const activeTab = (searchParams.get('tab') || "Visão Geral") as ActiveTabFrequencia;
   
-  const [settings, userProfile, upcomingClasses, stats] = await Promise.all([
-    getAcademySettings(),
-    getUserProfile(),
-    getUpcomingClasses(),
-    getAttendanceStats(),
-  ]);
+  const [settings, setSettings] = React.useState<AcademySettings | null>(null);
+  const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
+  const [upcomingClasses, setUpcomingClasses] = React.useState<UpcomingClass[]>([]);
+  const [stats, setStats] = React.useState<AttendanceStats | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  const loadData = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const [settingsData, profileData, classesData, statsData] = await Promise.all([
+        getAcademySettings(),
+        getUserProfile(),
+        getUpcomingClasses(),
+        getAttendanceStats(),
+      ]);
+      setSettings(settingsData);
+      setUserProfile(profileData);
+      setUpcomingClasses(classesData);
+      setStats(statsData);
+    } catch (error) {
+        console.error("Failed to load frequency data", error);
+    } finally {
+        setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadData();
+  }, [loadData]);
   
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -55,7 +85,7 @@ export default async function FrequenciaPage({
                 <Download className="mr-2 h-4 w-4" />
                 Exportar
               </Button>
-               <MarkAttendanceDialog classes={upcomingClasses}>
+               <MarkAttendanceDialog classes={upcomingClasses} onSuccess={loadData}>
                 <Button className="w-full">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Marcar Presença
@@ -66,7 +96,13 @@ export default async function FrequenciaPage({
           
           <FrequenciaFilters activeTab={activeTab} />
 
-          {activeTab === 'Visão Geral' && (
+          {loading && (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          {!loading && stats && activeTab === 'Visão Geral' && (
             <div className="space-y-6">
               <FrequenciaStatsCards stats={stats} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -74,15 +110,15 @@ export default async function FrequenciaPage({
                 <FrequenciaPorModalidade />
               </div>
               <AlunosBaixaFrequencia />
-              <AcoesRapidasFrequencia classes={upcomingClasses} />
+              <AcoesRapidasFrequencia classes={upcomingClasses} onSuccess={loadData} />
             </div>
           )}
 
-          {activeTab === 'Controle de Presença' && (
+          {!loading && activeTab === 'Controle de Presença' && (
             <ControlePresencaTab classes={upcomingClasses} />
           )}
 
-          {activeTab === 'Histórico' && (
+          {!loading && activeTab === 'Histórico' && (
             <PlaceholderContent title="Histórico de Frequência" />
           )}
 

@@ -39,21 +39,31 @@ import { cn } from '@/lib/utils';
 import { IMaskInput } from 'react-imask';
 import type { Database } from '@/lib/database.types';
 import { getStudents } from '@/app/alunos/actions';
+import { addTransaction } from '@/app/financeiro/actions';
 
 type Student = Database['public']['Tables']['students']['Row'];
 
 const paymentFormSchema = z.object({
-  student: z.string().min(1, 'É necessário selecionar um aluno.'),
+  student_id: z.string().min(1, 'É necessário selecionar um aluno.'),
   amount: z.string().min(1, 'O valor é obrigatório.'),
-  paymentMethod: z.string({ required_error: 'Selecione um método de pagamento.' }),
+  payment_method: z.string({ required_error: 'Selecione um método de pagamento.' }),
   description: z.string().optional(),
+  due_date: z.date().default(new Date()),
+  status: z.enum(['pago', 'pendente', 'vencido']).default('pago'),
+  type: z.enum(['receita', 'despesa']).default('receita'),
+  category: z.string().default('Pagamentos Avulsos')
 });
 
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
 const paymentMethods = ['PIX', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto'];
 
-export function AddPaymentForm({ children }: { children: React.ReactNode }) {
+interface AddPaymentFormProps {
+  children: React.ReactNode;
+  onSuccess?: () => void;
+}
+
+export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
   const [open, setOpen] = React.useState(false);
   const [students, setStudents] = React.useState<Student[]>([]);
   const { toast } = useToast();
@@ -73,17 +83,30 @@ export function AddPaymentForm({ children }: { children: React.ReactNode }) {
     defaultValues: {
       amount: '',
       description: '',
+      status: 'pago',
+      type: 'receita',
+      category: 'Pagamentos Avulsos',
+      due_date: new Date(),
     },
   });
 
-  const onSubmit = (data: PaymentFormValues) => {
-    const studentName = students.find(s => s.id === data.student)?.name || 'Aluno';
-    toast({
-        title: "Pagamento Registrado!",
-        description: `O pagamento de ${data.amount} para ${studentName} foi registrado.`,
-    })
-    setOpen(false);
-    form.reset();
+  const onSubmit = async (data: PaymentFormValues) => {
+    const result = await addTransaction(data);
+    if (result.success) {
+      toast({
+          title: "Pagamento Registrado!",
+          description: result.message,
+      })
+      setOpen(false);
+      form.reset();
+      onSuccess?.();
+    } else {
+       toast({
+        title: "Erro ao registrar pagamento!",
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   const getInitials = (name: string | null) => {
@@ -109,7 +132,7 @@ export function AddPaymentForm({ children }: { children: React.ReactNode }) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="student"
+              name="student_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Aluno</FormLabel>
@@ -156,7 +179,7 @@ export function AddPaymentForm({ children }: { children: React.ReactNode }) {
                               mapToRadix: ['.'],
                             }
                           }}
-                          value={field.value}
+                          value={field.value || ''}
                           onAccept={(value) => field.onChange(value)}
                           className={cn(
                             'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
@@ -170,7 +193,7 @@ export function AddPaymentForm({ children }: { children: React.ReactNode }) {
                 />
               <FormField
                 control={form.control}
-                name="paymentMethod"
+                name="payment_method"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Método de Pagamento</FormLabel>

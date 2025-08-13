@@ -15,6 +15,7 @@ type UpcomingClass = ClassRow & { instructors: Pick<Instructor, 'name'> | null }
 
 interface AcoesRapidasFrequenciaProps {
   classes: UpcomingClass[];
+  onSuccess: () => void;
 }
 
 const actions = [
@@ -30,7 +31,7 @@ const IconWrapper = ({ children }: { children: React.ReactNode }) => (
     </div>
 )
 
-export default function AcoesRapidasFrequencia({ classes }: AcoesRapidasFrequenciaProps) {
+export default function AcoesRapidasFrequencia({ classes, onSuccess }: AcoesRapidasFrequenciaProps) {
   const { toast } = useToast();
 
   const handleActionClick = (label: string) => {
@@ -64,7 +65,7 @@ export default function AcoesRapidasFrequencia({ classes }: AcoesRapidasFrequenc
 
             if (ActionComponent) {
                 return (
-                    <ActionComponent key={index} classes={classes}>
+                    <ActionComponent key={index} classes={classes} onSuccess={onSuccess}>
                         {buttonContent}
                     </ActionComponent>
                 )

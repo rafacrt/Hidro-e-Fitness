@@ -30,11 +30,12 @@ interface PagamentosContentProps {
   payments: Payment[];
   stats: PaymentStats;
   students: Student[];
+  onSuccess: () => void;
 }
 
 type ActiveTab = "Visão Geral" | "Métodos de Pagamento" | "Planos e Preços" | "Histórico";
 
-export default function PagamentosContent({ payments, stats, students }: PagamentosContentProps) {
+export default function PagamentosContent({ payments, stats, students, onSuccess }: PagamentosContentProps) {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
 
   const renderHeaderButtons = () => {
@@ -54,7 +55,7 @@ export default function PagamentosContent({ payments, stats, students }: Pagamen
                     <Download className="mr-2 h-4 w-4" />
                     Exportar
                 </Button>
-                 <AddPaymentForm>
+                 <AddPaymentForm onSuccess={onSuccess}>
                     <Button>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Novo Pagamento
@@ -64,7 +65,7 @@ export default function PagamentosContent({ payments, stats, students }: Pagamen
          )
       default:
         return (
-          <AddPaymentForm>
+          <AddPaymentForm onSuccess={onSuccess}>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
               Novo Pagamento
