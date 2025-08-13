@@ -111,18 +111,6 @@ export default function PagamentosTable({ pagamentos, selectedPayments, setSelec
                     </TableCell>
                     <TableCell className="text-right">
                         <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                          <EditTransacaoDialog transacao={item} onSuccess={onSuccess}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <FileEdit className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Editar</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </EditTransacaoDialog>
                           <DeleteTransacaoAlert transacaoId={item.id} onSuccess={onSuccess}>
                              <Tooltip>
                                 <TooltipTrigger asChild>
