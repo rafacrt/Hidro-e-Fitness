@@ -99,8 +99,11 @@ export function DetalhesTransacaoDialog({ transacao, children, onSuccess }: Deta
                     Fechar
                 </Button>
             </DialogClose>
-            <EditTransacaoDialog transacao={transacao} onSuccess={onSuccess}>
-                <Button onClick={() => setOpen(false)}>
+            <EditTransacaoDialog transacao={transacao} onSuccess={() => {
+                setOpen(false);
+                onSuccess();
+            }}>
+                <Button onClick={(e) => e.stopPropagation()}>
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar Transação
                 </Button>
