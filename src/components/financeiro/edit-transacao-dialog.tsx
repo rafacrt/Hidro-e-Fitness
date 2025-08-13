@@ -84,13 +84,18 @@ const extractCategoryAndDescription = (fullDescription: string) => {
 
 const formatCurrencyForInput = (value: number | null) => {
     if (value === null || typeof value === 'undefined') return '';
-    // Use Math.abs because the input handles only positive numbers
     const absValue = Math.abs(value);
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
     }).format(absValue).replace('R$', 'R$ ');
 }
+
+// Helper to parse date string from Supabase (which is UTC) as if it were local time
+const parseUTCDateAsLocal = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+};
 
 
 export function EditTransacaoDialog({ children, transacao, onSuccess }: EditTransacaoDialogProps) {
@@ -106,7 +111,7 @@ export function EditTransacaoDialog({ children, transacao, onSuccess }: EditTran
         description: description,
         category: category,
         amount: formatCurrencyForInput(transacao.amount),
-        due_date: new Date(transacao.due_date),
+        due_date: parseUTCDateAsLocal(transacao.due_date),
         payment_method: transacao.payment_method || '',
         status: transacao.status as 'pago' | 'pendente' | 'vencido',
     }
@@ -133,8 +138,25 @@ export function EditTransacaoDialog({ children, transacao, onSuccess }: EditTran
     }
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      const { category, description } = extractCategoryAndDescription(transacao.description);
+      form.reset({
+        type: (transacao.amount || 0) > 0 ? 'receita' : 'despesa',
+        description: description,
+        category: category,
+        amount: formatCurrencyForInput(transacao.amount),
+        due_date: parseUTCDateAsLocal(transacao.due_date),
+        payment_method: transacao.payment_method || '',
+        status: transacao.status as 'pago' | 'pendente' | 'vencido',
+      });
+    }
+  };
+
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

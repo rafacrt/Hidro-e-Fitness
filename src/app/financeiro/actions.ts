@@ -28,6 +28,14 @@ const transactionFormSchema = z.object({
   status: z.enum(['pago', 'pendente', 'vencido']).default('pago'),
 });
 
+// Helper function to convert a local date to a UTC-aligned ISO string for just the date part.
+const toDateOnlyISOString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export async function addTransaction(formData: unknown) {
   const parsedData = transactionFormSchema.safeParse(formData);
 
@@ -53,7 +61,7 @@ export async function addTransaction(formData: unknown) {
       {
         description: `${parsedData.data.category} - ${parsedData.data.description}`,
         amount: amountAsNumber,
-        due_date: parsedData.data.due_date.toISOString(),
+        due_date: toDateOnlyISOString(parsedData.data.due_date),
         payment_method: parsedData.data.payment_method,
         status: parsedData.data.status,
       },
@@ -165,7 +173,7 @@ export async function updateTransaction(id: string, formData: unknown) {
             .update({
                 description: `${parsedData.data.category} - ${parsedData.data.description}`,
                 amount: amountAsNumber,
-                due_date: parsedData.data.due_date.toISOString(),
+                due_date: toDateOnlyISOString(parsedData.data.due_date),
                 payment_method: parsedData.data.payment_method,
                 status: parsedData.data.status,
             })
@@ -249,7 +257,7 @@ export async function generateMonthlyPayments(month: Date) {
           student_id: enrollment.student_id,
           description: `Mensalidade - ${plan.name} - ${monthName}`,
           amount: plan.price,
-          due_date: dueDate.toISOString(),
+          due_date: toDateOnlyISOString(dueDate),
           status: 'pendente',
           category: 'Mensalidades',
           type: 'receita',
@@ -295,7 +303,7 @@ export async function scheduleSelectedPayments(paymentIds: string[], newDueDate:
         const supabase = await createSupabaseServerClient();
         const { error } = await supabase
             .from('payments')
-            .update({ due_date: newDueDate.toISOString(), status: 'pendente' })
+            .update({ due_date: toDateOnlyISOString(newDueDate), status: 'pendente' })
             .in('id', paymentIds);
 
         if (error) throw error;
