@@ -86,7 +86,7 @@ export default function PagamentosTable({ pagamentos, selectedPayments, setSelec
             {pagamentos.map((item) => {
               const statusInfo = statusConfig[item.status as keyof typeof statusConfig] || statusConfig.pendente;
               return (
-                <DetalhesTransacaoDialog transacao={item} key={item.id}>
+                <DetalhesTransacaoDialog transacao={item} key={item.id} onSuccess={onSuccess}>
                   <TableRow className="cursor-pointer">
                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox 
@@ -126,7 +126,7 @@ export default function PagamentosTable({ pagamentos, selectedPayments, setSelec
                           <DeleteTransacaoAlert transacaoId={item.id} onSuccess={onSuccess}>
                              <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={(e) => e.stopPropagation()}>
+                                  <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
                                       <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>

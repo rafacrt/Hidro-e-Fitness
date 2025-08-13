@@ -35,6 +35,7 @@ type Payment = Database['public']['Tables']['payments']['Row'];
 interface DetalhesTransacaoDialogProps {
   transacao: Payment;
   children: React.ReactNode;
+  onSuccess: () => void;
 }
 
 const formatCurrency = (value: number | null) => {
@@ -55,7 +56,7 @@ const DetailItem = ({ icon: Icon, label, value }: { icon: React.ElementType; lab
   </div>
 );
 
-export function DetalhesTransacaoDialog({ transacao, children }: DetalhesTransacaoDialogProps) {
+export function DetalhesTransacaoDialog({ transacao, children, onSuccess }: DetalhesTransacaoDialogProps) {
   const [open, setOpen] = React.useState(false);
   const statusInfo = statusConfig[transacao.status] || statusConfig.pendente;
 
@@ -98,8 +99,8 @@ export function DetalhesTransacaoDialog({ transacao, children }: DetalhesTransac
                     Fechar
                 </Button>
             </DialogClose>
-            <EditTransacaoDialog transacao={transacao}>
-                <Button onClick={(e) => { e.stopPropagation(); setOpen(false); }}>
+            <EditTransacaoDialog transacao={transacao} onSuccess={onSuccess}>
+                <Button onClick={() => setOpen(false)}>
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar Transação
                 </Button>
