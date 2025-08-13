@@ -5,6 +5,16 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import type { Database } from '@/lib/database.types';
 
 type Payment = Database['public']['Tables']['payments']['Row'];
+// Assumindo que teremos uma tabela payment_methods no futuro.
+// Por enquanto, a estrutura será usada para mock data.
+export type PaymentMethod = {
+  id: string;
+  name: string;
+  type: 'pix' | 'card' | 'cash' | 'transfer';
+  enabled: boolean;
+  fee_percentage: number;
+  created_at: string;
+}
 
 interface PaymentStats {
   totalVolume: number;
@@ -87,4 +97,17 @@ export async function getPaymentStats(): Promise<PaymentStats> {
       overdueVolume: 0,
     };
   }
+}
+
+// Ação para buscar os métodos de pagamento.
+// Como a tabela ainda não existe, retornará um array vazio.
+export async function getPaymentMethods(): Promise<PaymentMethod[]> {
+    // const supabase = await createSupabaseServerClient();
+    // const { data, error } = await supabase.from('payment_methods').select('*');
+    // if (error) {
+    //     console.error('Error fetching payment methods:', error);
+    //     return [];
+    // }
+    // return data;
+    return Promise.resolve([]);
 }

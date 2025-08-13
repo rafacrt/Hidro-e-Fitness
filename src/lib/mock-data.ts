@@ -1,5 +1,6 @@
 
 import type { Database } from './database.types';
+import type { PaymentMethod } from '@/app/pagamentos/actions';
 
 type Student = Database['public']['Tables']['students']['Row'];
 type Payment = Database['public']['Tables']['payments']['Row'];
@@ -192,3 +193,38 @@ export const mockPayments: Payment[] = [
     created_at: '2024-07-22T00:00:00Z',
   },
 ];
+
+export const mockPaymentMethods: PaymentMethod[] = [
+    {
+        id: '1',
+        name: 'PIX (Mock)',
+        type: 'pix',
+        enabled: true,
+        fee_percentage: 0,
+        created_at: new Date().toISOString(),
+    },
+    {
+        id: '2',
+        name: 'Cartão de Crédito (Mock)',
+        type: 'card',
+        enabled: true,
+        fee_percentage: 3.5,
+        created_at: new Date().toISOString(),
+    },
+    {
+        id: '3',
+        name: 'Dinheiro (Mock)',
+        type: 'cash',
+        enabled: true,
+        fee_percentage: 0,
+        created_at: new Date().toISOString(),
+    },
+     {
+        id: '4',
+        name: 'Transferência (Mock)',
+        type: 'transfer',
+        enabled: false,
+        fee_percentage: 0,
+        created_at: new Date().toISOString(),
+    },
+]
