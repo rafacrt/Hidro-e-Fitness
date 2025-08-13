@@ -272,3 +272,37 @@ export async function generateMonthlyPayments(month: Date) {
     return { success: false, message: error.message || 'Ocorreu um erro inesperado.' };
   }
 }
+
+export async function paySelectedPayments(paymentIds: string[]) {
+    try {
+        const supabase = await createSupabaseServerClient();
+        const { error } = await supabase
+            .from('payments')
+            .update({ status: 'pago', paid_at: new Date().toISOString() })
+            .in('id', paymentIds);
+
+        if (error) throw error;
+
+        revalidatePath('/financeiro');
+        return { success: true, message: `${paymentIds.length} transação(ões) marcada(s) como paga(s).` };
+    } catch (error: any) {
+        return { success: false, message: `Erro ao pagar transações: ${error.message}` };
+    }
+}
+
+export async function scheduleSelectedPayments(paymentIds: string[], newDueDate: Date) {
+    try {
+        const supabase = await createSupabaseServerClient();
+        const { error } = await supabase
+            .from('payments')
+            .update({ due_date: newDueDate.toISOString(), status: 'pendente' })
+            .in('id', paymentIds);
+
+        if (error) throw error;
+
+        revalidatePath('/financeiro');
+        return { success: true, message: `${paymentIds.length} transação(ões) reagendada(s).` };
+    } catch (error: any) {
+        return { success: false, message: `Erro ao agendar pagamentos: ${error.message}` };
+    }
+}

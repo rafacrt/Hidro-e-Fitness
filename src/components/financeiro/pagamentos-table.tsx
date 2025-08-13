@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import {
   Table,
   TableBody,
@@ -21,11 +22,14 @@ import { ptBR } from 'date-fns/locale';
 import { EditTransacaoDialog } from './edit-transacao-dialog';
 import { DetalhesTransacaoDialog } from './detalhes-transacao-dialog';
 import { DeleteTransacaoAlert } from './delete-transacao-alert';
+import { Checkbox } from '../ui/checkbox';
 
 type Payment = Database['public']['Tables']['payments']['Row'];
 
 interface PagamentosTableProps {
   pagamentos: Payment[];
+  selectedPayments: string[];
+  setSelectedPayments: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const statusConfig = {
@@ -39,21 +43,36 @@ const formatCurrency = (value: number | null) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
-export default function PagamentosTable({ pagamentos }: PagamentosTableProps) {
+export default function PagamentosTable({ pagamentos, selectedPayments, setSelectedPayments }: PagamentosTableProps) {
   const { toast } = useToast();
   
-  const handleActionClick = (description: string) => {
-    toast({
-        title: 'Funcionalidade em desenvolvimento',
-        description: `A ação "${description}" será implementada em breve.`,
-    })
-  }
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedPayments(pagamentos.map(p => p.id));
+    } else {
+      setSelectedPayments([]);
+    }
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedPayments(prev => [...prev, id]);
+    } else {
+      setSelectedPayments(prev => prev.filter(pId => pId !== id));
+    }
+  };
   
   return (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12">
+              <Checkbox 
+                checked={selectedPayments.length > 0 && selectedPayments.length === pagamentos.length}
+                onCheckedChange={handleSelectAll}
+              />
+            </TableHead>
             <TableHead>Descrição</TableHead>
             <TableHead>Valor</TableHead>
             <TableHead>Vencimento</TableHead>
@@ -68,6 +87,12 @@ export default function PagamentosTable({ pagamentos }: PagamentosTableProps) {
               return (
                 <DetalhesTransacaoDialog transacao={item} key={item.id}>
                   <TableRow className="cursor-pointer">
+                     <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox 
+                            checked={selectedPayments.includes(item.id)}
+                            onCheckedChange={(checked) => handleSelectOne(item.id, !!checked)}
+                        />
+                    </TableCell>
                     <TableCell>
                       <p className="font-medium text-sm">{item.description}</p>
                     </TableCell>
