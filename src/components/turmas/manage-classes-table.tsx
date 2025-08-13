@@ -19,6 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { DeleteClassAlert } from './delete-class-alert';
 import { EditClassForm } from './edit-class-form';
 import { EnrollStudentsDialog } from './enroll-students-dialog';
+import { ViewEnrolledStudentsDialog } from './view-enrolled-students-dialog';
 
 type Instructor = Database['public']['Tables']['instructors']['Row'];
 type Modality = Database['public']['Tables']['modalities']['Row'];
@@ -141,10 +142,12 @@ export default function ManageClassesTable({ classes }: ManageClassesTableProps)
                                         Matricular Aluno
                                     </DropdownMenuItem>
                                 </EnrollStudentsDialog>
-                                <DropdownMenuItem>
-                                    <User className="mr-2 h-4 w-4" />
-                                    Ver Alunos
-                                </DropdownMenuItem>
+                                <ViewEnrolledStudentsDialog classData={cls}>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                        <User className="mr-2 h-4 w-4" />
+                                        Ver Alunos
+                                    </DropdownMenuItem>
+                                </ViewEnrolledStudentsDialog>
                                 <EditClassForm classData={cls}>
                                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                         <Edit className="mr-2 h-4 w-4" />
