@@ -98,7 +98,7 @@ export function EditTransacaoDialog({ children, transacao }: EditTransacaoDialog
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
-        type: transacao.type as 'receita' | 'despesa',
+        type: (transacao.amount || 0) > 0 ? 'receita' : 'despesa',
         description: description,
         category: category,
         amount: formatCurrencyForInput(transacao.amount),
