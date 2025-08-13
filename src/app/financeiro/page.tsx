@@ -19,6 +19,7 @@ import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { NavContent } from '@/components/layout/nav-content';
 import { getFinancialSummary, getTransactions, type FinancialSummary } from './actions';
 import { Loader2 } from 'lucide-react';
+import { mockPayments } from '@/lib/mock-data';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -47,7 +48,13 @@ export default function FinanceiroPage() {
     setSettings(academySettings);
     setUserProfile(profile);
     setRecebimentos(receitasData);
-    setPagamentos(despesasData);
+    
+    if (process.env.NODE_ENV === 'development' && despesasData.length === 0) {
+      setPagamentos(mockPayments);
+    } else {
+      setPagamentos(despesasData);
+    }
+    
     setSummary(financialSummary);
     setLoading(false);
   }, []);

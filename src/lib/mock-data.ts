@@ -2,6 +2,7 @@
 import type { Database } from './database.types';
 
 type Student = Database['public']['Tables']['students']['Row'];
+type Payment = Database['public']['Tables']['payments']['Row'];
 
 export const mockStudents: Student[] = [
   {
@@ -122,4 +123,72 @@ export const mockInstructors = [
   { id: '1', name: 'Prof. Ana Silva (Mock)' },
   { id: '2', name: 'Prof. Carlos Santos (Mock)' },
   { id: '3', name: 'Prof. Beatriz Lima (Mock)' },
+];
+
+export const mockPayments: Payment[] = [
+  {
+    id: '1',
+    description: 'Manutenção - Troca de filtro da Piscina 1',
+    amount: -450.00,
+    due_date: '2024-07-15T00:00:00Z',
+    status: 'pago',
+    category: 'Manutenção',
+    payment_method: 'PIX',
+    type: 'despesa',
+    student_id: null,
+    paid_at: '2024-07-15T00:00:00Z',
+    created_at: '2024-07-10T00:00:00Z',
+  },
+  {
+    id: '2',
+    description: 'Salários - Pagamento Prof. Ana Silva',
+    amount: -3500.00,
+    due_date: '2024-08-05T00:00:00Z',
+    status: 'pendente',
+    category: 'Salários',
+    payment_method: 'Transferência',
+    type: 'despesa',
+    student_id: null,
+    paid_at: null,
+    created_at: '2024-07-05T00:00:00Z',
+  },
+  {
+    id: '3',
+    description: 'Contas (Água, Luz, etc.) - Conta de Luz',
+    amount: -850.50,
+    due_date: '2024-07-20T00:00:00Z',
+    status: 'pago',
+    category: 'Contas (Água, Luz, etc.)',
+    payment_method: 'Boleto',
+    type: 'despesa',
+    student_id: null,
+    paid_at: '2024-07-18T00:00:00Z',
+    created_at: '2024-07-01T00:00:00Z',
+  },
+  {
+    id: '4',
+    description: 'Aluguel - Aluguel do espaço',
+    amount: -5000.00,
+    due_date: '2024-07-10T00:00:00Z',
+    status: 'vencido',
+    category: 'Aluguel',
+    payment_method: 'Boleto',
+    type: 'despesa',
+    student_id: null,
+    paid_at: null,
+    created_at: '2024-06-10T00:00:00Z',
+  },
+  {
+    id: '5',
+    description: 'Marketing - Impulsionamento de post',
+    amount: -150.00,
+    due_date: '2024-07-25T00:00:00Z',
+    status: 'pendente',
+    category: 'Marketing',
+    payment_method: 'Cartão de Crédito',
+    type: 'despesa',
+    student_id: null,
+    paid_at: null,
+    created_at: '2024-07-22T00:00:00Z',
+  },
 ];
