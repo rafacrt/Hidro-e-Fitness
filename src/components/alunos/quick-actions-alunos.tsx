@@ -16,7 +16,11 @@ const IconWrapper = ({ children }: { children: React.ReactNode }) => (
     </div>
 )
 
-export default function QuickActionsAlunos() {
+interface QuickActionsAlunosProps {
+  onSuccess: () => void;
+}
+
+export default function QuickActionsAlunos({ onSuccess }: QuickActionsAlunosProps) {
   const { toast } = useToast();
 
   const handleActionClick = (label: string) => {
@@ -47,7 +51,7 @@ export default function QuickActionsAlunos() {
 
             if (action.label === 'Novo Aluno') {
               return (
-                 <AddStudentForm key={index}>
+                 <AddStudentForm key={index} onSuccess={onSuccess}>
                    {buttonContent}
                 </AddStudentForm>
               )

@@ -24,6 +24,7 @@ import { getClasses, getEnrollments } from './actions';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { NavContent } from '@/components/layout/nav-content';
+import { useRouter } from 'next/navigation';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -41,6 +42,7 @@ export default function TurmasPage() {
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const router = useRouter();
 
   const loadData = React.useCallback(async () => {
     setLoading(true);
@@ -61,6 +63,10 @@ export default function TurmasPage() {
     loadData();
   }, [loadData]);
 
+  const handleSuccess = () => {
+    router.refresh();
+  };
+
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -76,7 +82,7 @@ export default function TurmasPage() {
               <p className="text-muted-foreground">Gestão completa de turmas e horários</p>
             </div>
             <div className='flex gap-2 w-full md:w-auto'>
-                <AddClassForm onSuccess={loadData}>
+                <AddClassForm onSuccess={handleSuccess}>
                   <Button className="w-full">
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Nova Turma
@@ -93,7 +99,7 @@ export default function TurmasPage() {
             <div className="space-y-6">
               <TurmasStatCards classes={classes} enrollments={enrollments} />
               <AulasDeHoje classes={classes} />
-              <AcoesRapidasTurmas classes={classes} onSuccess={loadData} />
+              <AcoesRapidasTurmas classes={classes} onSuccess={handleSuccess} />
             </div>
           )}
 

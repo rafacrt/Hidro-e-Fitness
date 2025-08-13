@@ -1,4 +1,7 @@
 
+'use client';
+
+import * as React from 'react';
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import StudentsTable from '@/components/alunos/students-table';
@@ -6,16 +9,18 @@ import QuickActionsAlunos from '@/components/alunos/quick-actions-alunos';
 import StudentStats from '@/components/alunos/student-stats';
 import Filters from '@/components/alunos/filters';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Loader2 } from 'lucide-react';
 import { AddStudentForm } from '@/components/alunos/add-student-form';
 import { getStudents } from './actions';
-import { unstable_noStore as noStore } from 'next/cache';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import type { Database } from '@/lib/database.types';
 import { mockStudents } from '@/lib/mock-data';
 import { NavContent } from '@/components/layout/nav-content';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 type Student = Database['public']['Tables']['students']['Row'];
+type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 function processStudents(
   students: Student[],
@@ -58,33 +63,67 @@ function processStudents(
   return filteredStudents;
 }
 
-export default async function AlunosPage({
-  searchParams,
-}: {
-  searchParams?: {
-    query?: string;
-    status?: string;
-    sort?: string;
-    order?: string;
-  };
-}) {
-  noStore();
-  const query = searchParams?.query || '';
-  const status = searchParams?.status || 'all';
-  const sort = searchParams?.sort;
-  const order = searchParams?.order;
+export default function AlunosPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [loading, setLoading] = React.useState(true);
+  const [allStudents, setAllStudents] = React.useState<Student[]>([]);
+  const [processedStudents, setProcessedStudents] = React.useState<Student[]>([]);
+  const [academySettings, setAcademySettings] = React.useState<AcademySettings | null>(null);
+  const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
 
-  const [dbStudents, academySettings, userProfile] = await Promise.all([
-    getStudents(),
-    getAcademySettings(),
-    getUserProfile()
-  ]);
+  const query = searchParams.get('query') || '';
+  const status = searchParams.get('status') || 'all';
+  const sort = searchParams.get('sort');
+  const order = searchParams.get('order');
 
-  const allStudents = (process.env.NODE_ENV === 'development' && dbStudents.length === 0)
-    ? mockStudents
-    : dbStudents;
+  const loadData = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const [dbStudents, settings, profile] = await Promise.all([
+        getStudents(),
+        getAcademySettings(),
+        getUserProfile()
+      ]);
 
-  const processedStudents = processStudents(allStudents, query, status, sort, order);
+      const studentsData = (process.env.NODE_ENV === 'development' && dbStudents.length === 0)
+        ? mockStudents
+        : dbStudents;
+      
+      setAllStudents(studentsData);
+      setAcademySettings(settings);
+      setUserProfile(profile);
+    } catch (error) {
+      console.error("Failed to load data", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadData();
+  }, [loadData]);
+  
+  React.useEffect(() => {
+    const processed = processStudents(allStudents, query, status, sort, order);
+    setProcessedStudents(processed);
+  }, [allStudents, query, status, sort, order]);
+
+  if (loading) {
+     return (
+        <div className="flex min-h-screen w-full bg-background text-foreground">
+            <Sidebar>
+                <NavContent settings={academySettings} />
+            </Sidebar>
+            <div className="flex flex-col w-0 flex-1">
+                <Header settings={academySettings} userProfile={userProfile} />
+                <main className="flex-1 flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                </main>
+            </div>
+        </div>
+     )
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -99,7 +138,7 @@ export default async function AlunosPage({
               <h1 className="text-2xl font-bold">Alunos</h1>
               <p className="text-muted-foreground">Gerencie todos os alunos cadastrados</p>
             </div>
-            <AddStudentForm>
+            <AddStudentForm onSuccess={() => router.refresh()}>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Novo Aluno
@@ -110,7 +149,7 @@ export default async function AlunosPage({
           <Filters />
           <StudentsTable students={processedStudents} />
           <StudentStats students={allStudents} />
-          <QuickActionsAlunos />
+          <QuickActionsAlunos onSuccess={() => router.refresh()} />
 
         </main>
       </div>

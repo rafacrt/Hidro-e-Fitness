@@ -41,6 +41,7 @@ import { IMaskInput } from 'react-imask';
 import { WaveSpinner } from '../ui/wave-spinner';
 import { addStudent } from '@/app/alunos/actions';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const studentFormSchema = z
   .object({
@@ -92,11 +93,17 @@ const studentFormSchema = z
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
 
-export function AddStudentForm({ children }: { children: React.ReactNode }) {
+interface AddStudentFormProps {
+  children: React.ReactNode;
+  onSuccess?: () => void;
+}
+
+export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
   const [open, setOpen] = React.useState(false);
   const [isMinor, setIsMinor] = React.useState(false);
   const [isFetchingCep, setIsFetchingCep] = React.useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
@@ -146,7 +153,7 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
         const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
         const data = await response.json();
         if (!data.erro) {
-          form.setValue('street', data.logradouro);
+          form.setValue('street', data.logouro);
           form.setValue('neighborhood', data.bairro);
           form.setValue('city', data.localidade);
           form.setValue('state', data.uf);
@@ -172,6 +179,11 @@ export function AddStudentForm({ children }: { children: React.ReactNode }) {
       });
       setOpen(false);
       form.reset();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.refresh();
+      }
     } else {
       toast({
         title: 'Erro ao cadastrar aluno!',

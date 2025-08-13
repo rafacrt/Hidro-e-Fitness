@@ -17,6 +17,7 @@ import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { NavContent } from '@/components/layout/nav-content';
 import PlanosPrecosTab from '@/components/modalidades/planos-precos-tab';
+import { useRouter } from 'next/navigation';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -30,8 +31,9 @@ export default function ModalidadesPage() {
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
   const [activeTab, setActiveTab] = React.useState<ActiveTabModalities>("Visão Geral");
   const [stats, setStats] = React.useState<{ totalStudents: number, totalRevenue: number }>({ totalStudents: 0, totalRevenue: 0 });
+  const router = useRouter();
 
-  const loadData = async () => {
+  const loadData = React.useCallback(async () => {
     const [
       fetchedModalities,
       fetchedSettings,
@@ -47,11 +49,15 @@ export default function ModalidadesPage() {
     setSettings(fetchedSettings);
     setUserProfile(fetchedProfile);
     setStats(fetchedStats);
-  }
+  }, []);
 
   React.useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
+
+  const handleSuccess = () => {
+    router.refresh();
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -91,7 +97,7 @@ export default function ModalidadesPage() {
               <p className="text-muted-foreground">Gestão completa de modalidades e atividades</p>
             </div>
             <div className='flex gap-2 w-full md:w-auto'>
-                <AddModalityForm onSuccess={loadData}>
+                <AddModalityForm onSuccess={handleSuccess}>
                     <Button className="w-full">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Nova Modalidade
