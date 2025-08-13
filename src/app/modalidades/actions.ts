@@ -138,6 +138,26 @@ export async function updateModality(id: string, formData: unknown) {
 export async function deleteModality(id: string) {
   try {
     const supabase = await createSupabaseServerClient();
+
+    // 1. Check if any classes are using this modality
+    const { count, error: checkError } = await supabase
+      .from('classes')
+      .select('*', { count: 'exact', head: true })
+      .eq('modality_id', id);
+
+    if (checkError) {
+      console.error('Supabase Check Error:', checkError);
+      return { success: false, message: `Erro ao verificar turmas: ${checkError.message}` };
+    }
+
+    if (count !== null && count > 0) {
+      return { 
+        success: false, 
+        message: `Não é possível excluir esta modalidade, pois ela está associada a ${count} turma(s). Por favor, altere ou remova as turmas antes.` 
+      };
+    }
+
+    // 2. If no classes are using it, proceed with deletion
     const { error } = await supabase.from('modalities').delete().eq('id', id);
 
     if (error) {
@@ -193,5 +213,3 @@ export async function addPlan(formData: unknown) {
     return { success: false, message: 'Ocorreu um erro inesperado.' };
   }
 }
-
-    
