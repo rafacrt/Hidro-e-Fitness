@@ -35,7 +35,7 @@ export default function PlanosPrecosActions({ modalities, onSuccess }: PlanosPre
     { label: 'Ajustar Preços', icon: Tag, variant: 'secondary', component: AdjustPricesDialog },
     { label: 'Análise de Performance', icon: BarChart, variant: 'secondary', component: PerformanceAnalysisDialog },
   ];
-
+console.log('Modalidades no PlanosPrecosActions:', modalities);
   return (
     <Card>
       <CardHeader>

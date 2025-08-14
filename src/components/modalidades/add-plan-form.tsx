@@ -54,6 +54,8 @@ const planFormSchema = z.object({
 type PlanFormValues = z.infer<typeof planFormSchema>;
 
 export function AddPlanForm({ children, modalities, onSuccess }: AddPlanFormProps) {
+  console.log('Modalidades recebidas:', modalities);
+
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
 
