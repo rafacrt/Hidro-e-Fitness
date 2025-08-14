@@ -10,12 +10,16 @@ import { AddPlanForm } from './add-plan-form';
 import { DuplicatePlanDialog } from './duplicate-plan-dialog';
 import { AdjustPricesDialog } from './adjust-prices-dialog';
 import { PerformanceAnalysisDialog } from './performance-analysis-dialog';
+import type { Database } from '@/lib/database.types';
+
+type Modality = Database['public']['Tables']['modalities']['Row'];
 
 interface PlanosPrecosActionsProps {
+  modalities: Modality[];
   onSuccess: () => void;
 }
 
-export default function PlanosPrecosActions({ onSuccess }: PlanosPrecosActionsProps) {
+export default function PlanosPrecosActions({ modalities, onSuccess }: PlanosPrecosActionsProps) {
   const { toast } = useToast();
 
   const handleActionClick = (label: string) => {
@@ -54,7 +58,7 @@ export default function PlanosPrecosActions({ onSuccess }: PlanosPrecosActionsPr
 
             if (ActionComponent) {
                 if (action.label === 'Novo Plano') {
-                    return <ActionComponent key={index} onSuccess={onSuccess}>{buttonContent}</ActionComponent>;
+                    return <ActionComponent key={index} modalities={modalities} onSuccess={onSuccess}>{buttonContent}</ActionComponent>;
                 }
               return <ActionComponent key={index}>{buttonContent}</ActionComponent>;
             }

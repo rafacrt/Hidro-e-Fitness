@@ -56,7 +56,7 @@ export default function ModalidadesPage() {
   }, [loadData]);
 
   const handleSuccess = () => {
-    router.refresh();
+    loadData();
   };
 
   const renderContent = () => {
@@ -76,7 +76,7 @@ export default function ModalidadesPage() {
             </div>
           );
       case 'Preços e Planos':
-          return <PlanosPrecosTab />;
+          return <PlanosPrecosTab modalities={modalities} onSuccess={handleSuccess} />;
       default:
         return <p>Selecione uma aba</p>;
     }

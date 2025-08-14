@@ -28,7 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getModalities, addPlan } from '@/app/modalidades/actions';
+import { addPlan } from '@/app/modalidades/actions';
 import { IMaskInput } from 'react-imask';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -38,6 +38,7 @@ type Modality = Database['public']['Tables']['modalities']['Row'];
 
 interface AddPlanFormProps {
   children: React.ReactNode;
+  modalities: Modality[];
   onSuccess?: () => void;
 }
 
@@ -52,16 +53,9 @@ const planFormSchema = z.object({
 
 type PlanFormValues = z.infer<typeof planFormSchema>;
 
-export function AddPlanForm({ children, onSuccess }: AddPlanFormProps) {
+export function AddPlanForm({ children, modalities, onSuccess }: AddPlanFormProps) {
   const [open, setOpen] = React.useState(false);
-  const [modalities, setModalities] = React.useState<Modality[]>([]);
   const { toast } = useToast();
-
-  React.useEffect(() => {
-    if (open) {
-        getModalities().then(setModalities);
-    }
-  }, [open]);
 
   const form = useForm<PlanFormValues>({
     resolver: zodResolver(planFormSchema),

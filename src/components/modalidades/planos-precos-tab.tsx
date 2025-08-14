@@ -9,13 +9,17 @@ import { Button } from '../ui/button';
 import { PlusCircle } from 'lucide-react';
 import { AddPlanForm } from './add-plan-form';
 import { useRouter } from 'next/navigation';
+import type { Database } from '@/lib/database.types';
 
-export default function PlanosPrecosTab() {
+type Modality = Database['public']['Tables']['modalities']['Row'];
+
+interface PlanosPrecosTabProps {
+    modalities: Modality[];
+    onSuccess: () => void;
+}
+
+export default function PlanosPrecosTab({ modalities, onSuccess }: PlanosPrecosTabProps) {
     const router = useRouter();
-
-    const handleSuccess = () => {
-        router.refresh();
-    }
     
     return (
         <div className="space-y-6">
@@ -27,13 +31,14 @@ export default function PlanosPrecosTab() {
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">Todas as Modalidades</SelectItem>
-                    <SelectItem value="natacao">Natação</SelectItem>
-                    <SelectItem value="hidro">Hidroginástica</SelectItem>
+                    {modalities.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                    ))}
                 </SelectContent>
                 </Select>
             </div>
             <PlanosList />
-            <PlanosPrecosActions onSuccess={handleSuccess} />
+            <PlanosPrecosActions modalities={modalities} onSuccess={onSuccess} />
         </div>
     )
 }
