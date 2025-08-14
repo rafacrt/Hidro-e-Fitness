@@ -8,8 +8,15 @@ import PlanosPrecosActions from './planos-precos-actions';
 import { Button } from '../ui/button';
 import { PlusCircle } from 'lucide-react';
 import { AddPlanForm } from './add-plan-form';
+import { useRouter } from 'next/navigation';
 
 export default function PlanosPrecosTab() {
+    const router = useRouter();
+
+    const handleSuccess = () => {
+        router.refresh();
+    }
+    
     return (
         <div className="space-y-6">
             <PlanosPrecosStats />
@@ -26,7 +33,7 @@ export default function PlanosPrecosTab() {
                 </Select>
             </div>
             <PlanosList />
-            <PlanosPrecosActions />
+            <PlanosPrecosActions onSuccess={handleSuccess} />
         </div>
     )
 }

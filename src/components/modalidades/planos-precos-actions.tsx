@@ -11,14 +11,11 @@ import { DuplicatePlanDialog } from './duplicate-plan-dialog';
 import { AdjustPricesDialog } from './adjust-prices-dialog';
 import { PerformanceAnalysisDialog } from './performance-analysis-dialog';
 
-const actions = [
-  { label: 'Novo Plano', icon: Plus, variant: 'default', component: AddPlanForm },
-  { label: 'Duplicar Plano', icon: Copy, variant: 'secondary', component: DuplicatePlanDialog },
-  { label: 'Ajustar Preços', icon: Tag, variant: 'secondary', component: AdjustPricesDialog },
-  { label: 'Análise de Performance', icon: BarChart, variant: 'secondary', component: PerformanceAnalysisDialog },
-];
+interface PlanosPrecosActionsProps {
+  onSuccess: () => void;
+}
 
-export default function PlanosPrecosActions() {
+export default function PlanosPrecosActions({ onSuccess }: PlanosPrecosActionsProps) {
   const { toast } = useToast();
 
   const handleActionClick = (label: string) => {
@@ -27,6 +24,13 @@ export default function PlanosPrecosActions() {
       description: `A ação "${label}" será implementada em breve.`,
     });
   };
+
+  const actions = [
+    { label: 'Novo Plano', icon: Plus, variant: 'default', component: AddPlanForm },
+    { label: 'Duplicar Plano', icon: Copy, variant: 'secondary', component: DuplicatePlanDialog },
+    { label: 'Ajustar Preços', icon: Tag, variant: 'secondary', component: AdjustPricesDialog },
+    { label: 'Análise de Performance', icon: BarChart, variant: 'secondary', component: PerformanceAnalysisDialog },
+  ];
 
   return (
     <Card>
@@ -49,6 +53,9 @@ export default function PlanosPrecosActions() {
             const ActionComponent = action.component;
 
             if (ActionComponent) {
+                if (action.label === 'Novo Plano') {
+                    return <ActionComponent key={index} onSuccess={onSuccess}>{buttonContent}</ActionComponent>;
+                }
               return <ActionComponent key={index}>{buttonContent}</ActionComponent>;
             }
 

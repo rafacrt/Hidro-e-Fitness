@@ -36,6 +36,11 @@ import type { Database } from '@/lib/database.types';
 
 type Modality = Database['public']['Tables']['modalities']['Row'];
 
+interface AddPlanFormProps {
+  children: React.ReactNode;
+  onSuccess?: () => void;
+}
+
 const planFormSchema = z.object({
   name: z.string().min(3, 'O nome do plano deve ter pelo menos 3 caracteres.'),
   modality_id: z.string({ required_error: 'Selecione uma modalidade.' }),
@@ -47,7 +52,7 @@ const planFormSchema = z.object({
 
 type PlanFormValues = z.infer<typeof planFormSchema>;
 
-export function AddPlanForm({ children }: { children: React.ReactNode }) {
+export function AddPlanForm({ children, onSuccess }: AddPlanFormProps) {
   const [open, setOpen] = React.useState(false);
   const [modalities, setModalities] = React.useState<Modality[]>([]);
   const { toast } = useToast();
@@ -76,6 +81,7 @@ export function AddPlanForm({ children }: { children: React.ReactNode }) {
       });
       setOpen(false);
       form.reset();
+      onSuccess?.();
     } else {
       toast({
         title: 'Erro ao cadastrar plano!',
@@ -213,5 +219,3 @@ export function AddPlanForm({ children }: { children: React.ReactNode }) {
     </Dialog>
   );
 }
-
-    
