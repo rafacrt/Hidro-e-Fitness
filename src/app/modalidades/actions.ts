@@ -208,8 +208,8 @@ export async function addPlan(formData: unknown) {
 
     revalidatePath('/modalidades');
     return { success: true, message: 'Plano cadastrado com sucesso!' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected Error:', error);
-    return { success: false, message: 'Ocorreu um erro inesperado.' };
+    return { success: false, message: `Ocorreu um erro inesperado: ${error.message}` };
   }
 }
