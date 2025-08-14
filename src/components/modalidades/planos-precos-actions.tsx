@@ -35,7 +35,7 @@ export default function PlanosPrecosActions({ modalities, onSuccess }: PlanosPre
     { label: 'Ajustar Preços', icon: Tag, variant: 'secondary', component: AdjustPricesDialog },
     { label: 'Análise de Performance', icon: BarChart, variant: 'secondary', component: PerformanceAnalysisDialog },
   ];
-console.log('Modalidades no PlanosPrecosActions:', modalities);
+  console.log('Modalidades no PlanosPrecosActions:', modalities);
   return (
     <Card>
       <CardHeader>
@@ -44,28 +44,52 @@ console.log('Modalidades no PlanosPrecosActions:', modalities);
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {actions.map((action, index) => {
-             const buttonContent = (
-              <Button
-                variant={action.variant as any}
-                className="h-auto p-4 flex items-center justify-center gap-2 w-full"
-              >
-                <action.icon className="h-4 w-4" />
-                <span className="text-sm font-medium">{action.label}</span>
-              </Button>
-            );
-
             const ActionComponent = action.component;
 
             if (ActionComponent) {
-                if (action.label === 'Novo Plano') {
-                    return <ActionComponent key={index} modalities={modalities} onSuccess={onSuccess}>{buttonContent}</ActionComponent>;
-                }
+              if (action.label === 'Novo Plano') {
+                return (
+                  <ActionComponent
+                    key={index}
+                    modalities={modalities}
+                    onSuccess={onSuccess}
+                  >
+                    <Button
+                      variant={action.variant as any}
+                      className="h-auto p-4 flex items-center justify-center gap-2 w-full"
+                      disabled={modalities.length === 0}
+                    >
+                      <action.icon className="h-4 w-4" />
+                      <span className="text-sm font-medium">{action.label}</span>
+                    </Button>
+                  </ActionComponent>
+                );
+              }
+
+              // Para outros botões que não são "Novo Plano"
+              const buttonContent = (
+                <Button
+                  variant={action.variant as any}
+                  className="h-auto p-4 flex items-center justify-center gap-2 w-full"
+                >
+                  <action.icon className="h-4 w-4" />
+                  <span className="text-sm font-medium">{action.label}</span>
+                </Button>
+              );
+
               return <ActionComponent key={index}>{buttonContent}</ActionComponent>;
             }
 
+            // Para ações sem componente
             return (
               <div key={index} onClick={() => handleActionClick(action.label)} className="w-full cursor-pointer">
-                {buttonContent}
+                <Button
+                  variant={action.variant as any}
+                  className="h-auto p-4 flex items-center justify-center gap-2 w-full"
+                >
+                  <action.icon className="h-4 w-4" />
+                  <span className="text-sm font-medium">{action.label}</span>
+                </Button>
               </div>
             );
           })}
