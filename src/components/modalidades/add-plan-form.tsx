@@ -43,7 +43,7 @@ interface AddPlanFormProps {
 
 const planFormSchema = z.object({
   name: z.string().min(3, 'O nome do plano deve ter pelo menos 3 caracteres.'),
-  modality_id: z.string({ required_error: 'Selecione uma modalidade.' }),
+  modality_id: z.string({ required_error: 'Selecione uma modalidade.' }).min(1, 'Selecione uma modalidade.'),
   price: z.string().min(1, 'O preço é obrigatório.'),
   recurrence: z.enum(['mensal', 'trimestral', 'semestral', 'anual']),
   benefits: z.string().optional(),
