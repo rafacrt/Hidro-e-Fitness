@@ -35,8 +35,12 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addClass, getInstructorsForForm, getModalitiesForForm } from '@/app/turmas/actions';
-import { mockInstructors, mockModalities } from '@/lib/mock-data';
+import { addClass } from '@/app/turmas/actions';
+import type { Database } from '@/lib/database.types';
+
+type Instructor = Pick<Database['public']['Tables']['instructors']['Row'], 'id' | 'name'>;
+type Modality = Pick<Database['public']['Tables']['modalities']['Row'], 'id' | 'name'>;
+
 
 const classFormSchema = z.object({
   name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
@@ -55,6 +59,8 @@ type ClassFormValues = z.infer<typeof classFormSchema>;
 
 interface AddClassFormProps {
   children: React.ReactNode;
+  instructors: Instructor[];
+  modalities: Modality[];
   onSuccess?: () => void;
 }
 
@@ -67,31 +73,9 @@ const weekdays = [
   { id: 'Sábado', label: 'Sábado' },
 ];
 
-export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
+export function AddClassForm({ children, onSuccess, instructors, modalities }: AddClassFormProps) {
   const [open, setOpen] = React.useState(false);
-  const [instructors, setInstructors] = React.useState<{ id: string; name: string }[]>([]);
-  const [modalities, setModalities] = React.useState<{ id: string; name: string }[]>([]);
   const { toast } = useToast();
-
-  React.useEffect(() => {
-    async function fetchData() {
-       if (process.env.NODE_ENV === 'development') {
-        console.log("Using mock data for instructors and modalities in development.");
-        setInstructors(mockInstructors);
-        setModalities(mockModalities);
-      } else {
-        const [fetchedInstructors, fetchedModalities] = await Promise.all([
-          getInstructorsForForm(),
-          getModalitiesForForm()
-        ]);
-        setInstructors(fetchedInstructors);
-        setModalities(fetchedModalities);
-      }
-    }
-    if (open) {
-      fetchData();
-    }
-  }, [open]);
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classFormSchema),

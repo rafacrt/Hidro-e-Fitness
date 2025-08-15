@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -31,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { IMaskInput } from 'react-imask';
 import { updateInstructor } from '@/app/professores/actions';
 import type { Database } from '@/lib/database.types';
+import { useRouter } from 'next/navigation';
 
 type Instructor = Database['public']['Tables']['instructors']['Row'];
 
@@ -73,6 +75,7 @@ const weekdays = [
 export function EditProfessorForm({ instructor, children }: EditProfessorFormProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
+  const router = useRouter();
   const form = useForm<ProfessorFormValues>({
     resolver: zodResolver(professorFormSchema),
     defaultValues: {
@@ -92,6 +95,7 @@ export function EditProfessorForm({ instructor, children }: EditProfessorFormPro
         description: result.message,
       });
       setOpen(false);
+      router.refresh();
     } else {
       toast({
         title: 'Erro!',

@@ -6,7 +6,7 @@ import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import TurmasFilters from '@/components/turmas/turmas-filters';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Loader2 } from 'lucide-react';
 import TurmasStatCards from '@/components/turmas/turmas-stat-cards';
 import AulasDeHoje from '@/components/turmas/aulas-de-hoje';
 import AcoesRapidasTurmas from '@/components/turmas/acoes-rapidas-turmas';
@@ -20,7 +20,7 @@ import AttendanceFilters from '@/components/turmas/attendance-filters';
 import AttendanceTable from '@/components/turmas/attendance-table';
 import AttendanceBatchActions from '@/components/turmas/attendance-batch-actions';
 import { AddClassForm } from '@/components/turmas/add-class-form';
-import { getClasses, getEnrollments } from './actions';
+import { getClasses, getEnrollments, getInstructorsForForm, getModalitiesForForm } from './actions';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { NavContent } from '@/components/layout/nav-content';
@@ -39,6 +39,8 @@ export default function TurmasPage() {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
   const [classes, setClasses] = React.useState<ClassRow[]>([]);
   const [enrollments, setEnrollments] = React.useState<Enrollment[]>([]);
+  const [instructors, setInstructors] = React.useState<Pick<Instructor, 'id' | 'name'>[]>([]);
+  const [modalities, setModalities] = React.useState<Pick<Modality, 'id' | 'name'>[]>([]);
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -46,17 +48,33 @@ export default function TurmasPage() {
 
   const loadData = React.useCallback(async () => {
     setLoading(true);
-    const [fetchedClasses, fetchedEnrollments, fetchedSettings, fetchedProfile] = await Promise.all([
-      getClasses(),
-      getEnrollments(),
-      getAcademySettings(),
-      getUserProfile(),
-    ]);
-    setClasses(fetchedClasses);
-    setEnrollments(fetchedEnrollments);
-    setSettings(fetchedSettings);
-    setUserProfile(fetchedProfile);
-    setLoading(false);
+    try {
+        const [
+            fetchedClasses,
+            fetchedEnrollments,
+            fetchedInstructors,
+            fetchedModalities,
+            fetchedSettings,
+            fetchedProfile
+        ] = await Promise.all([
+            getClasses(),
+            getEnrollments(),
+            getInstructorsForForm(),
+            getModalitiesForForm(),
+            getAcademySettings(),
+            getUserProfile(),
+        ]);
+        setClasses(fetchedClasses);
+        setEnrollments(fetchedEnrollments);
+        setInstructors(fetchedInstructors);
+        setModalities(fetchedModalities);
+        setSettings(fetchedSettings);
+        setUserProfile(fetchedProfile);
+    } catch (error) {
+        console.error("Failed to load data for Turmas page", error);
+    } finally {
+        setLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
@@ -64,9 +82,8 @@ export default function TurmasPage() {
   }, [loadData]);
 
   const handleSuccess = () => {
-    router.refresh();
+    loadData();
   };
-
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
@@ -82,7 +99,7 @@ export default function TurmasPage() {
               <p className="text-muted-foreground">Gestão completa de turmas e horários</p>
             </div>
             <div className='flex gap-2 w-full md:w-auto'>
-                <AddClassForm onSuccess={handleSuccess}>
+                <AddClassForm onSuccess={handleSuccess} instructors={instructors} modalities={modalities}>
                   <Button className="w-full">
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Nova Turma
@@ -93,13 +110,17 @@ export default function TurmasPage() {
           
           <TurmasFilters activeTab={activeTab} setActiveTab={setActiveTab} />
           
-          {loading && <p>Carregando...</p>}
+          {loading && (
+             <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
 
           {!loading && activeTab === 'Visão Geral' && (
             <div className="space-y-6">
               <TurmasStatCards classes={classes} enrollments={enrollments} />
               <AulasDeHoje classes={classes} />
-              <AcoesRapidasTurmas classes={classes} onSuccess={handleSuccess} />
+              <AcoesRapidasTurmas classes={classes} onSuccess={handleSuccess} instructors={instructors} modalities={modalities} />
             </div>
           )}
 
