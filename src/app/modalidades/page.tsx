@@ -9,7 +9,7 @@ import ModalitiesFilters from '@/components/modalidades/modalities-filters';
 import ModalitiesTable from '@/components/modalidades/modalities-table';
 import QuickActionsModalities from '@/components/modalidades/quick-actions-modalities';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Loader2 } from 'lucide-react';
 import TableFilters from '@/components/modalidades/table-filters';
 import { getModalities, getModalitiesStats } from './actions';
 import { AddModalityForm } from '@/components/modalidades/add-modality-form';
@@ -31,24 +31,32 @@ export default function ModalidadesPage() {
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
   const [activeTab, setActiveTab] = React.useState<ActiveTabModalities>("Visão Geral");
   const [stats, setStats] = React.useState<{ totalStudents: number, totalRevenue: number }>({ totalStudents: 0, totalRevenue: 0 });
+  const [loading, setLoading] = React.useState(true);
   const router = useRouter();
 
   const loadData = React.useCallback(async () => {
-    const [
-      fetchedModalities,
-      fetchedSettings,
-      fetchedProfile,
-      fetchedStats,
-    ] = await Promise.all([
-      getModalities(),
-      getAcademySettings(),
-      getUserProfile(),
-      getModalitiesStats(),
-    ]);
-    setModalities(fetchedModalities);
-    setSettings(fetchedSettings);
-    setUserProfile(fetchedProfile);
-    setStats(fetchedStats);
+    setLoading(true);
+    try {
+      const [
+        fetchedModalities,
+        fetchedSettings,
+        fetchedProfile,
+        fetchedStats,
+      ] = await Promise.all([
+        getModalities(),
+        getAcademySettings(),
+        getUserProfile(),
+        getModalitiesStats(),
+      ]);
+      setModalities(fetchedModalities);
+      setSettings(fetchedSettings);
+      setUserProfile(fetchedProfile);
+      setStats(fetchedStats);
+    } catch (error) {
+        console.error("Failed to load modalities data", error);
+    } finally {
+        setLoading(false);
+    }
   }, []);
 
   React.useEffect(() => {
@@ -60,6 +68,14 @@ export default function ModalidadesPage() {
   };
 
   const renderContent = () => {
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        )
+    }
+
     switch (activeTab) {
       case 'Gerenciar Modalidades':
         return (
