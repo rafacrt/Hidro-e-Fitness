@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -7,15 +6,15 @@ import { Button } from '../ui/button';
 import { UserPlus, CalendarPlus, DollarSign, Award } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AddStudentForm } from '../alunos/add-student-form';
-import { AddClassForm } from '../turmas/add-class-form';
+import AddClassForm from '../turmas/add-class-form';
 import { AddPaymentForm } from '../pagamentos/add-payment-form';
-import { AddAssessmentForm } from '../avaliacoes/add-assessment-form';
+// Temporariamente removido: import { AddAssessmentForm } from '../avaliacoes/add-assessment-form';
 
 const actions = [
   { label: 'Novo Aluno', icon: UserPlus, component: AddStudentForm },
   { label: 'Nova Turma', icon: CalendarPlus, component: AddClassForm },
   { label: 'Pagamento', icon: DollarSign, component: AddPaymentForm },
-  { label: 'Avaliação', icon: Award, component: AddAssessmentForm },
+  { label: 'Avaliação', icon: Award, component: null }, // Temporariamente sem componente
 ];
 
 const IconWrapper = ({ children }: { children: React.ReactNode }) => (
