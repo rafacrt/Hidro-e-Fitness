@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -20,11 +19,10 @@ import AttendanceFilters from '@/components/turmas/attendance-filters';
 import AttendanceTable from '@/components/turmas/attendance-table';
 import AttendanceBatchActions from '@/components/turmas/attendance-batch-actions';
 import { AddClassForm } from '@/components/turmas/add-class-form';
-import { getClasses, getEnrollments, getInstructorsForForm, getModalitiesForForm } from './actions';
+import { getClasses, getEnrollments } from './actions';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { NavContent } from '@/components/layout/nav-content';
-import { useRouter } from 'next/navigation';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -39,12 +37,9 @@ export default function TurmasPage() {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
   const [classes, setClasses] = React.useState<ClassRow[]>([]);
   const [enrollments, setEnrollments] = React.useState<Enrollment[]>([]);
-  const [instructors, setInstructors] = React.useState<Pick<Instructor, 'id' | 'name'>[]>([]);
-  const [modalities, setModalities] = React.useState<Pick<Modality, 'id' | 'name'>[]>([]);
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const router = useRouter();
 
   const loadData = React.useCallback(async () => {
     setLoading(true);
@@ -52,22 +47,16 @@ export default function TurmasPage() {
         const [
             fetchedClasses,
             fetchedEnrollments,
-            fetchedInstructors,
-            fetchedModalities,
             fetchedSettings,
             fetchedProfile
         ] = await Promise.all([
             getClasses(),
             getEnrollments(),
-            getInstructorsForForm(),
-            getModalitiesForForm(),
             getAcademySettings(),
             getUserProfile(),
         ]);
         setClasses(fetchedClasses);
         setEnrollments(fetchedEnrollments);
-        setInstructors(fetchedInstructors);
-        setModalities(fetchedModalities);
         setSettings(fetchedSettings);
         setUserProfile(fetchedProfile);
     } catch (error) {
@@ -99,7 +88,7 @@ export default function TurmasPage() {
               <p className="text-muted-foreground">Gestão completa de turmas e horários</p>
             </div>
             <div className='flex gap-2 w-full md:w-auto'>
-                <AddClassForm onSuccess={handleSuccess} instructors={instructors} modalities={modalities}>
+                <AddClassForm onSuccess={handleSuccess}>
                   <Button className="w-full">
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Nova Turma
@@ -120,7 +109,7 @@ export default function TurmasPage() {
             <div className="space-y-6">
               <TurmasStatCards classes={classes} enrollments={enrollments} />
               <AulasDeHoje classes={classes} />
-              <AcoesRapidasTurmas classes={classes} onSuccess={handleSuccess} instructors={instructors} modalities={modalities} />
+              <AcoesRapidasTurmas classes={classes} onSuccess={handleSuccess} />
             </div>
           )}
 

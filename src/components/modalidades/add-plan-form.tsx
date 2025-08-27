@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addPlan, getModalities } from '@/app/modalidades/actions'; // ADICIONE getModalities
+import { addPlan, getModalities } from '@/app/modalidades/actions';
 import { IMaskInput } from 'react-imask';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -37,7 +37,6 @@ type Modality = Database['public']['Tables']['modalities']['Row'];
 
 interface AddPlanFormProps {
   children: React.ReactNode;
-  modalities: Modality[];
   onSuccess?: () => void;
 }
 
@@ -52,18 +51,16 @@ const planFormSchema = z.object({
 
 type PlanFormValues = z.infer<typeof planFormSchema>;
 
-export function AddPlanForm({ children, modalities: initialModalities, onSuccess }: AddPlanFormProps) {
+export function AddPlanForm({ children, onSuccess }: AddPlanFormProps) {
   const [open, setOpen] = React.useState(false);
-  const [modalities, setModalities] = React.useState<Modality[]>(initialModalities || []);
+  const [modalities, setModalities] = React.useState<Modality[]>([]);
   const [loadingModalities, setLoadingModalities] = React.useState(false);
   const { toast } = useToast();
 
-  // Carrega modalidades quando o modal abre
   React.useEffect(() => {
     if (open) {
       setLoadingModalities(true);
       getModalities().then((data) => {
-        console.log('Modalidades carregadas no modal:', data);
         setModalities(data);
         setLoadingModalities(false);
       }).catch(() => {
@@ -137,8 +134,8 @@ export function AddPlanForm({ children, modalities: initialModalities, onSuccess
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Modalidade</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
                       defaultValue={field.value}
                       disabled={loadingModalities}
                     >
@@ -236,8 +233,8 @@ export function AddPlanForm({ children, modalities: initialModalities, onSuccess
               <DialogClose asChild>
                 <Button type="button" variant="outline">Cancelar</Button>
               </DialogClose>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={form.formState.isSubmitting || loadingModalities || modalities.length === 0}
               >
                 {form.formState.isSubmitting ? (

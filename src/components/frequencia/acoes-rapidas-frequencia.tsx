@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -6,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '../ui/button';
 import { CheckSquare, List, AlertCircle, BarChartHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { MarkAttendanceDialog } from './mark-attendance-dialog';
+import { MarkAttendanceDialog } from '@/components/turmas/mark-attendance-dialog';
 import type { Database } from '@/lib/database.types';
 
 type ClassRow = Database['public']['Tables']['classes']['Row'];

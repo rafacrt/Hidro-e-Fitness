@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -35,8 +34,11 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addClass } from '@/app/turmas/actions';
-import { useFormData } from '@/hooks/use-form-data';
+import { addClass, getInstructorsForForm, getModalitiesForForm } from '@/app/turmas/actions';
+import type { Database } from '@/lib/database.types';
+
+type Instructor = Database['public']['Tables']['instructors']['Row'];
+type Modality = Database['public']['Tables']['modalities']['Row'];
 
 const classFormSchema = z.object({
   name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
@@ -57,8 +59,6 @@ type ClassFormValues = z.infer<typeof classFormSchema>;
 interface AddClassFormProps {
   children: React.ReactNode;
   onSuccess?: () => void;
-  instructors?: { id: string; name: string }[];
-  modalities?: { id: string; name: string }[];
 }
 
 const locations = ['Piscina 1', 'Piscina 2', 'Piscina Terapêutica'];
@@ -71,29 +71,28 @@ const weekdays = [
   { id: 'Sábado', label: 'Sábado' },
 ];
 
-export function AddClassForm({ children, onSuccess, instructors: initialInstructors, modalities: initialModalities }: AddClassFormProps) {
+export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
+  const [instructors, setInstructors] = React.useState<Pick<Instructor, 'id' | 'name'>[]>([]);
+  const [modalities, setModalities] = React.useState<Pick<Modality, 'id' | 'name'>[]>([]);
+  const [loading, setLoading] = React.useState({ instructors: false, modalities: false });
 
-  const {
-    instructors,
-    modalities,
-    loading,
-    loadData,
-  } = useFormData({
-    fetchInstructors: !initialInstructors,
-    fetchModalities: !initialModalities,
-  });
-  
   React.useEffect(() => {
-    if (open && (!initialInstructors || !initialModalities)) {
-        loadData();
+    if (open) {
+      setLoading({ instructors: true, modalities: true });
+      Promise.all([getInstructorsForForm(), getModalitiesForForm()])
+        .then(([instructorsData, modalitiesData]) => {
+          setInstructors(instructorsData);
+          setModalities(modalitiesData);
+          setLoading({ instructors: false, modalities: false });
+        })
+        .catch(() => {
+          toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar professores e modalidades.", variant: "destructive" });
+          setLoading({ instructors: false, modalities: false });
+        });
     }
-  }, [open, initialInstructors, initialModalities, loadData]);
-
-  const finalInstructors = initialInstructors || instructors;
-  const finalModalities = initialModalities || modalities;
-
+  }, [open, toast]);
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classFormSchema),
@@ -162,7 +161,7 @@ export function AddClassForm({ children, onSuccess, instructors: initialInstruct
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {finalModalities.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                        {modalities.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -182,7 +181,7 @@ export function AddClassForm({ children, onSuccess, instructors: initialInstruct
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {finalInstructors.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
+                        {instructors.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
