@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -28,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addPlan } from '@/app/modalidades/actions';
+import { addPlan, getModalities } from '@/app/modalidades/actions'; // ADICIONE getModalities
 import { IMaskInput } from 'react-imask';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -53,11 +52,30 @@ const planFormSchema = z.object({
 
 type PlanFormValues = z.infer<typeof planFormSchema>;
 
-export function AddPlanForm({ children, modalities, onSuccess }: AddPlanFormProps) {
-  console.log('Modalidades recebidas:', modalities);
-
+export function AddPlanForm({ children, modalities: initialModalities, onSuccess }: AddPlanFormProps) {
   const [open, setOpen] = React.useState(false);
+  const [modalities, setModalities] = React.useState<Modality[]>(initialModalities || []);
+  const [loadingModalities, setLoadingModalities] = React.useState(false);
   const { toast } = useToast();
+
+  // Carrega modalidades quando o modal abre
+  React.useEffect(() => {
+    if (open) {
+      setLoadingModalities(true);
+      getModalities().then((data) => {
+        console.log('Modalidades carregadas no modal:', data);
+        setModalities(data);
+        setLoadingModalities(false);
+      }).catch(() => {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível carregar as modalidades.',
+          variant: 'destructive',
+        });
+        setLoadingModalities(false);
+      });
+    }
+  }, [open, toast]);
 
   const form = useForm<PlanFormValues>({
     resolver: zodResolver(planFormSchema),
@@ -113,76 +131,90 @@ export function AddPlanForm({ children, modalities, onSuccess }: AddPlanFormProp
               )}
             />
             <div className="grid grid-cols-2 gap-4">
-                <FormField
+              <FormField
                 control={form.control}
                 name="modality_id"
                 render={({ field }) => (
-                    <FormItem>
+                  <FormItem>
                     <FormLabel>Modalidade</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      disabled={loadingModalities}
+                    >
+                      <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder="Selecione..." />
+                          <SelectValue placeholder={loadingModalities ? "Carregando..." : "Selecione..."} />
                         </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {modalities.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                            {m.name}
+                      </FormControl>
+                      <SelectContent>
+                        {loadingModalities ? (
+                          <SelectItem value="loading" disabled>
+                            Carregando modalidades...
+                          </SelectItem>
+                        ) : modalities.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            Nenhuma modalidade cadastrada
+                          </SelectItem>
+                        ) : (
+                          modalities.map((m) => (
+                            <SelectItem key={m.id} value={String(m.id)}>
+                              {m.name}
                             </SelectItem>
-                        ))}
-                        </SelectContent>
+                          ))
+                        )}
+                      </SelectContent>
                     </Select>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
-                 <FormField
+              />
+              <FormField
                 control={form.control}
                 name="price"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Preço</FormLabel>
                     <FormControl>
-                       <IMaskInput
-                          mask="R$ num"
-                          blocks={{
-                            num: { mask: Number, radix: ",", thousandsSeparator: ".", scale: 2, padFractionalZeros: true, normalizeZeros: true, mapToRadix: ['.'] }
-                          }}
-                          value={field.value || ''}
-                          onAccept={(value) => field.onChange(value)}
-                          className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
-                          placeholder="R$ 0,00"
-                        />
+                      <IMaskInput
+                        mask="R$ num"
+                        blocks={{
+                          num: { mask: Number, radix: ",", thousandsSeparator: ".", scale: 2, padFractionalZeros: true, normalizeZeros: true, mapToRadix: ['.'] }
+                        }}
+                        value={field.value || ''}
+                        onAccept={(value) => field.onChange(value)}
+                        className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
+                        placeholder="R$ 0,00"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-             <FormField
-                control={form.control}
-                name="recurrence"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Recorrência</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                           <SelectItem value="mensal">Mensal</SelectItem>
-                           <SelectItem value="trimestral">Trimestral</SelectItem>
-                           <SelectItem value="semestral">Semestral</SelectItem>
-                           <SelectItem value="anual">Anual</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+            <FormField
+              control={form.control}
+              name="recurrence"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Recorrência</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="mensal">Mensal</SelectItem>
+                      <SelectItem value="trimestral">Trimestral</SelectItem>
+                      <SelectItem value="semestral">Semestral</SelectItem>
+                      <SelectItem value="anual">Anual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="benefits"
@@ -204,9 +236,20 @@ export function AddPlanForm({ children, modalities, onSuccess }: AddPlanFormProp
               <DialogClose asChild>
                 <Button type="button" variant="outline">Cancelar</Button>
               </DialogClose>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {form.formState.isSubmitting ? 'Salvando...' : 'Salvar Plano'}
+              <Button 
+                type="submit" 
+                disabled={form.formState.isSubmitting || loadingModalities || modalities.length === 0}
+              >
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : modalities.length === 0 ? (
+                  'Sem modalidades'
+                ) : (
+                  'Salvar Plano'
+                )}
               </Button>
             </DialogFooter>
           </form>
