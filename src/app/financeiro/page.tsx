@@ -14,10 +14,13 @@ import { ExportFinanceiroDialog } from '@/components/financeiro/export-financeir
 import RecebimentosTab from '@/components/financeiro/recebimentos-tab';
 import PagamentosTab from '@/components/financeiro/pagamentos-tab';
 import FluxoDeCaixaTab from '@/components/financeiro/fluxo-de-caixa-tab';
+import MetodosPagamentoTab from '@/components/pagamentos/metodos-pagamento-tab';
+import PlanosPrecosTab from '@/components/modalidades/planos-precos-tab';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { NavContent } from '@/components/layout/nav-content';
 import { getFinancialSummary, getTransactions, type FinancialSummary } from './actions';
+import { getModalities, getPlans } from '../modalidades/actions';
 import { Loader2 } from 'lucide-react';
 import { mockPayments } from '@/lib/mock-data';
 import TransacoesRecentesTable from '@/components/financeiro/transacoes-recentes-table';
@@ -25,8 +28,10 @@ import TransacoesRecentesTable from '@/components/financeiro/transacoes-recentes
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Payment = Database['public']['Tables']['payments']['Row'];
+type Modality = Database['public']['Tables']['modalities']['Row'];
+type Plan = Database['public']['Tables']['plans']['Row'] & { modalities: Pick<Modality, 'name'> | null };
 
-type ActiveTab = "Visão Geral" | "Recebimentos" | "Pagamentos" | "Fluxo de Caixa";
+type ActiveTab = "Visão Geral" | "Recebimentos" | "Pagamentos" | "Fluxo de Caixa" | "Métodos de Pagamento" | "Planos e Preços";
 
 export default function FinanceiroPage() {
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("Visão Geral");
@@ -35,21 +40,35 @@ export default function FinanceiroPage() {
   const [recebimentos, setRecebimentos] = React.useState<Payment[]>([]);
   const [pagamentos, setPagamentos] = React.useState<Payment[]>([]);
   const [summary, setSummary] = React.useState<FinancialSummary | null>(null);
+  const [modalities, setModalities] = React.useState<Modality[]>([]);
+  const [plans, setPlans] = React.useState<Plan[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   const loadData = React.useCallback(async () => {
     setLoading(true);
     try {
-      const [academySettings, profile, receitasData, despesasData, financialSummary] = await Promise.all([
+      const [
+        academySettings, 
+        profile, 
+        receitasData, 
+        despesasData, 
+        financialSummary,
+        modalitiesData,
+        plansData,
+      ] = await Promise.all([
         getAcademySettings(), 
         getUserProfile(),
         getTransactions('receita'),
         getTransactions('despesa'),
         getFinancialSummary(),
+        getModalities(),
+        getPlans(),
       ]);
       setSettings(academySettings);
       setUserProfile(profile);
       setRecebimentos(receitasData);
+      setModalities(modalitiesData);
+      setPlans(plansData);
       
       if (process.env.NODE_ENV === 'development' && despesasData.length === 0) {
         setPagamentos(mockPayments);
@@ -69,6 +88,39 @@ export default function FinanceiroPage() {
     loadData();
   }, [loadData]);
 
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+
+    switch(activeTab) {
+      case 'Visão Geral':
+        return summary && (
+          <div className="space-y-6">
+            <FinanceiroStatCards summary={summary} />
+            <TransacoesRecentesTable transactions={summary.transactions} onSuccess={loadData} />
+            <AcoesRapidasFinanceiro onSuccess={loadData} />
+          </div>
+        );
+      case 'Recebimentos':
+        return <RecebimentosTab recebimentos={recebimentos} />;
+      case 'Pagamentos':
+        return <PagamentosTab pagamentos={pagamentos} />;
+      case 'Fluxo de Caixa':
+        return summary && <FluxoDeCaixaTab summary={summary} />;
+      case 'Métodos de Pagamento':
+        return <MetodosPagamentoTab />;
+      case 'Planos e Preços':
+        return <PlanosPrecosTab modalities={modalities} plans={plans} onSuccess={loadData} />;
+      default:
+        return null;
+    }
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar>
@@ -80,7 +132,7 @@ export default function FinanceiroPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-2xl font-bold">Financeiro</h1>
-              <p className="text-muted-foreground">Gestão completa das finanças da academia</p>
+              <p className="text-muted-foreground">Gestão completa das finanças, planos e pagamentos da academia</p>
             </div>
             <div className="flex gap-2 w-full md:w-auto">
               <ExportFinanceiroDialog>
@@ -100,25 +152,7 @@ export default function FinanceiroPage() {
           
           <FiltrosFinanceiro activeTab={activeTab} setActiveTab={setActiveTab} />
 
-          {loading && (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          )}
-
-          {!loading && activeTab === 'Visão Geral' && summary && (
-            <div className="space-y-6">
-              <FinanceiroStatCards summary={summary} />
-              <TransacoesRecentesTable transactions={summary.transactions} onSuccess={loadData} />
-              <AcoesRapidasFinanceiro onSuccess={loadData} />
-            </div>
-          )}
-
-          {!loading && activeTab === 'Recebimentos' && <RecebimentosTab recebimentos={recebimentos} />}
-          
-          {!loading && activeTab === 'Pagamentos' && <PagamentosTab pagamentos={pagamentos} />}
-
-          {!loading && activeTab === 'Fluxo de Caixa' && summary && <FluxoDeCaixaTab summary={summary} />}
+          {renderContent()}
 
         </main>
       </div>

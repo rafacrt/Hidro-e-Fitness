@@ -1,113 +1,40 @@
+'use client';
 
-'use server';
+import * as React from 'react';
+import { Button } from "@/components/ui/button";
+import { Eye, ArrowDownToDot, CreditCard, Repeat, DollarSign, Settings } from "lucide-react";
 
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-import type { Database } from '@/lib/database.types';
+type ActiveTab = "Visão Geral" | "Recebimentos" | "Pagamentos" | "Fluxo de Caixa" | "Métodos de Pagamento" | "Planos e Preços";
 
-type Payment = Database['public']['Tables']['payments']['Row'];
-// Assumindo que teremos uma tabela payment_methods no futuro.
-// Por enquanto, a estrutura será usada para mock data.
-export type PaymentMethod = {
-  id: string;
-  name: string;
-  type: 'pix' | 'card' | 'cash' | 'transfer';
-  enabled: boolean;
-  fee_percentage: number;
-  created_at: string;
+const filters: { label: ActiveTab; icon: React.ElementType }[] = [
+    { label: "Visão Geral", icon: Eye },
+    { label: "Recebimentos", icon: ArrowDownToDot },
+    { label: "Pagamentos", icon: CreditCard },
+    { label: "Fluxo de Caixa", icon: Repeat },
+    { label: "Métodos de Pagamento", icon: Settings },
+    { label: "Planos e Preços", icon: DollarSign },
+];
+
+interface FiltrosFinanceiroProps {
+    activeTab: ActiveTab;
+    setActiveTab: (tab: ActiveTab) => void;
 }
 
-interface PaymentStats {
-  totalVolume: number;
-  totalCount: number;
-  approvedVolume: number;
-  pendingVolume: number;
-  overdueVolume: number;
-}
-
-export async function getPayments(filters: { status?: string; query?: string }): Promise<Payment[]> {
-  try {
-    const supabase = await createSupabaseServerClient();
-    let queryBuilder = supabase
-      .from('payments')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (filters.status && filters.status !== 'all') {
-      queryBuilder = queryBuilder.eq('status', filters.status);
-    }
-    
-    // Simple query for description for now
-    if (filters.query) {
-      queryBuilder = queryBuilder.ilike('description', `%${filters.query}%`);
-    }
-
-    const { data, error } = await queryBuilder;
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      throw new Error('Não foi possível buscar os pagamentos.');
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return [];
-  }
-}
-
-export async function getPaymentStats(): Promise<PaymentStats> {
-  try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase.from('payments').select('amount, status');
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      throw new Error('Não foi possível buscar as estatísticas de pagamento.');
-    }
-
-    const stats = data.reduce((acc, payment) => {
-      const amount = payment.amount || 0;
-      acc.totalVolume += amount;
-      acc.totalCount += 1;
-      if (payment.status === 'pago') {
-        acc.approvedVolume += amount;
-      } else if (payment.status === 'pendente') {
-        acc.pendingVolume += amount;
-      } else if (payment.status === 'vencido') {
-        acc.overdueVolume += amount;
-      }
-      return acc;
-    }, {
-      totalVolume: 0,
-      totalCount: 0,
-      approvedVolume: 0,
-      pendingVolume: 0,
-      overdueVolume: 0,
-    });
-
-    return stats;
-
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return {
-      totalVolume: 0,
-      totalCount: 0,
-      approvedVolume: 0,
-      pendingVolume: 0,
-      overdueVolume: 0,
-    };
-  }
-}
-
-// Ação para buscar os métodos de pagamento.
-// Como a tabela ainda não existe, retornará um array vazio.
-export async function getPaymentMethods(): Promise<PaymentMethod[]> {
-    // const supabase = await createSupabaseServerClient();
-    // const { data, error } = await supabase.from('payment_methods').select('*');
-    // if (error) {
-    //     console.error('Error fetching payment methods:', error);
-    //     return [];
-    // }
-    // return data;
-    return Promise.resolve([]);
+export default function FiltrosFinanceiro({ activeTab, setActiveTab }: FiltrosFinanceiroProps) {
+    return (
+        <div className="flex flex-wrap items-center gap-2 border-b pb-2">
+            {filters.map((filter, index) => (
+                <Button 
+                    key={index} 
+                    variant={activeTab === filter.label ? "secondary" : "ghost"} 
+                    onClick={() => setActiveTab(filter.label)}
+                    className="font-normal text-muted-foreground data-[state=active]:text-foreground data-[state=active]:font-semibold"
+                    data-state={activeTab === filter.label ? 'active' : 'inactive'}
+                >
+                    <filter.icon className="mr-2 h-4 w-4" />
+                    {filter.label}
+                </Button>
+            ))}
+        </div>
+    )
 }

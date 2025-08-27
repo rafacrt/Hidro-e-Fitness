@@ -24,7 +24,6 @@ export const navItems = [
   { href: '/modalidades', label: 'Modalidades', icon: Dumbbell },
   { href: '/professores', label: 'Professores', icon: User },
   { href: '/financeiro', 'label': 'Financeiro', icon: DollarSign },
-  { href: '/pagamentos', label: 'Pagamentos', icon: Receipt },
   { href: '/frequencia', label: 'Frequência', icon: ClipboardCheck },
   { href: '/relatorios', label: 'Relatórios', icon: FileText },
   { href: '/manutencao', label: 'Manutenção', icon: Wrench },
