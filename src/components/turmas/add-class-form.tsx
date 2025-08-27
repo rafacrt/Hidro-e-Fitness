@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -25,82 +24,70 @@ import {
 } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addClass } from '@/app/turmas/actions';
+import { addPlan, getModalities } from '@/app/modalidades/actions'; // ADICIONE getModalities
+import { IMaskInput } from 'react-imask';
+import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { Database } from '@/lib/database.types';
-import { useFormData } from '@/hooks/use-form-data'; // ✅ hook padronizado de dados
 
-type Instructor = Pick<Database['public']['Tables']['instructors']['Row'], 'id' | 'name'>;
-type Modality = Pick<Database['public']['Tables']['modalities']['Row'], 'id' | 'name'>;
+type Modality = Database['public']['Tables']['modalities']['Row'];
 
-const classFormSchema = z.object({
-  name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
-  modality_id: z.string({ required_error: 'Selecione uma modalidade.' }),
-  instructor_id: z.string().optional(),
-  start_time: z
-    .string()
-    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido.'),
-  end_time: z
-    .string()
-    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido.'),
-  days_of_week: z
-    .array(z.string())
-    .refine((value) => value.some((item) => item), {
-      message: 'Você deve selecionar pelo menos um dia da semana.',
-    }),
-  max_students: z.coerce.number().min(1, 'A turma deve ter pelo menos 1 vaga.'),
-  status: z.enum(['ativa', 'inativa', 'lotada']).default('ativa'),
-  location: z.string().optional(),
-});
-
-
-type ClassFormValues = z.infer<typeof classFormSchema>;
-
-interface AddClassFormProps {
+interface AddPlanFormProps {
   children: React.ReactNode;
+  modalities: Modality[];
   onSuccess?: () => void;
 }
 
-const weekdays = [
-  { id: 'Segunda', label: 'Segunda' },
-  { id: 'Terça', label: 'Terça' },
-  { id: 'Quarta', label: 'Quarta' },
-  { id: 'Quinta', label: 'Quinta' },
-  { id: 'Sexta', label: 'Sexta' },
-  { id: 'Sábado', label: 'Sábado' },
-];
+const planFormSchema = z.object({
+  name: z.string().min(3, 'O nome do plano deve ter pelo menos 3 caracteres.'),
+  modality_id: z.string({ required_error: 'Selecione uma modalidade.' }).min(1, 'Selecione uma modalidade.'),
+  price: z.string().min(1, 'O preço é obrigatório.'),
+  recurrence: z.enum(['mensal', 'trimestral', 'semestral', 'anual']),
+  benefits: z.string().optional(),
+  status: z.enum(['ativo', 'inativo']).default('ativo'),
+});
 
-export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
+type PlanFormValues = z.infer<typeof planFormSchema>;
+
+export function AddPlanForm({ children, modalities: initialModalities, onSuccess }: AddPlanFormProps) {
   const [open, setOpen] = React.useState(false);
+  const [modalities, setModalities] = React.useState<Modality[]>(initialModalities || []);
+  const [loadingModalities, setLoadingModalities] = React.useState(false);
   const { toast } = useToast();
-  
-  // 🔄 hook padronizado que carrega os dados quando o modal abre
-  const { instructors, modalities, loading } = useFormData({
-    fetchInstructors: open,
-    fetchModalities: open,
-  });
 
-  const form = useForm<ClassFormValues>({
-    resolver: zodResolver(classFormSchema),
+  // Carrega modalidades quando o modal abre
+  React.useEffect(() => {
+    if (open) {
+      setLoadingModalities(true);
+      getModalities().then((data) => {
+        console.log('Modalidades carregadas no modal:', data);
+        setModalities(data);
+        setLoadingModalities(false);
+      }).catch(() => {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível carregar as modalidades.',
+          variant: 'destructive',
+        });
+        setLoadingModalities(false);
+      });
+    }
+  }, [open, toast]);
+
+  const form = useForm<PlanFormValues>({
+    resolver: zodResolver(planFormSchema),
     defaultValues: {
       name: '',
-      days_of_week: [],
-      max_students: 10,
-      status: 'ativa',
+      recurrence: 'mensal',
+      status: 'ativo',
     },
   });
 
-  const onSubmit = async (data: ClassFormValues) => {
-    const result = await addClass(data);
+  const onSubmit = async (data: PlanFormValues) => {
+    const result = await addPlan(data);
     if (result.success) {
       toast({
         title: 'Sucesso!',
@@ -111,7 +98,7 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
       onSuccess?.();
     } else {
       toast({
-        title: 'Erro ao cadastrar turma!',
+        title: 'Erro ao cadastrar plano!',
         description: result.message,
         variant: 'destructive',
       });
@@ -121,11 +108,11 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Cadastrar Nova Turma</DialogTitle>
+          <DialogTitle>Criar Novo Plano</DialogTitle>
           <DialogDescription>
-            Preencha os campos abaixo para criar uma nova turma.
+            Preencha os dados para adicionar um novo plano de preços.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -135,39 +122,33 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome da Turma</FormLabel>
+                  <FormLabel>Nome do Plano</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Natação Adulto - Manhã" {...field} />
+                    <Input placeholder="Ex: Natação Adulto - Mensal" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Modalidade com comportamento de carregamento/empty */}
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="modality_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Modalidade</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
+                    <Select 
+                      onValueChange={field.onChange} 
                       defaultValue={field.value}
-                      disabled={loading.modalities}
+                      disabled={loadingModalities}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue
-                            placeholder={
-                              loading.modalities ? 'Carregando...' : 'Selecione...'
-                            }
-                          />
+                          <SelectValue placeholder={loadingModalities ? "Carregando..." : "Selecione..."} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {loading.modalities ? (
+                        {loadingModalities ? (
                           <SelectItem value="loading" disabled>
                             Carregando modalidades...
                           </SelectItem>
@@ -177,7 +158,7 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
                           </SelectItem>
                         ) : (
                           modalities.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
+                            <SelectItem key={m.id} value={String(m.id)}>
                               {m.name}
                             </SelectItem>
                           ))
@@ -188,145 +169,87 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
                   </FormItem>
                 )}
               />
-
-              {/* Professor com comportamento de carregamento/empty */}
               <FormField
                 control={form.control}
-                name="instructor_id"
+                name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Professor (Opcional)</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={loading.instructors}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={
-                              loading.instructors ? 'Carregando...' : 'Selecione...'
-                            }
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {loading.instructors ? (
-                          <SelectItem value="loading" disabled>
-                            Carregando professores...
-                          </SelectItem>
-                        ) : instructors.length === 0 ? (
-                          <SelectItem value="empty" disabled>
-                            Nenhum professor cadastrado
-                          </SelectItem>
-                        ) : (
-                          instructors.map((i) => (
-                            <SelectItem key={i.id} value={i.id}>
-                              {i.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="start_time"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Horário de Início</FormLabel>
+                    <FormLabel>Preço</FormLabel>
                     <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="end_time"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Horário de Fim</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
+                      <IMaskInput
+                        mask="R$ num"
+                        blocks={{
+                          num: { mask: Number, radix: ",", thousandsSeparator: ".", scale: 2, padFractionalZeros: true, normalizeZeros: true, mapToRadix: ['.'] }
+                        }}
+                        value={field.value || ''}
+                        onAccept={(value) => field.onChange(value)}
+                        className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
+                        placeholder="R$ 0,00"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-
             <FormField
               control={form.control}
-              name="days_of_week"
-              render={() => (
+              name="recurrence"
+              render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Dias da Semana</FormLabel>
-                  <div className="flex flex-wrap gap-4">
-                    {weekdays.map((item) => (
-                      <FormField
-                        key={item.id}
-                        control={form.control}
-                        name="days_of_week"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(item.label)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...(field.value || []), item.label])
-                                    : field.onChange(
-                                        field.value?.filter((v: string) => v !== item.label),
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">{item.label}</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
-                  </div>
+                  <FormLabel>Recorrência</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="mensal">Mensal</SelectItem>
+                      <SelectItem value="trimestral">Trimestral</SelectItem>
+                      <SelectItem value="semestral">Semestral</SelectItem>
+                      <SelectItem value="anual">Anual</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="max_students"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Máximo de Alunos</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
+            <FormField
+              control={form.control}
+              name="benefits"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Benefícios (Opcional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Liste os benefícios separados por vírgula. Ex: Aulas ilimitadas, Acesso à piscina..."
+                      className="resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <DialogFooter>
               <DialogClose asChild>
-                <Button type="button" variant="outline">
-                  Cancelar
-                </Button>
+                <Button type="button" variant="outline">Cancelar</Button>
               </DialogClose>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Button 
+                type="submit" 
+                disabled={form.formState.isSubmitting || loadingModalities || modalities.length === 0}
+              >
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : modalities.length === 0 ? (
+                  'Sem modalidades'
+                ) : (
+                  'Salvar Plano'
                 )}
-                Cadastrar Turma
               </Button>
             </DialogFooter>
           </form>
