@@ -20,6 +20,7 @@ import { NavContent } from '@/components/layout/nav-content';
 import { getFinancialSummary, getTransactions, type FinancialSummary } from './actions';
 import { Loader2 } from 'lucide-react';
 import { mockPayments } from '@/lib/mock-data';
+import TransacoesRecentesTable from '@/components/financeiro/transacoes-recentes-table';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -38,25 +39,30 @@ export default function FinanceiroPage() {
 
   const loadData = React.useCallback(async () => {
     setLoading(true);
-    const [academySettings, profile, receitasData, despesasData, financialSummary] = await Promise.all([
-      getAcademySettings(), 
-      getUserProfile(),
-      getTransactions('receita'),
-      getTransactions('despesa'),
-      getFinancialSummary(),
-    ]);
-    setSettings(academySettings);
-    setUserProfile(profile);
-    setRecebimentos(receitasData);
-    
-    if (process.env.NODE_ENV === 'development' && despesasData.length === 0) {
-      setPagamentos(mockPayments);
-    } else {
-      setPagamentos(despesasData);
+    try {
+      const [academySettings, profile, receitasData, despesasData, financialSummary] = await Promise.all([
+        getAcademySettings(), 
+        getUserProfile(),
+        getTransactions('receita'),
+        getTransactions('despesa'),
+        getFinancialSummary(),
+      ]);
+      setSettings(academySettings);
+      setUserProfile(profile);
+      setRecebimentos(receitasData);
+      
+      if (process.env.NODE_ENV === 'development' && despesasData.length === 0) {
+        setPagamentos(mockPayments);
+      } else {
+        setPagamentos(despesasData);
+      }
+      
+      setSummary(financialSummary);
+    } catch (error) {
+      console.error("Failed to load financial data", error);
+    } finally {
+      setLoading(false);
     }
-    
-    setSummary(financialSummary);
-    setLoading(false);
   }, []);
 
   React.useEffect(() => {
@@ -83,7 +89,7 @@ export default function FinanceiroPage() {
                   Exportar
                 </Button>
               </ExportFinanceiroDialog>
-              <AddTransacaoDialog>
+              <AddTransacaoDialog onSuccess={loadData}>
                 <Button className="w-full">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Nova Transação
@@ -103,7 +109,8 @@ export default function FinanceiroPage() {
           {!loading && activeTab === 'Visão Geral' && summary && (
             <div className="space-y-6">
               <FinanceiroStatCards summary={summary} />
-              <AcoesRapidasFinanceiro />
+              <TransacoesRecentesTable transactions={summary.transactions} onSuccess={loadData} />
+              <AcoesRapidasFinanceiro onSuccess={loadData} />
             </div>
           )}
 

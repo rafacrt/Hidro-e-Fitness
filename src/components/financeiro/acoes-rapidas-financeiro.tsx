@@ -1,10 +1,17 @@
 
+'use client';
+
+import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '../ui/button';
 import { Plus, Download, Upload } from 'lucide-react';
 import { AddTransacaoDialog } from './add-transacao-dialog';
 import { ExportFinanceiroDialog } from './export-financeiro-dialog';
 import { useToast } from '@/hooks/use-toast';
+
+interface AcoesRapidasFinanceiroProps {
+  onSuccess: () => void;
+}
 
 const actions = [
   { label: 'Nova Transação', icon: Plus, component: AddTransacaoDialog },
@@ -18,7 +25,7 @@ const IconWrapper = ({ children }: { children: React.ReactNode }) => (
     </div>
 )
 
-export default function AcoesRapidasFinanceiro() {
+export default function AcoesRapidasFinanceiro({ onSuccess }: AcoesRapidasFinanceiroProps) {
   const { toast } = useToast();
 
   const handleActionClick = (label: string) => {
@@ -47,6 +54,13 @@ export default function AcoesRapidasFinanceiro() {
           {actions.map((action, index) => {
             const ActionComponent = action.component;
             if (ActionComponent) {
+              if (action.label === 'Nova Transação') {
+                return (
+                  <ActionComponent key={index} onSuccess={onSuccess}>
+                    {buttonContent(action)}
+                  </ActionComponent>
+                )
+              }
               return (
                 <ActionComponent key={index}>
                   {buttonContent(action)}

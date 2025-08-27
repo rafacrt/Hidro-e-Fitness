@@ -62,7 +62,12 @@ const categories = {
 };
 const paymentMethods = ['PIX', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto', 'Transferência'];
 
-export function AddTransacaoDialog({ children }: { children: React.ReactNode }) {
+interface AddTransacaoDialogProps {
+  children: React.ReactNode;
+  onSuccess: () => void;
+}
+
+export function AddTransacaoDialog({ children, onSuccess }: AddTransacaoDialogProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
   const form = useForm<TransactionFormValues>({
@@ -84,6 +89,7 @@ export function AddTransacaoDialog({ children }: { children: React.ReactNode }) 
       });
       setOpen(false);
       form.reset();
+      onSuccess();
     } else {
        toast({
         title: 'Erro ao registrar transação!',
