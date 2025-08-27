@@ -1,40 +1,96 @@
+
 'use client';
 
 import * as React from 'react';
-import { Button } from "@/components/ui/button";
-import { Eye, ArrowDownToDot, CreditCard, Repeat, DollarSign, Settings } from "lucide-react";
+import Header from '@/components/layout/header';
+import Sidebar from '@/components/layout/sidebar';
+import PagamentosContent from '@/components/pagamentos/pagamentos-content';
+import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
+import { getStudents } from '../alunos/actions';
+import { getTransactions } from '../financeiro/actions';
+import { getPaymentStats } from './actions';
+import { NavContent } from '@/components/layout/nav-content';
+import { Loader2 } from 'lucide-react';
+import type { Database } from '@/lib/database.types';
 
-type ActiveTab = "Visão Geral" | "Recebimentos" | "Pagamentos" | "Fluxo de Caixa" | "Métodos de Pagamento" | "Planos e Preços";
+type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
+type Payment = Database['public']['Tables']['payments']['Row'];
+type Student = Database['public']['Tables']['students']['Row'];
 
-const filters: { label: ActiveTab; icon: React.ElementType }[] = [
-    { label: "Visão Geral", icon: Eye },
-    { label: "Recebimentos", icon: ArrowDownToDot },
-    { label: "Pagamentos", icon: CreditCard },
-    { label: "Fluxo de Caixa", icon: Repeat },
-    { label: "Métodos de Pagamento", icon: Settings },
-    { label: "Planos e Preços", icon: DollarSign },
-];
+export default function PagamentosPage() {
+  const [settings, setSettings] = React.useState<AcademySettings | null>(null);
+  const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
+  const [payments, setPayments] = React.useState<Payment[]>([]);
+  const [students, setStudents] = React.useState<Student[]>([]);
+  const [stats, setStats] = React.useState<any>(null); // Replace 'any' with a proper type
+  const [loading, setLoading] = React.useState(true);
 
-interface FiltrosFinanceiroProps {
-    activeTab: ActiveTab;
-    setActiveTab: (tab: ActiveTab) => void;
-}
+  const loadData = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const [
+        settingsData,
+        profileData,
+        paymentsData,
+        studentsData,
+        statsData
+      ] = await Promise.all([
+        getAcademySettings(),
+        getUserProfile(),
+        getTransactions('all'),
+        getStudents(),
+        getPaymentStats()
+      ]);
+      setSettings(settingsData);
+      setUserProfile(profileData);
+      setPayments(paymentsData);
+      setStudents(studentsData);
+      setStats(statsData);
+    } catch (error) {
+      console.error("Failed to load payments data", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-export default function FiltrosFinanceiro({ activeTab, setActiveTab }: FiltrosFinanceiroProps) {
+  React.useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  if (loading) {
     return (
-        <div className="flex flex-wrap items-center gap-2 border-b pb-2">
-            {filters.map((filter, index) => (
-                <Button 
-                    key={index} 
-                    variant={activeTab === filter.label ? "secondary" : "ghost"} 
-                    onClick={() => setActiveTab(filter.label)}
-                    className="font-normal text-muted-foreground data-[state=active]:text-foreground data-[state=active]:font-semibold"
-                    data-state={activeTab === filter.label ? 'active' : 'inactive'}
-                >
-                    <filter.icon className="mr-2 h-4 w-4" />
-                    {filter.label}
-                </Button>
-            ))}
+      <div className="flex min-h-screen w-full bg-background text-foreground">
+        <Sidebar>
+          <NavContent settings={settings} />
+        </Sidebar>
+        <div className="flex flex-col w-0 flex-1">
+          <Header settings={settings} userProfile={userProfile} />
+          <main className="flex-1 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </main>
         </div>
-    )
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="flex min-h-screen w-full bg-background text-foreground">
+      <Sidebar>
+        <NavContent settings={settings} />
+      </Sidebar>
+      <div className="flex flex-col w-0 flex-1">
+        <Header settings={settings} userProfile={userProfile} />
+        <main className="flex-1 p-4 md:p-6 space-y-6">
+          <PagamentosContent 
+            payments={payments}
+            stats={stats}
+            students={students}
+            onSuccess={loadData}
+          />
+        </main>
+      </div>
+    </div>
+  );
 }
