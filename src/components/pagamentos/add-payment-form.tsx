@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -38,9 +37,10 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { cn } from '@/lib/utils';
 import { IMaskInput } from 'react-imask';
 import { addTransaction } from '@/app/financeiro/actions';
+import { getStudents } from '@/app/alunos/actions';
+import type { Database } from '@/lib/database.types';
 
-// ✅ novo import: hook padronizado de dados do formulário
-import { useFormData } from '@/hooks/use-form-data';
+type Student = Database['public']['Tables']['students']['Row'];
 
 const paymentFormSchema = z.object({
   student_id: z.string().min(1, 'É necessário selecionar um aluno.'),
@@ -65,12 +65,18 @@ interface AddPaymentFormProps {
 export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
+  const [students, setStudents] = React.useState<Student[]>([]);
+  const [loading, setLoading] = React.useState(false);
 
-  // 🔄 carrega alunos quando o modal abre, com autoLoad e controle de loading
-  const { students, loading } = useFormData({
-    fetchStudents: open,
-    autoLoad: true,
-  });
+  React.useEffect(() => {
+    if (open) {
+      setLoading(true);
+      getStudents()
+        .then(setStudents)
+        .catch(() => toast({ title: 'Erro', description: 'Não foi possível carregar os alunos.', variant: 'destructive' }))
+        .finally(() => setLoading(false));
+    }
+  }, [open, toast]);
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
@@ -123,7 +129,6 @@ export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Aluno com placeholder/itens de loading/empty e disabled durante fetch */}
             <FormField
               control={form.control}
               name="student_id"
@@ -133,19 +138,19 @@ export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    disabled={loading.students}
+                    disabled={loading}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue
                           placeholder={
-                            loading.students ? 'Carregando...' : 'Selecione o aluno...'
+                            loading ? 'Carregando...' : 'Selecione o aluno...'
                           }
                         />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {loading.students ? (
+                      {loading ? (
                         <SelectItem value="loading" disabled>
                           Carregando alunos...
                         </SelectItem>

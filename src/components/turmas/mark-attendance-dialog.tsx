@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -13,19 +12,13 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Check, X, Clock, User, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { Database } from '@/lib/database.types';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
-import type { Database } from '@/lib/database.types';
 import { getEnrolledStudents } from '@/app/turmas/actions';
 
 type ClassRow = Database['public']['Tables']['classes']['Row'];
@@ -34,6 +27,7 @@ type Student = Pick<Database['public']['Tables']['students']['Row'], 'id' | 'nam
 interface MarkAttendanceDialogProps {
   classes: ClassRow[];
   children: React.ReactNode;
+  onSuccess: () => void;
 }
 
 type StudentStatus = 'pending' | 'present' | 'absent' | 'justified';
@@ -45,15 +39,8 @@ const statusClasses: Record<StudentStatus, string> = {
   pending: 'bg-transparent',
 };
 
-const getInitials = (name: string | null) => {
-  if (!name) return '';
-  const names = name.split(' ');
-  return names.length > 1
-    ? `${names[0][0]}${names[names.length - 1][0]}`
-    : name.substring(0, 2);
-};
 
-export function MarkAttendanceDialog({ classes, children }: MarkAttendanceDialogProps) {
+export function MarkAttendanceDialog({ classes, children, onSuccess }: MarkAttendanceDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedClassId, setSelectedClassId] = React.useState<string | null>(null);
   const [enrolledStudents, setEnrolledStudents] = React.useState<Student[]>([]);
@@ -73,7 +60,7 @@ export function MarkAttendanceDialog({ classes, children }: MarkAttendanceDialog
     } catch (error) {
       toast({
         title: 'Erro ao buscar alunos.',
-        description: 'Não foi possível carregar a lista de alunos para esta turma.',
+        description: 'Não foi possível carregar la lista de alunos para esta turma.',
         variant: 'destructive',
       });
     } finally {
@@ -88,6 +75,14 @@ export function MarkAttendanceDialog({ classes, children }: MarkAttendanceDialog
     }));
   };
 
+  const getInitials = (name: string | null) => {
+    if (!name) return '';
+    const names = name.split(' ');
+    return names.length > 1
+      ? `${names[0][0]}${names[names.length - 1][0]}`
+      : name.substring(0, 2);
+  };
+
   const handleSave = () => {
     setIsSaving(true);
     // TODO: Implement server action to save attendance data
@@ -100,6 +95,7 @@ export function MarkAttendanceDialog({ classes, children }: MarkAttendanceDialog
         setOpen(false);
         setSelectedClassId(null);
         setAttendance({});
+        onSuccess();
     }, 1000)
   };
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -41,13 +40,13 @@ import type { Database } from '@/lib/database.types';
 const classFormSchema = z.object({
   name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
   modality_id: z.string({ required_error: 'Selecione uma modalidade.' }),
-  instructor_id: z.string({ required_error: 'Selecione um professor.' }),
+  instructor_id: z.string().optional(),
   start_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido.'),
   end_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido.'),
   days_of_week: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'Você deve selecionar pelo menos um dia da semana.',
   }),
-  location: z.string({ required_error: 'Selecione um local.' }),
+  location: z.string().optional(),
   max_students: z.coerce.number().min(1, 'A turma deve ter pelo menos 1 vaga.'),
   status: z.enum(['ativa', 'inativa', 'lotada']).default('ativa'),
 });
@@ -75,19 +74,29 @@ export function EditClassForm({ classData, children }: EditClassFormProps) {
   const [open, setOpen] = React.useState(false);
   const [instructors, setInstructors] = React.useState<{ id: string; name: string }[]>([]);
   const [modalities, setModalities] = React.useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = React.useState(false);
   const { toast } = useToast();
 
   React.useEffect(() => {
     async function fetchData() {
-      const fetchedInstructors = await getInstructorsForForm();
-      const fetchedModalities = await getModalitiesForForm();
-      setInstructors(fetchedInstructors);
-      setModalities(fetchedModalities);
+      setLoading(true);
+      try {
+        const [fetchedInstructors, fetchedModalities] = await Promise.all([
+            getInstructorsForForm(),
+            getModalitiesForForm()
+        ]);
+        setInstructors(fetchedInstructors);
+        setModalities(fetchedModalities);
+      } catch (error) {
+        toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar as opções para o formulário.", variant: "destructive"})
+      } finally {
+        setLoading(false);
+      }
     }
     if (open) {
       fetchData();
     }
-  }, [open]);
+  }, [open, toast]);
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classFormSchema),
@@ -153,7 +162,7 @@ export function EditClassForm({ classData, children }: EditClassFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Modalidade</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione..." />
@@ -173,7 +182,7 @@ export function EditClassForm({ classData, children }: EditClassFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Professor</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione..." />

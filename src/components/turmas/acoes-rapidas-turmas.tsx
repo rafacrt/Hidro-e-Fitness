@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -9,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AddClassForm } from './add-class-form';
 import { EnrollStudentsDialog } from './enroll-students-dialog';
 import { ScheduleClassDialog } from './schedule-class-dialog';
-import { MarkAttendanceDialog } from '../frequencia/mark-attendance-dialog';
+import { MarkAttendanceDialog } from '../turmas/mark-attendance-dialog';
 import type { Database } from '@/lib/database.types';
 
 type ClassRow = Database['public']['Tables']['classes']['Row'];
@@ -18,8 +17,6 @@ type Modality = Database['public']['Tables']['modalities']['Row'];
 
 interface AcoesRapidasTurmasProps {
   classes: ClassRow[];
-  instructors: Pick<Instructor, 'id' | 'name'>[];
-  modalities: Pick<Modality, 'id' | 'name'>[];
   onSuccess: () => void;
 }
 
@@ -36,7 +33,7 @@ const IconWrapper = ({ children }: { children: React.ReactNode }) => (
     </div>
 )
 
-export default function AcoesRapidasTurmas({ classes, instructors, modalities, onSuccess }: AcoesRapidasTurmasProps) {
+export default function AcoesRapidasTurmas({ classes, onSuccess }: AcoesRapidasTurmasProps) {
   const { toast } = useToast();
 
   const handleActionClick = (label: string) => {
@@ -66,25 +63,11 @@ export default function AcoesRapidasTurmas({ classes, instructors, modalities, o
             const ActionComponent = action.component;
 
             if (ActionComponent) {
-              if (action.label === 'Nova Turma') {
-                return (
-                  <ActionComponent key={index} onSuccess={onSuccess} instructors={instructors} modalities={modalities}>
-                    {buttonContent}
-                  </ActionComponent>
-                );
-              }
-              if (action.label === 'Agendar Aula' || action.label === 'Marcar Presença' || action.label === 'Matricular Aluno') {
-                return (
+              return (
                   <ActionComponent key={index} classes={classes as any} onSuccess={onSuccess}>
                     {buttonContent}
                   </ActionComponent>
-                )
-              }
-              return (
-                 <ActionComponent key={index}>
-                   {buttonContent}
-                </ActionComponent>
-              )
+                );
             }
 
             return (

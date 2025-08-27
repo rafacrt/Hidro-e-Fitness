@@ -24,70 +24,87 @@ import {
 } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addPlan, getModalities } from '@/app/modalidades/actions'; // ADICIONE getModalities
-import { IMaskInput } from 'react-imask';
-import { cn } from '@/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { addClass, getInstructorsForForm, getModalitiesForForm } from '@/app/turmas/actions';
 import type { Database } from '@/lib/database.types';
 
+type Instructor = Database['public']['Tables']['instructors']['Row'];
 type Modality = Database['public']['Tables']['modalities']['Row'];
 
-interface AddPlanFormProps {
+const classFormSchema = z.object({
+  name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
+  modality_id: z.string({ required_error: 'Selecione uma modalidade.' }),
+  instructor_id: z.string().optional(),
+  start_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido.'),
+  end_time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido.'),
+  days_of_week: z.array(z.string()).refine((value) => value.some((item) => item), {
+    message: 'Você deve selecionar pelo menos um dia da semana.',
+  }),
+  location: z.string().optional(),
+  max_students: z.coerce.number().min(1, 'A turma deve ter pelo menos 1 vaga.'),
+  status: z.enum(['ativa', 'inativa', 'lotada']).default('ativa'),
+});
+
+type ClassFormValues = z.infer<typeof classFormSchema>;
+
+interface AddClassFormProps {
   children: React.ReactNode;
-  modalities: Modality[];
   onSuccess?: () => void;
 }
 
-const planFormSchema = z.object({
-  name: z.string().min(3, 'O nome do plano deve ter pelo menos 3 caracteres.'),
-  modality_id: z.string({ required_error: 'Selecione uma modalidade.' }).min(1, 'Selecione uma modalidade.'),
-  price: z.string().min(1, 'O preço é obrigatório.'),
-  recurrence: z.enum(['mensal', 'trimestral', 'semestral', 'anual']),
-  benefits: z.string().optional(),
-  status: z.enum(['ativo', 'inativo']).default('ativo'),
-});
+const locations = ['Piscina 1', 'Piscina 2', 'Piscina Terapêutica'];
+const weekdays = [
+  { id: 'Segunda', label: 'Segunda' },
+  { id: 'Terça', label: 'Terça' },
+  { id: 'Quarta', label: 'Quarta' },
+  { id: 'Quinta', label: 'Quinta' },
+  { id: 'Sexta', label: 'Sexta' },
+  { id: 'Sábado', label: 'Sábado' },
+];
 
-type PlanFormValues = z.infer<typeof planFormSchema>;
-
-export function AddPlanForm({ children, modalities: initialModalities, onSuccess }: AddPlanFormProps) {
+export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
   const [open, setOpen] = React.useState(false);
-  const [modalities, setModalities] = React.useState<Modality[]>(initialModalities || []);
-  const [loadingModalities, setLoadingModalities] = React.useState(false);
   const { toast } = useToast();
+  const [instructors, setInstructors] = React.useState<Pick<Instructor, 'id' | 'name'>[]>([]);
+  const [modalities, setModalities] = React.useState<Pick<Modality, 'id' | 'name'>[]>([]);
+  const [loading, setLoading] = React.useState({ instructors: false, modalities: false });
 
-  // Carrega modalidades quando o modal abre
   React.useEffect(() => {
     if (open) {
-      setLoadingModalities(true);
-      getModalities().then((data) => {
-        console.log('Modalidades carregadas no modal:', data);
-        setModalities(data);
-        setLoadingModalities(false);
-      }).catch(() => {
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível carregar as modalidades.',
-          variant: 'destructive',
+      setLoading({ instructors: true, modalities: true });
+      Promise.all([getInstructorsForForm(), getModalitiesForForm()])
+        .then(([instructorsData, modalitiesData]) => {
+          setInstructors(instructorsData);
+          setModalities(modalitiesData);
+          setLoading({ instructors: false, modalities: false });
+        })
+        .catch(() => {
+          toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar professores e modalidades.", variant: "destructive" });
+          setLoading({ instructors: false, modalities: false });
         });
-        setLoadingModalities(false);
-      });
     }
   }, [open, toast]);
 
-  const form = useForm<PlanFormValues>({
-    resolver: zodResolver(planFormSchema),
+  const form = useForm<ClassFormValues>({
+    resolver: zodResolver(classFormSchema),
     defaultValues: {
-      name: '',
-      recurrence: 'mensal',
-      status: 'ativo',
+      days_of_week: [],
+      max_students: 10,
+      status: 'ativa',
     },
   });
 
-  const onSubmit = async (data: PlanFormValues) => {
-    const result = await addPlan(data);
+  const onSubmit = async (data: ClassFormValues) => {
+    const result = await addClass(data);
     if (result.success) {
       toast({
         title: 'Sucesso!',
@@ -98,7 +115,7 @@ export function AddPlanForm({ children, modalities: initialModalities, onSuccess
       onSuccess?.();
     } else {
       toast({
-        title: 'Erro ao cadastrar plano!',
+        title: 'Erro!',
         description: result.message,
         variant: 'destructive',
       });
@@ -108,11 +125,11 @@ export function AddPlanForm({ children, modalities: initialModalities, onSuccess
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Criar Novo Plano</DialogTitle>
+          <DialogTitle>Criar Nova Turma</DialogTitle>
           <DialogDescription>
-            Preencha os dados para adicionar um novo plano de preços.
+            Preencha os dados para adicionar uma nova turma ao sistema.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -122,47 +139,29 @@ export function AddPlanForm({ children, modalities: initialModalities, onSuccess
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do Plano</FormLabel>
+                  <FormLabel>Nome da Turma</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Natação Adulto - Mensal" {...field} />
+                    <Input placeholder="Ex: Natação Adulto - Manhã" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="modality_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Modalidade</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={loadingModalities}
-                    >
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading.modalities}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={loadingModalities ? "Carregando..." : "Selecione..."} />
+                          <SelectValue placeholder={loading.modalities ? "Carregando..." : "Selecione..."} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {loadingModalities ? (
-                          <SelectItem value="loading" disabled>
-                            Carregando modalidades...
-                          </SelectItem>
-                        ) : modalities.length === 0 ? (
-                          <SelectItem value="empty" disabled>
-                            Nenhuma modalidade cadastrada
-                          </SelectItem>
-                        ) : (
-                          modalities.map((m) => (
-                            <SelectItem key={m.id} value={String(m.id)}>
-                              {m.name}
-                            </SelectItem>
-                          ))
-                        )}
+                        {modalities.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -171,86 +170,143 @@ export function AddPlanForm({ children, modalities: initialModalities, onSuccess
               />
               <FormField
                 control={form.control}
-                name="price"
+                name="instructor_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Preço</FormLabel>
-                    <FormControl>
-                      <IMaskInput
-                        mask="R$ num"
-                        blocks={{
-                          num: { mask: Number, radix: ",", thousandsSeparator: ".", scale: 2, padFractionalZeros: true, normalizeZeros: true, mapToRadix: ['.'] }
-                        }}
-                        value={field.value || ''}
-                        onAccept={(value) => field.onChange(value)}
-                        className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
-                        placeholder="R$ 0,00"
-                      />
-                    </FormControl>
+                    <FormLabel>Professor</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading.instructors}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={loading.instructors ? "Carregando..." : "Selecione..."} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {instructors.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="recurrence"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Recorrência</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <FormField
+                control={form.control}
+                name="start_time"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Horário de Início</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
+                        <Input type="time" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="mensal">Mensal</SelectItem>
-                      <SelectItem value="trimestral">Trimestral</SelectItem>
-                      <SelectItem value="semestral">Semestral</SelectItem>
-                      <SelectItem value="anual">Anual</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="benefits"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Benefícios (Opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Liste os benefícios separados por vírgula. Ex: Aulas ilimitadas, Acesso à piscina..."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline">Cancelar</Button>
-              </DialogClose>
-              <Button 
-                type="submit" 
-                disabled={form.formState.isSubmitting || loadingModalities || modalities.length === 0}
-              >
-                {form.formState.isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Salvando...
-                  </>
-                ) : modalities.length === 0 ? (
-                  'Sem modalidades'
-                ) : (
-                  'Salvar Plano'
+                    <FormMessage />
+                    </FormItem>
                 )}
-              </Button>
+                />
+                <FormField
+                control={form.control}
+                name="end_time"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Horário de Fim</FormLabel>
+                    <FormControl>
+                        <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+             <FormField
+                control={form.control}
+                name="days_of_week"
+                render={() => (
+                    <FormItem>
+                        <FormLabel>Dias da Semana</FormLabel>
+                        <div className="flex flex-wrap gap-4">
+                        {weekdays.map((item) => (
+                            <FormField
+                            key={item.id}
+                            control={form.control}
+                            name="days_of_week"
+                            render={({ field }) => {
+                                return (
+                                <FormItem
+                                    key={item.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                    <FormControl>
+                                    <Checkbox
+                                        checked={field.value?.includes(item.label)}
+                                        onCheckedChange={(checked) => {
+                                        return checked
+                                            ? field.onChange([...(field.value || []), item.label])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                (value) => value !== item.label
+                                                )
+                                            )
+                                        }}
+                                    />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                    {item.label}
+                                    </FormLabel>
+                                </FormItem>
+                                )
+                            }}
+                            />
+                        ))}
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                )}
+                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <FormField
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Local</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Selecione..." />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                           {locations.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="max_students"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Máximo de Alunos</FormLabel>
+                        <FormControl>
+                            <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+            </div>
+             <DialogFooter>
+                <DialogClose asChild>
+                    <Button type="button" variant="outline">
+                    Cancelar
+                    </Button>
+                </DialogClose>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Criar Turma
+                </Button>
             </DialogFooter>
           </form>
         </Form>
