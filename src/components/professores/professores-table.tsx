@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Table,
   TableBody,
@@ -22,6 +24,7 @@ type Instructor = Database['public']['Tables']['instructors']['Row'];
 
 interface ProfessoresTableProps {
   instructors: Instructor[];
+  onSuccess: () => void;
 }
 
 const getInitials = (name: string) => {
@@ -45,7 +48,7 @@ const statusStyles: { [key: string]: string } = {
   Inativo: 'bg-zinc-100 text-zinc-800 border-zinc-200',
 };
 
-export default function ProfessoresTable({ instructors }: ProfessoresTableProps) {
+export default function ProfessoresTable({ instructors, onSuccess }: ProfessoresTableProps) {
   if (instructors.length === 0) {
     return (
         <Card>
@@ -128,13 +131,13 @@ export default function ProfessoresTable({ instructors }: ProfessoresTableProps)
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Ações</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <EditProfessorForm instructor={prof}>
+                            <EditProfessorForm instructor={prof} onSuccess={onSuccess}>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                     <Edit className="mr-2 h-4 w-4" />
                                     Editar
                                 </DropdownMenuItem>
                             </EditProfessorForm>
-                             <DeleteProfessorAlert instructorId={prof.id}>
+                             <DeleteProfessorAlert instructorId={prof.id} onSuccess={onSuccess}>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Excluir

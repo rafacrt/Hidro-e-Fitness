@@ -32,13 +32,13 @@ import { cn } from '@/lib/utils';
 import { IMaskInput } from 'react-imask';
 import { updateInstructor } from '@/app/professores/actions';
 import type { Database } from '@/lib/database.types';
-import { useRouter } from 'next/navigation';
 
 type Instructor = Database['public']['Tables']['instructors']['Row'];
 
 interface EditProfessorFormProps {
     instructor: Instructor;
     children: React.ReactNode;
+    onSuccess: () => void;
 }
 
 const professorFormSchema = z.object({
@@ -72,10 +72,10 @@ const weekdays = [
   { id: 'Sábado', label: 'Sábado' },
 ];
 
-export function EditProfessorForm({ instructor, children }: EditProfessorFormProps) {
+export function EditProfessorForm({ instructor, children, onSuccess }: EditProfessorFormProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
-  const router = useRouter();
+  
   const form = useForm<ProfessorFormValues>({
     resolver: zodResolver(professorFormSchema),
     defaultValues: {
@@ -95,7 +95,7 @@ export function EditProfessorForm({ instructor, children }: EditProfessorFormPro
         description: result.message,
       });
       setOpen(false);
-      router.refresh();
+      onSuccess();
     } else {
       toast({
         title: 'Erro!',

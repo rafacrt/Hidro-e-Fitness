@@ -31,7 +31,6 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { IMaskInput } from 'react-imask';
 import { addInstructor } from '@/app/professores/actions';
-import { useRouter } from 'next/navigation';
 
 const professorFormSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
@@ -64,10 +63,15 @@ const weekdays = [
   { id: 'Sábado', label: 'Sábado' },
 ];
 
-export function AddProfessorForm({ children }: { children: React.ReactNode }) {
+interface AddProfessorFormProps {
+  children: React.ReactNode;
+  onSuccess: () => void;
+}
+
+export function AddProfessorForm({ children, onSuccess }: AddProfessorFormProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
-  const router = useRouter();
+  
   const form = useForm<ProfessorFormValues>({
     resolver: zodResolver(professorFormSchema),
     defaultValues: {
@@ -88,7 +92,7 @@ export function AddProfessorForm({ children }: { children: React.ReactNode }) {
       });
       setOpen(false);
       form.reset();
-      router.refresh();
+      onSuccess();
     } else {
       toast({
         title: 'Erro ao cadastrar professor!',

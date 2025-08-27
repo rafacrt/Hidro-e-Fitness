@@ -19,9 +19,10 @@ import { Loader2 } from 'lucide-react';
 interface DeleteProfessorAlertProps {
   instructorId: string;
   children: React.ReactNode;
+  onSuccess: () => void;
 }
 
-export function DeleteProfessorAlert({ instructorId, children }: DeleteProfessorAlertProps) {
+export function DeleteProfessorAlert({ instructorId, children, onSuccess }: DeleteProfessorAlertProps) {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = React.useState(false);
 
@@ -33,6 +34,7 @@ export function DeleteProfessorAlert({ instructorId, children }: DeleteProfessor
         title: 'Sucesso!',
         description: result.message,
       });
+      onSuccess();
     } else {
       toast({
         title: 'Erro!',
