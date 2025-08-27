@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -35,7 +34,7 @@ export default function PlanosPrecosActions({ modalities, onSuccess }: PlanosPre
     { label: 'Ajustar Preços', icon: Tag, variant: 'secondary', component: AdjustPricesDialog },
     { label: 'Análise de Performance', icon: BarChart, variant: 'secondary', component: PerformanceAnalysisDialog },
   ];
-  console.log('Modalidades no PlanosPrecosActions:', modalities);
+
   return (
     <Card>
       <CardHeader>
@@ -48,16 +47,15 @@ export default function PlanosPrecosActions({ modalities, onSuccess }: PlanosPre
 
             if (ActionComponent) {
               if (action.label === 'Novo Plano') {
+                // AddPlanForm não precisa mais de modalities, ela carrega internamente
                 return (
                   <ActionComponent
                     key={index}
-                    modalities={modalities}
                     onSuccess={onSuccess}
                   >
                     <Button
                       variant={action.variant as any}
                       className="h-auto p-4 flex items-center justify-center gap-2 w-full"
-                      disabled={modalities.length === 0}
                     >
                       <action.icon className="h-4 w-4" />
                       <span className="text-sm font-medium">{action.label}</span>
@@ -66,7 +64,7 @@ export default function PlanosPrecosActions({ modalities, onSuccess }: PlanosPre
                 );
               }
 
-              // Para outros botões que não são "Novo Plano"
+              // Para outros componentes de dialog
               const buttonContent = (
                 <Button
                   variant={action.variant as any}
