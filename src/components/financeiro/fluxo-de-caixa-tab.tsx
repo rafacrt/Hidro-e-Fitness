@@ -12,6 +12,8 @@ import type { FinancialSummary } from "@/app/financeiro/actions";
 import { eachMonthOfInterval, startOfMonth, endOfMonth, format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FluxoDeCaixaChartDialog } from './fluxo-de-caixa-chart-dialog';
+import { getFinancialSummary } from '@/app/financeiro/actions';
+import { useToast } from '@/hooks/use-toast';
 
 interface FluxoDeCaixaTabProps {
     summary: FinancialSummary;
@@ -29,11 +31,26 @@ const generateMonthOptions = () => {
 };
 
 export default function FluxoDeCaixaTab({ summary: initialSummary }: FluxoDeCaixaTabProps) {
+    const [summary, setSummary] = React.useState(initialSummary);
     const [selectedMonth, setSelectedMonth] = React.useState(format(new Date(), 'yyyy-MM'));
     const monthOptions = React.useMemo(() => generateMonthOptions(), []);
+    const { toast } = useToast();
+
+    const refreshData = async () => {
+        try {
+            const freshSummary = await getFinancialSummary();
+            setSummary(freshSummary);
+        } catch (error) {
+            toast({
+                title: 'Erro ao atualizar dados',
+                description: 'Não foi possível buscar os dados financeiros mais recentes.',
+                variant: 'destructive',
+            });
+        }
+    };
 
     const filteredSummary = React.useMemo(() => {
-        if (!initialSummary || !initialSummary.transactions) {
+        if (!summary || !summary.transactions) {
             return { totalRevenue: 0, totalExpenses: 0, netFlow: 0, currentBalance: 0, transactions: [] };
         }
         
@@ -41,12 +58,12 @@ export default function FluxoDeCaixaTab({ summary: initialSummary }: FluxoDeCaix
         const startDate = startOfMonth(new Date(year, month - 1));
         const endDate = endOfMonth(new Date(year, month - 1));
 
-        const filteredTransactions = initialSummary.transactions.filter(t => {
+        const filteredTransactions = summary.transactions.filter(t => {
             const transactionDate = new Date(t.created_at);
             return transactionDate >= startDate && transactionDate <= endDate;
         });
 
-        const summary = filteredTransactions.reduce((acc, t) => {
+        const periodSummary = filteredTransactions.reduce((acc, t) => {
             const amount = t.amount || 0;
             if (amount > 0) {
                 acc.totalRevenue += amount;
@@ -57,14 +74,14 @@ export default function FluxoDeCaixaTab({ summary: initialSummary }: FluxoDeCaix
         }, { totalRevenue: 0, totalExpenses: 0 });
 
         return {
-            totalRevenue: summary.totalRevenue,
-            totalExpenses: summary.totalExpenses,
-            netFlow: summary.totalRevenue + summary.totalExpenses,
-            currentBalance: initialSummary.currentBalance, // Keep the overall balance
+            totalRevenue: periodSummary.totalRevenue,
+            totalExpenses: periodSummary.totalExpenses,
+            netFlow: periodSummary.totalRevenue + periodSummary.totalExpenses,
+            currentBalance: summary.currentBalance, // Keep the overall balance
             transactions: filteredTransactions,
         };
 
-    }, [selectedMonth, initialSummary]);
+    }, [selectedMonth, summary]);
 
     return (
         <div className="space-y-6">
@@ -95,7 +112,7 @@ export default function FluxoDeCaixaTab({ summary: initialSummary }: FluxoDeCaix
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                    <FluxoDeCaixaTable transactions={filteredSummary.transactions} />
+                    <FluxoDeCaixaTable transactions={filteredSummary.transactions} onSuccess={refreshData} />
                 </CardContent>
             </Card>
             <FluxoDeCaixaSummary summary={filteredSummary} />

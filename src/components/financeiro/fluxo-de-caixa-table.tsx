@@ -11,18 +11,22 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/lib/database.types';
 import { format } from 'date-fns';
+import { Button } from '../ui/button';
+import { Trash2 } from 'lucide-react';
+import { DeleteTransacaoAlert } from './delete-transacao-alert';
 
 type Payment = Database['public']['Tables']['payments']['Row'];
 
 interface FluxoDeCaixaTableProps {
   transactions: Payment[];
+  onSuccess: () => void;
 }
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-export default function FluxoDeCaixaTable({ transactions }: FluxoDeCaixaTableProps) {
+export default function FluxoDeCaixaTable({ transactions, onSuccess }: FluxoDeCaixaTableProps) {
     let currentBalance = 0;
 
     const sortedTransactions = [...transactions].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
@@ -36,7 +40,8 @@ export default function FluxoDeCaixaTable({ transactions }: FluxoDeCaixaTablePro
             <TableHead>Descrição</TableHead>
             <TableHead>Entrada</TableHead>
             <TableHead>Saída</TableHead>
-            <TableHead className="text-right">Saldo</TableHead>
+            <TableHead>Saldo</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -61,8 +66,15 @@ export default function FluxoDeCaixaTable({ transactions }: FluxoDeCaixaTablePro
                 <TableCell>
                     <p className="font-medium text-sm text-red-600">{!isEntry ? formatCurrency(amount) : ''}</p>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell>
                     <p className="font-semibold text-sm">{formatCurrency(currentBalance)}</p>
+                </TableCell>
+                <TableCell className="text-right">
+                    <DeleteTransacaoAlert transacaoId={item.id} onSuccess={onSuccess}>
+                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </DeleteTransacaoAlert>
                 </TableCell>
                 </TableRow>
             )
