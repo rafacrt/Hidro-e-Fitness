@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -34,8 +35,12 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { addClass, getInstructorsForForm, getModalitiesForForm } from '@/app/turmas/actions';
-import { mockInstructors, mockModalities } from '@/lib/mock-data';
+import { addClass } from '@/app/turmas/actions';
+import type { Database } from '@/lib/database.types';
+import { useFormData } from '@/hooks/use-form-data'; // ✅ hook padronizado de dados
+
+type Instructor = Pick<Database['public']['Tables']['instructors']['Row'], 'id' | 'name'>;
+type Modality = Pick<Database['public']['Tables']['modalities']['Row'], 'id' | 'name'>;
 
 const classFormSchema = z.object({
   name: z.string().min(3, 'O nome da turma deve ter pelo menos 3 caracteres.'),
@@ -54,7 +59,9 @@ const classFormSchema = z.object({
     }),
   max_students: z.coerce.number().min(1, 'A turma deve ter pelo menos 1 vaga.'),
   status: z.enum(['ativa', 'inativa', 'lotada']).default('ativa'),
+  location: z.string().optional(),
 });
+
 
 type ClassFormValues = z.infer<typeof classFormSchema>;
 
@@ -74,51 +81,13 @@ const weekdays = [
 
 export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
   const [open, setOpen] = React.useState(false);
-
-  const [instructors, setInstructors] = React.useState<{ id: string; name: string }[]>([]);
-  const [modalities, setModalities] = React.useState<{ id: string; name: string }[]>([]);
-
-  // Estados de loading no padrão do seu AddPaymentForm
-  const [loading, setLoading] = React.useState({
-    instructors: false,
-    modalities: false,
-  });
-
   const { toast } = useToast();
-
-  React.useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading({ instructors: true, modalities: true });
-
-        if (process.env.NODE_ENV === 'development') {
-          // Mock em dev
-          setInstructors(mockInstructors);
-          setModalities(mockModalities);
-        } else {
-          const [fetchedInstructors, fetchedModalities] = await Promise.all([
-            getInstructorsForForm(),
-            getModalitiesForForm(),
-          ]);
-          setInstructors(fetchedInstructors);
-          setModalities(fetchedModalities);
-        }
-      } catch (e) {
-        toast({
-          title: 'Erro ao carregar dados',
-          description: 'Não foi possível carregar modalidades e professores.',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading({ instructors: false, modalities: false });
-      }
-    }
-
-    // Só busca quando o modal abre (igual ao seu padrão de fetch on open)
-    if (open) {
-      fetchData();
-    }
-  }, [open, toast]);
+  
+  // 🔄 hook padronizado que carrega os dados quando o modal abre
+  const { instructors, modalities, loading } = useFormData({
+    fetchInstructors: open,
+    fetchModalities: open,
+  });
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classFormSchema),

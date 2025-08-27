@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -153,7 +154,7 @@ export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
                           Nenhum aluno cadastrado
                         </SelectItem>
                       ) : (
-                        students.map((s: { id: string | number; name: string }) => (
+                        students.map((s) => (
                           <SelectItem key={String(s.id)} value={String(s.id)}>
                             <div className="flex items-center gap-2">
                               <Avatar className="h-6 w-6">

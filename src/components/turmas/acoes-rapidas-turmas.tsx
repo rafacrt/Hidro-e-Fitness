@@ -9,13 +9,17 @@ import { useToast } from '@/hooks/use-toast';
 import { AddClassForm } from './add-class-form';
 import { EnrollStudentsDialog } from './enroll-students-dialog';
 import { ScheduleClassDialog } from './schedule-class-dialog';
-import { MarkAttendanceDialog } from './mark-attendance-dialog';
+import { MarkAttendanceDialog } from '../frequencia/mark-attendance-dialog';
 import type { Database } from '@/lib/database.types';
 
 type ClassRow = Database['public']['Tables']['classes']['Row'];
+type Instructor = Database['public']['Tables']['instructors']['Row'];
+type Modality = Database['public']['Tables']['modalities']['Row'];
 
 interface AcoesRapidasTurmasProps {
   classes: ClassRow[];
+  instructors: Pick<Instructor, 'id' | 'name'>[];
+  modalities: Pick<Modality, 'id' | 'name'>[];
   onSuccess: () => void;
 }
 
@@ -32,7 +36,7 @@ const IconWrapper = ({ children }: { children: React.ReactNode }) => (
     </div>
 )
 
-export default function AcoesRapidasTurmas({ classes, onSuccess }: AcoesRapidasTurmasProps) {
+export default function AcoesRapidasTurmas({ classes, instructors, modalities, onSuccess }: AcoesRapidasTurmasProps) {
   const { toast } = useToast();
 
   const handleActionClick = (label: string) => {
@@ -64,14 +68,14 @@ export default function AcoesRapidasTurmas({ classes, onSuccess }: AcoesRapidasT
             if (ActionComponent) {
               if (action.label === 'Nova Turma') {
                 return (
-                  <ActionComponent key={index} onSuccess={onSuccess}>
+                  <ActionComponent key={index} onSuccess={onSuccess} instructors={instructors} modalities={modalities}>
                     {buttonContent}
                   </ActionComponent>
                 );
               }
               if (action.label === 'Agendar Aula' || action.label === 'Marcar Presença' || action.label === 'Matricular Aluno') {
                 return (
-                  <ActionComponent key={index} classes={classes as any}>
+                  <ActionComponent key={index} classes={classes as any} onSuccess={onSuccess}>
                     {buttonContent}
                   </ActionComponent>
                 )
