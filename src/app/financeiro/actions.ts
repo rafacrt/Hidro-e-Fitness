@@ -75,9 +75,9 @@ export async function addTransaction(formData: unknown) {
     revalidatePath('/financeiro');
     return { success: true, message: 'Transação registrada com sucesso!' };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected Error:', error);
-    return { success: false, message: 'Ocorreu um erro inesperado.' };
+    return { success: false, message: `Ocorreu um erro inesperado: ${error.message}` };
   }
 }
 
