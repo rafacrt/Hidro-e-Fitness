@@ -19,9 +19,10 @@ import { Loader2 } from 'lucide-react';
 interface DeleteModalityAlertProps {
   modalityId: string;
   children: React.ReactNode;
+  onSuccess: () => void;
 }
 
-export function DeleteModalityAlert({ modalityId, children }: DeleteModalityAlertProps) {
+export function DeleteModalityAlert({ modalityId, children, onSuccess }: DeleteModalityAlertProps) {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = React.useState(false);
 
@@ -33,6 +34,7 @@ export function DeleteModalityAlert({ modalityId, children }: DeleteModalityAler
         title: 'Sucesso!',
         description: result.message,
       });
+      onSuccess();
     } else {
       toast({
         title: 'Erro!',

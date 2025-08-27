@@ -23,9 +23,10 @@ type Modality = Database['public']['Tables']['modalities']['Row'];
 
 interface ModalitiesTableProps {
   modalities: Modality[];
+  onSuccess: () => void;
 }
 
-export default function ModalitiesTable({ modalities }: ModalitiesTableProps) {
+export default function ModalitiesTable({ modalities, onSuccess }: ModalitiesTableProps) {
   
   if (modalities.length === 0) {
     return (
@@ -76,13 +77,13 @@ export default function ModalitiesTable({ modalities }: ModalitiesTableProps) {
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Ações</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <EditModalityForm modality={mod}>
+                            <EditModalityForm modality={mod} onSuccess={onSuccess}>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                     <Edit className="mr-2 h-4 w-4" />
                                     Editar
                                 </DropdownMenuItem>
                             </EditModalityForm>
-                            <DeleteModalityAlert modalityId={mod.id}>
+                            <DeleteModalityAlert modalityId={mod.id} onSuccess={onSuccess}>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-500">
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Excluir

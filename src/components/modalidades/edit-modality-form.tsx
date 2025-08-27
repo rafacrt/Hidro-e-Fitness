@@ -29,14 +29,13 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateModality } from '@/app/modalidades/actions';
 import type { Database } from '@/lib/database.types';
-import { IMaskInput } from 'react-imask';
-import { cn } from '@/lib/utils';
 
 type Modality = Database['public']['Tables']['modalities']['Row'];
 
 interface EditModalityFormProps {
   modality: Modality;
   children: React.ReactNode;
+  onSuccess: () => void;
 }
 
 const modalityFormSchema = z.object({
@@ -46,7 +45,7 @@ const modalityFormSchema = z.object({
 
 type ModalityFormValues = z.infer<typeof modalityFormSchema>;
 
-export function EditModalityForm({ modality, children }: EditModalityFormProps) {
+export function EditModalityForm({ modality, children, onSuccess }: EditModalityFormProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
 
@@ -67,6 +66,7 @@ export function EditModalityForm({ modality, children }: EditModalityFormProps) 
         description: result.message,
       });
       setOpen(false);
+      onSuccess();
     } else {
       toast({
         title: 'Erro!',
@@ -75,9 +75,20 @@ export function EditModalityForm({ modality, children }: EditModalityFormProps) 
       });
     }
   };
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      form.reset({
+        name: modality.name,
+        description: modality.description || '',
+      });
+    }
+  };
+
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

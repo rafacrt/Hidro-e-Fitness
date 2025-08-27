@@ -87,7 +87,7 @@ export default function ModalidadesPage() {
         return (
           <>
             <TableFilters />
-            <ModalitiesTable modalities={modalities} />
+            <ModalitiesTable modalities={modalities} onSuccess={handleSuccess} />
           </>
         );
       case 'Visão Geral':
