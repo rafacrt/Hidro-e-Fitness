@@ -4,10 +4,31 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Check, Edit, Trash2, Copy, AlertCircle, XCircle } from 'lucide-react';
 import { Separator } from "../ui/separator";
+import type { Database } from '@/lib/database.types';
 
-const plans: any[] = []
+type Modality = Database['public']['Tables']['modalities']['Row'];
+type Plan = Database['public']['Tables']['plans']['Row'] & { modalities: Pick<Modality, 'name'> | null };
 
-export default function PlanosList() {
+interface PlanosListProps {
+  plans: Plan[];
+}
+
+const formatCurrency = (value: number | null) => {
+  if (value === null) return 'N/A';
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+};
+
+const recurrenceMap = {
+    mensal: { text: "por mês", badge: "Mensal", badgeClass: "bg-blue-100 text-blue-800" },
+    trimestral: { text: "por 3 meses", badge: "Trimestral", badgeClass: "bg-green-100 text-green-800" },
+    semestral: { text: "por 6 meses", badge: "Semestral", badgeClass: "bg-purple-100 text-purple-800" },
+    anual: { text: "por ano", badge: "Anual", badgeClass: "bg-orange-100 text-orange-800" },
+}
+
+export default function PlanosList({ plans }: PlanosListProps) {
   if (plans.length === 0) {
     return (
         <Card>
@@ -20,65 +41,43 @@ export default function PlanosList() {
   }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {plans.map((plan, index) => (
-                <Card key={index} className={plan.highlight ? "bg-green-50/50 border-green-200" : ""}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {plans.map((plan, index) => {
+                const recurrenceInfo = recurrenceMap[plan.recurrence as keyof typeof recurrenceMap] || recurrenceMap.mensal;
+                return (
+                <Card key={index}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
-                            <CardTitle className="text-xl">{plan.title}</CardTitle>
+                            <div>
+                                <CardTitle className="text-xl">{plan.name}</CardTitle>
+                                <p className="text-sm text-muted-foreground">{plan.modalities?.name}</p>
+                            </div>
                             <div className="text-right">
-                                {plan.originalPrice && <p className="text-sm text-muted-foreground line-through">{plan.originalPrice}</p>}
-                                <p className="text-2xl font-bold">{plan.price}</p>
-                                <p className="text-sm text-muted-foreground">{plan.period}</p>
+                                <p className="text-2xl font-bold">{formatCurrency(plan.price)}</p>
+                                <p className="text-sm text-muted-foreground">{recurrenceInfo.text}</p>
                             </div>
                         </div>
                         <div className="flex justify-between items-center pt-2">
-                             <Badge className={plan.badgeClass}>{plan.badge}</Badge>
-                             {plan.discount && (
-                                <div className="text-right">
-                                    <p className="font-semibold text-sm text-green-700">{plan.discount.percentage}</p>
-                                    <p className="text-xs text-green-600">{plan.discount.saving}</p>
-                                </div>
-                             )}
+                             <Badge className={recurrenceInfo.badgeClass}>{recurrenceInfo.badge}</Badge>
+                             <Badge variant={plan.status === 'ativo' ? 'default' : 'secondary'} className={plan.status === 'ativo' ? 'bg-green-600' : ''}>
+                                {plan.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                            </Badge>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4 text-center">
-                            <div className="bg-card p-3 rounded-lg border">
-                                <p className="text-sm text-muted-foreground">Alunos</p>
-                                <p className="text-lg font-bold">{plan.students}</p>
+                        {(plan.benefits && plan.benefits.length > 0) && (
+                            <div>
+                                <h4 className="font-semibold mb-2 text-sm">Benefícios inclusos:</h4>
+                                <ul className="space-y-1.5 text-sm text-muted-foreground">
+                                    {plan.benefits.map((benefit: string, i: number) => (
+                                        <li key={i} className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-green-500" />
+                                            <span>{benefit}</span>
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
-                             <div className="bg-card p-3 rounded-lg border">
-                                <p className="text-sm text-muted-foreground">Receita</p>
-                                <p className="text-lg font-bold">{plan.revenue}</p>
-                            </div>
-                        </div>
-
-                        <Separator />
-                        
-                        <div>
-                            <h4 className="font-semibold mb-2">Benefícios inclusos:</h4>
-                            <ul className="space-y-1.5 text-sm text-muted-foreground">
-                                {plan.benefits.map((benefit: string, i: number) => (
-                                    <li key={i} className="flex items-center gap-2">
-                                        <Check className="h-4 w-4 text-green-500" />
-                                        <span>{benefit}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="font-semibold mb-2">Restrições:</h4>
-                            <ul className="space-y-1.5 text-sm text-muted-foreground">
-                                {plan.restrictions.map((restriction: string, i: number) => (
-                                    <li key={i} className="flex items-center gap-2">
-                                        <XCircle className="h-4 w-4 text-red-500" />
-                                        <span>{restriction}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        )}
                         
                         <div className="flex items-center gap-2 pt-2">
                             <Button className="w-full">Editar Plano</Button>
@@ -87,7 +86,7 @@ export default function PlanosList() {
                         </div>
                     </CardContent>
                 </Card>
-            ))}
+            )})}
         </div>
     )
 }

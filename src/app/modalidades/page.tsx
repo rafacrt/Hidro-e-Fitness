@@ -11,7 +11,7 @@ import QuickActionsModalities from '@/components/modalidades/quick-actions-modal
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import TableFilters from '@/components/modalidades/table-filters';
-import { getModalities, getModalitiesStats } from './actions';
+import { getModalities, getModalitiesStats, getPlans } from './actions';
 import { AddModalityForm } from '@/components/modalidades/add-modality-form';
 import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
@@ -22,11 +22,14 @@ import { useRouter } from 'next/navigation';
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Modality = Database['public']['Tables']['modalities']['Row'];
+type Plan = Database['public']['Tables']['plans']['Row'] & { modalities: Pick<Modality, 'name'> | null };
+
 
 export type ActiveTabModalities = "Visão Geral" | "Gerenciar Modalidades" | "Preços e Planos";
 
 export default function ModalidadesPage() {
   const [modalities, setModalities] = React.useState<Modality[]>([]);
+  const [plans, setPlans] = React.useState<Plan[]>([]);
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
   const [activeTab, setActiveTab] = React.useState<ActiveTabModalities>("Visão Geral");
@@ -39,16 +42,19 @@ export default function ModalidadesPage() {
     try {
       const [
         fetchedModalities,
+        fetchedPlans,
         fetchedSettings,
         fetchedProfile,
         fetchedStats,
       ] = await Promise.all([
         getModalities(),
+        getPlans(),
         getAcademySettings(),
         getUserProfile(),
         getModalitiesStats(),
       ]);
       setModalities(fetchedModalities);
+      setPlans(fetchedPlans);
       setSettings(fetchedSettings);
       setUserProfile(fetchedProfile);
       setStats(fetchedStats);
@@ -92,7 +98,7 @@ export default function ModalidadesPage() {
             </div>
           );
       case 'Preços e Planos':
-          return <PlanosPrecosTab modalities={modalities} onSuccess={handleSuccess} />;
+          return <PlanosPrecosTab modalities={modalities} plans={plans} onSuccess={handleSuccess} />;
       default:
         return <p>Selecione uma aba</p>;
     }

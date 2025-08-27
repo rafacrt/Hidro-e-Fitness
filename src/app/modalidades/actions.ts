@@ -7,6 +7,8 @@ import { z } from 'zod';
 import type { Database } from '@/lib/database.types';
 
 type Modality = Database['public']['Tables']['modalities']['Row'];
+type Plan = Database['public']['Tables']['plans']['Row'] & { modalities: Pick<Modality, 'name'> | null };
+
 
 const modalityFormSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
@@ -35,6 +37,28 @@ export async function getModalities(): Promise<Modality[]> {
       throw new Error('Não foi possível buscar as modalidades.');
     }
 
+    return data;
+  } catch (error) {
+    console.error('Unexpected Error:', error);
+    return [];
+  }
+}
+
+export async function getPlans(): Promise<Plan[]> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from('plans')
+      .select(`
+        *,
+        modalities ( name )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase Error:', error);
+      throw new Error('Não foi possível buscar os planos.');
+    }
     return data;
   } catch (error) {
     console.error('Unexpected Error:', error);
@@ -158,7 +182,7 @@ export async function deleteModality(id: string) {
     }
 
     // 2. If no classes are using it, proceed with deletion
-    const { error } = await supabase.from('modalities').delete().eq('id', id);
+    const { error } = await supabase.from('modalidades').delete().eq('id', id);
 
     if (error) {
       console.error('Supabase Error:', error);

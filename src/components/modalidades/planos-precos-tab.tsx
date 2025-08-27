@@ -12,13 +12,16 @@ import { useRouter } from 'next/navigation';
 import type { Database } from '@/lib/database.types';
 
 type Modality = Database['public']['Tables']['modalities']['Row'];
+type Plan = Database['public']['Tables']['plans']['Row'] & { modalities: Pick<Modality, 'name'> | null };
+
 
 interface PlanosPrecosTabProps {
     modalities: Modality[];
+    plans: Plan[];
     onSuccess: () => void;
 }
 
-export default function PlanosPrecosTab({ modalities, onSuccess }: PlanosPrecosTabProps) {
+export default function PlanosPrecosTab({ modalities, plans, onSuccess }: PlanosPrecosTabProps) {
     const router = useRouter();
     
     return (
@@ -32,12 +35,12 @@ export default function PlanosPrecosTab({ modalities, onSuccess }: PlanosPrecosT
                 <SelectContent>
                     <SelectItem value="all">Todas as Modalidades</SelectItem>
                     {modalities.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                        <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>
                     ))}
                 </SelectContent>
                 </Select>
             </div>
-            <PlanosList />
+            <PlanosList plans={plans} />
             <PlanosPrecosActions modalities={modalities} onSuccess={onSuccess} />
         </div>
     )
