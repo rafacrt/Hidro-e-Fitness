@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -33,7 +34,7 @@ import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { Database } from '@/lib/database.types';
 
-type Modality = Database['public']['Tables']['modalities']['Row'];
+type Modality = Pick<Database['public']['Tables']['modalities']['Row'], 'id' | 'name'>;
 
 interface AddPlanFormProps {
   children: React.ReactNode;
@@ -61,7 +62,7 @@ export function AddPlanForm({ children, onSuccess }: AddPlanFormProps) {
     if (open) {
       setLoadingModalities(true);
       getModalities().then((data) => {
-        setModalities(data);
+        setModalities(data as Modality[]);
         setLoadingModalities(false);
       }).catch(() => {
         toast({
@@ -255,3 +256,5 @@ export function AddPlanForm({ children, onSuccess }: AddPlanFormProps) {
     </Dialog>
   );
 }
+
+    

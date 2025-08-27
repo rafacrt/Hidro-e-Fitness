@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -14,11 +15,10 @@ import type { Database } from '@/lib/database.types';
 type Modality = Database['public']['Tables']['modalities']['Row'];
 
 interface PlanosPrecosActionsProps {
-  modalities: Modality[];
   onSuccess: () => void;
 }
 
-export default function PlanosPrecosActions({ modalities, onSuccess }: PlanosPrecosActionsProps) {
+export default function PlanosPrecosActions({ onSuccess }: PlanosPrecosActionsProps) {
   const { toast } = useToast();
 
   const handleActionClick = (label: string) => {
@@ -45,49 +45,33 @@ export default function PlanosPrecosActions({ modalities, onSuccess }: PlanosPre
           {actions.map((action, index) => {
             const ActionComponent = action.component;
 
+            const buttonContent = (
+              <Button
+                variant={action.variant as any}
+                className="h-auto p-4 flex items-center justify-center gap-2 w-full"
+              >
+                <action.icon className="h-4 w-4" />
+                <span className="text-sm font-medium">{action.label}</span>
+              </Button>
+            );
+
             if (ActionComponent) {
               if (action.label === 'Novo Plano') {
-                // AddPlanForm não precisa mais de modalities, ela carrega internamente
                 return (
                   <ActionComponent
                     key={index}
                     onSuccess={onSuccess}
                   >
-                    <Button
-                      variant={action.variant as any}
-                      className="h-auto p-4 flex items-center justify-center gap-2 w-full"
-                    >
-                      <action.icon className="h-4 w-4" />
-                      <span className="text-sm font-medium">{action.label}</span>
-                    </Button>
+                    {buttonContent}
                   </ActionComponent>
                 );
               }
-
-              // Para outros componentes de dialog
-              const buttonContent = (
-                <Button
-                  variant={action.variant as any}
-                  className="h-auto p-4 flex items-center justify-center gap-2 w-full"
-                >
-                  <action.icon className="h-4 w-4" />
-                  <span className="text-sm font-medium">{action.label}</span>
-                </Button>
-              );
-
               return <ActionComponent key={index}>{buttonContent}</ActionComponent>;
             }
 
-            // Para ações sem componente
             return (
               <div key={index} onClick={() => handleActionClick(action.label)} className="w-full cursor-pointer">
-                <Button
-                  variant={action.variant as any}
-                  className="h-auto p-4 flex items-center justify-center gap-2 w-full"
-                >
-                  <action.icon className="h-4 w-4" />
-                  <span className="text-sm font-medium">{action.label}</span>
-                </Button>
+                {buttonContent}
               </div>
             );
           })}
@@ -96,3 +80,5 @@ export default function PlanosPrecosActions({ modalities, onSuccess }: PlanosPre
     </Card>
   );
 }
+
+    
