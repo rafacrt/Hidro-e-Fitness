@@ -118,6 +118,7 @@ export async function addModality(formData: unknown) {
     }
 
     revalidatePath('/modalidades');
+    revalidatePath('/financeiro');
     return { success: true, message: 'Modalidade cadastrada com sucesso!' };
   } catch (error) {
     console.error('Unexpected Error:', error);
@@ -152,6 +153,7 @@ export async function updateModality(id: string, formData: unknown) {
     }
 
     revalidatePath('/modalidades');
+    revalidatePath('/financeiro');
     return { success: true, message: 'Modalidade atualizada com sucesso!' };
   } catch (error) {
     console.error('Unexpected Error:', error);
@@ -182,7 +184,7 @@ export async function deleteModality(id: string) {
     }
 
     // 2. If no classes are using it, proceed with deletion
-    const { error } = await supabase.from('modalidades').delete().eq('id', id);
+    const { error } = await supabase.from('modalities').delete().eq('id', id);
 
     if (error) {
       console.error('Supabase Error:', error);
@@ -190,6 +192,7 @@ export async function deleteModality(id: string) {
     }
 
     revalidatePath('/modalidades');
+    revalidatePath('/financeiro');
     return { success: true, message: 'Modalidade excluída com sucesso!' };
   } catch (error) {
     console.error('Unexpected Error:', error);
@@ -235,9 +238,75 @@ export async function addPlan(formData: unknown) {
     }
 
     revalidatePath('/modalidades');
+    revalidatePath('/financeiro');
     return { success: true, message: 'Plano cadastrado com sucesso!' };
   } catch (error: any) {
     console.error('Unexpected Error:', error);
     return { success: false, message: `Ocorreu um erro inesperado: ${error.message}` };
+  }
+}
+
+
+export async function updatePlan(id: string, formData: unknown) {
+  const parsedData = planFormSchema.safeParse(formData);
+
+  if (!parsedData.success) {
+    return {
+      success: false,
+      message: 'Dados do formulário inválidos.',
+      errors: parsedData.error.flatten().fieldErrors,
+    };
+  }
+  
+  if (!parsedData.data.modality_id) {
+    return { success: false, message: 'É necessário selecionar uma modalidade válida.' };
+  }
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const priceAsNumber = Number(parsedData.data.price.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
+    const benefitsArray = parsedData.data.benefits?.split(',').map(b => b.trim()).filter(b => b) || [];
+
+    const { error } = await supabase.from('plans')
+      .update({
+        name: parsedData.data.name,
+        modality_id: parsedData.data.modality_id,
+        price: priceAsNumber,
+        recurrence: parsedData.data.recurrence,
+        benefits: benefitsArray,
+        status: parsedData.data.status,
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Supabase Error:', error);
+      return { success: false, message: `Erro ao atualizar plano: ${error.message}` };
+    }
+
+    revalidatePath('/modalidades');
+    revalidatePath('/financeiro');
+    return { success: true, message: 'Plano atualizado com sucesso!' };
+  } catch (error: any) {
+    console.error('Unexpected Error:', error);
+    return { success: false, message: `Ocorreu um erro inesperado: ${error.message}` };
+  }
+}
+
+export async function deletePlan(id: string) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase.from('plans').delete().eq('id', id);
+
+    if (error) {
+      console.error('Supabase Error:', error);
+      return { success: false, message: `Erro ao excluir plano: ${error.message}` };
+    }
+
+    revalidatePath('/modalidades');
+    revalidatePath('/financeiro');
+    return { success: true, message: 'Plano excluído com sucesso!' };
+  } catch (error) {
+    console.error('Unexpected Error:', error);
+    return { success: false, message: 'Ocorreu um erro inesperado.' };
   }
 }

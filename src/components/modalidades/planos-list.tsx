@@ -1,16 +1,21 @@
 
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { Check, Edit, Trash2, Copy, AlertCircle, XCircle } from 'lucide-react';
-import { Separator } from "../ui/separator";
+import { Check, Edit, Trash2, Copy } from 'lucide-react';
 import type { Database } from '@/lib/database.types';
+import { EditPlanDialog } from "./edit-plan-dialog";
+import { DeletePlanAlert } from "./delete-plan-alert";
+import { DuplicatePlanDialog } from "./duplicate-plan-dialog";
 
 type Modality = Database['public']['Tables']['modalities']['Row'];
 type Plan = Database['public']['Tables']['plans']['Row'] & { modalities: Pick<Modality, 'name'> | null };
 
 interface PlanosListProps {
   plans: Plan[];
+  modalities: Modality[];
+  onSuccess: () => void;
 }
 
 const formatCurrency = (value: number | null) => {
@@ -28,7 +33,7 @@ const recurrenceMap = {
     anual: { text: "por ano", badge: "Anual", badgeClass: "bg-orange-100 text-orange-800" },
 }
 
-export default function PlanosList({ plans }: PlanosListProps) {
+export default function PlanosList({ plans, modalities, onSuccess }: PlanosListProps) {
   if (plans.length === 0) {
     return (
         <Card>
@@ -42,10 +47,10 @@ export default function PlanosList({ plans }: PlanosListProps) {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {plans.map((plan, index) => {
+            {plans.map((plan) => {
                 const recurrenceInfo = recurrenceMap[plan.recurrence as keyof typeof recurrenceMap] || recurrenceMap.mensal;
                 return (
-                <Card key={index}>
+                <Card key={plan.id}>
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <div>
@@ -80,9 +85,15 @@ export default function PlanosList({ plans }: PlanosListProps) {
                         )}
                         
                         <div className="flex items-center gap-2 pt-2">
-                            <Button className="w-full">Editar Plano</Button>
-                            <Button variant="ghost" size="icon"><Copy className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600"><Trash2 className="h-4 w-4" /></Button>
+                            <EditPlanDialog plan={plan} modalities={modalities} onSuccess={onSuccess}>
+                                <Button className="w-full">Editar Plano</Button>
+                            </EditPlanDialog>
+                            <DuplicatePlanDialog plan={plan} onSuccess={onSuccess}>
+                                <Button variant="ghost" size="icon"><Copy className="h-4 w-4" /></Button>
+                            </DuplicatePlanDialog>
+                            <DeletePlanAlert planId={plan.id} onSuccess={onSuccess}>
+                                <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600"><Trash2 className="h-4 w-4" /></Button>
+                            </DeletePlanAlert>
                         </div>
                     </CardContent>
                 </Card>

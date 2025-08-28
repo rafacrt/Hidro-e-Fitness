@@ -40,8 +40,8 @@ export default function PlanosPrecosTab({ modalities, plans, onSuccess }: Planos
                 </SelectContent>
                 </Select>
             </div>
-            <PlanosList plans={plans} />
-            <PlanosPrecosActions modalities={modalities} onSuccess={onSuccess} />
+            <PlanosList plans={plans} modalities={modalities} onSuccess={onSuccess} />
+            <PlanosPrecosActions onSuccess={onSuccess} />
         </div>
     )
 }
