@@ -4,15 +4,14 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '../ui/button';
-import { Plus, Copy, Tag, BarChart } from 'lucide-react';
+import { Plus, Tag, BarChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AddPlanForm } from './add-plan-form';
-import { DuplicatePlanDialog } from './duplicate-plan-dialog';
 import { AdjustPricesDialog } from './adjust-prices-dialog';
 import { PerformanceAnalysisDialog } from './performance-analysis-dialog';
 import type { Database } from '@/lib/database.types';
 
-type Modality = Database['public']['Tables']['modalities']['Row'];
+type Modality = Database['public']['Tables']['modalidades']['Row'];
 
 interface PlanosPrecosActionsProps {
   onSuccess: () => void;
@@ -30,7 +29,6 @@ export default function PlanosPrecosActions({ onSuccess }: PlanosPrecosActionsPr
 
   const actions = [
     { label: 'Novo Plano', icon: Plus, variant: 'default', component: AddPlanForm },
-    { label: 'Duplicar Plano', icon: Copy, variant: 'secondary', component: DuplicatePlanDialog },
     { label: 'Ajustar Preços', icon: Tag, variant: 'secondary', component: AdjustPricesDialog },
     { label: 'Análise de Performance', icon: BarChart, variant: 'secondary', component: PerformanceAnalysisDialog },
   ];
@@ -80,5 +78,3 @@ export default function PlanosPrecosActions({ onSuccess }: PlanosPrecosActionsPr
     </Card>
   );
 }
-
-    
