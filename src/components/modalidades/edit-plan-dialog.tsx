@@ -48,7 +48,7 @@ const planFormSchema = z.object({
   name: z.string().min(3, 'O nome do plano deve ter pelo menos 3 caracteres.'),
   modality_id: z.string({ required_error: 'Selecione uma modalidade.' }).min(1, 'Selecione uma modalidade.'),
   price: z.string().min(1, 'O preço é obrigatório.'),
-  recurrence: z.enum(['mensal', 'trimestral', 'semestral', 'anual']),
+  recurrence: z.enum(['mensal', 'bimestral', 'trimestral', 'semestral', 'anual']),
   benefits: z.string().optional(),
   status: z.enum(['ativo', 'inativo']).default('ativo'),
 });
@@ -198,6 +198,7 @@ export function EditPlanDialog({ children, plan, modalities, onSuccess }: EditPl
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="mensal">Mensal</SelectItem>
+                      <SelectItem value="bimestral">Bimestral</SelectItem>
                       <SelectItem value="trimestral">Trimestral</SelectItem>
                       <SelectItem value="semestral">Semestral</SelectItem>
                       <SelectItem value="anual">Anual</SelectItem>

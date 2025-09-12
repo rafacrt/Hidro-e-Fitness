@@ -1,22 +1,22 @@
-
 'use client';
 
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '../ui/button';
-import { UserPlus, CalendarPlus, DollarSign, Award } from 'lucide-react';
+import { UserPlus, CalendarPlus, DollarSign, Award, Laptop } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AddStudentForm } from '../alunos/add-student-form';
 import { AddClassForm } from '../turmas/add-class-form';
 import { AddPaymentForm } from '../pagamentos/add-payment-form';
 import { AddAssessmentForm } from '../avaliacoes/add-assessment-form';
 import { useRouter } from 'next/navigation';
+import { VirtualTerminalDialog } from '../pagamentos/virtual-terminal-dialog';
 
 const actions = [
   { label: 'Novo Aluno', icon: UserPlus, component: AddStudentForm },
   { label: 'Nova Turma', icon: CalendarPlus, component: AddClassForm },
-  { label: 'Pagamento', icon: DollarSign, component: AddPaymentForm },
-  { label: 'Avaliação', icon: Award, component: AddAssessmentForm },
+  { label: 'Registrar Pagamento', icon: DollarSign, component: AddPaymentForm },
+  { label: 'Terminal Virtual', icon: Laptop, component: VirtualTerminalDialog },
 ];
 
 const IconWrapper = ({ children }: { children: React.ReactNode }) => (

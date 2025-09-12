@@ -28,6 +28,7 @@ const formatCurrency = (value: number | null) => {
 
 const recurrenceMap = {
     mensal: { text: "por mês", badge: "Mensal", badgeClass: "bg-blue-100 text-blue-800" },
+    bimestral: { text: "por 2 meses", badge: "Bimestral", badgeClass: "bg-cyan-100 text-cyan-800" },
     trimestral: { text: "por 3 meses", badge: "Trimestral", badgeClass: "bg-green-100 text-green-800" },
     semestral: { text: "por 6 meses", badge: "Semestral", badgeClass: "bg-purple-100 text-purple-800" },
     anual: { text: "por ano", badge: "Anual", badgeClass: "bg-orange-100 text-orange-800" },
