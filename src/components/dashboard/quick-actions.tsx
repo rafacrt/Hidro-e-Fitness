@@ -10,6 +10,7 @@ import { AddStudentForm } from '../alunos/add-student-form';
 import { AddClassForm } from '../turmas/add-class-form';
 import { AddPaymentForm } from '../pagamentos/add-payment-form';
 import { AddAssessmentForm } from '../avaliacoes/add-assessment-form';
+import { useRouter } from 'next/navigation';
 
 const actions = [
   { label: 'Novo Aluno', icon: UserPlus, component: AddStudentForm },
@@ -26,6 +27,7 @@ const IconWrapper = ({ children }: { children: React.ReactNode }) => (
 
 export default function QuickActions() {
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleActionClick = (label: string) => {
     toast({
@@ -33,6 +35,10 @@ export default function QuickActions() {
       description: `A ação "${label}" será implementada em breve.`,
     });
   };
+
+  const handleSuccess = () => {
+    router.refresh();
+  }
 
   return (
     <Card>
@@ -55,7 +61,7 @@ export default function QuickActions() {
 
             if (ActionComponent) {
                 return (
-                    <ActionComponent key={index}>
+                    <ActionComponent key={index} onSuccess={handleSuccess}>
                         {buttonContent}
                     </ActionComponent>
                 )

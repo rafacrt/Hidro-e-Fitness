@@ -7,7 +7,7 @@ import Sidebar from '@/components/layout/sidebar';
 import StudentsTable from '@/components/alunos/students-table';
 import QuickActionsAlunos from '@/components/alunos/quick-actions-alunos';
 import StudentStats from '@/components/alunos/student-stats';
-import Filters from '@/components/alunos/filters';
+import Filters, { type ActiveTabAlunos } from '@/components/alunos/filters';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { AddStudentForm } from '@/components/alunos/add-student-form';
@@ -17,6 +17,7 @@ import type { Database } from '@/lib/database.types';
 import { mockStudents } from '@/lib/mock-data';
 import { NavContent } from '@/components/layout/nav-content';
 import { useSearchParams, useRouter } from 'next/navigation';
+import ControlePagamentosTab from '@/components/alunos/controle-pagamentos-tab';
 
 type Student = Database['public']['Tables']['students']['Row'];
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
@@ -76,6 +77,7 @@ export default function AlunosPage() {
   const status = searchParams.get('status') || 'all';
   const sort = searchParams.get('sort');
   const order = searchParams.get('order');
+  const activeTab = (searchParams.get('tab') || 'Visão Geral') as ActiveTabAlunos;
 
   const loadData = React.useCallback(async () => {
     setLoading(true);
@@ -109,20 +111,29 @@ export default function AlunosPage() {
     setProcessedStudents(processed);
   }, [allStudents, query, status, sort, order]);
 
-  if (loading) {
-     return (
-        <div className="flex min-h-screen w-full bg-background text-foreground">
-            <Sidebar>
-                <NavContent settings={academySettings} />
-            </Sidebar>
-            <div className="flex flex-col w-0 flex-1">
-                <Header settings={academySettings} userProfile={userProfile} />
-                <main className="flex-1 flex items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                </main>
-            </div>
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-     )
+      );
+    }
+
+    switch(activeTab) {
+      case 'Visão Geral':
+        return (
+          <div className="space-y-6">
+            <StudentsTable students={processedStudents} />
+            <StudentStats students={allStudents} />
+            <QuickActionsAlunos onSuccess={() => router.refresh()} />
+          </div>
+        );
+      case 'Controle de Pagamentos':
+        return <ControlePagamentosTab />;
+      default:
+        return null;
+    }
   }
 
   return (
@@ -136,7 +147,7 @@ export default function AlunosPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h1 className="text-2xl font-bold">Alunos</h1>
-              <p className="text-muted-foreground">Gerencie todos os alunos cadastrados</p>
+              <p className="text-muted-foreground">Gerencie todos os alunos cadastrados e seus pagamentos</p>
             </div>
             <AddStudentForm onSuccess={() => router.refresh()}>
               <Button>
@@ -147,9 +158,8 @@ export default function AlunosPage() {
           </div>
           
           <Filters />
-          <StudentsTable students={processedStudents} />
-          <StudentStats students={allStudents} />
-          <QuickActionsAlunos onSuccess={() => router.refresh()} />
+          
+          {renderContent()}
 
         </main>
       </div>
