@@ -9,13 +9,13 @@ import { useToast } from '@/hooks/use-toast';
 import { AddStudentForm } from '../alunos/add-student-form';
 import { AddClassForm } from '../turmas/add-class-form';
 import { AddPaymentForm } from '../pagamentos/add-payment-form';
-// Temporariamente removido: import { AddAssessmentForm } from '../avaliacoes/add-assessment-form';
+import { AddAssessmentForm } from '../avaliacoes/add-assessment-form';
 
 const actions = [
   { label: 'Novo Aluno', icon: UserPlus, component: AddStudentForm },
   { label: 'Nova Turma', icon: CalendarPlus, component: AddClassForm },
   { label: 'Pagamento', icon: DollarSign, component: AddPaymentForm },
-  { label: 'Avaliação', icon: Award, component: null }, // Temporariamente sem componente
+  { label: 'Avaliação', icon: Award, component: AddAssessmentForm },
 ];
 
 const IconWrapper = ({ children }: { children: React.ReactNode }) => (

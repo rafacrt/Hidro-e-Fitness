@@ -9,7 +9,7 @@ import { usePathname, useRouter } from 'next/navigation';
 
 const filters: { label: ActiveTabFrequencia; icon: React.ElementType }[] = [
     { label: "Visão Geral", icon: Eye },
-    { label: "Controle de Pagamentos", icon: CheckCircle },
+    { label: "Controle de Presença", icon: CheckCircle },
     { label: "Histórico", icon: History },
 ]
 
@@ -42,5 +42,3 @@ export default function FrequenciaFilters({ activeTab }: FrequenciaFiltersProps)
         </div>
     )
 }
-
-    
