@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import RecebimentosStatCards from "@/components/financeiro/recebimentos-stat-cards";
 import RecebimentosFilters from "@/components/financeiro/recebimentos-filters";
 import RecebimentosTable from "@/components/financeiro/recebimentos-table";
@@ -10,7 +10,9 @@ import RecebimentosBatchActions from "@/components/financeiro/recebimentos-batch
 import type { Database } from "@/lib/database.types";
 import { getTransactions } from '@/app/financeiro/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, PlusCircle } from 'lucide-react';
+import { AddPaymentForm } from '../pagamentos/add-payment-form';
+import { Button } from '../ui/button';
 
 type Payment = Database['public']['Tables']['payments']['Row'];
 
@@ -51,6 +53,15 @@ export default function ControlePagamentosTab() {
         <div className="space-y-6">
             <RecebimentosStatCards recebimentos={recebimentos} />
             <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Histórico de Recebimentos</CardTitle>
+                    <AddPaymentForm onSuccess={refreshData}>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Novo Pagamento
+                        </Button>
+                    </AddPaymentForm>
+                </CardHeader>
                 <RecebimentosFilters />
                 <CardContent className="p-0">
                     <RecebimentosTable recebimentos={recebimentos} onSuccess={refreshData} />
