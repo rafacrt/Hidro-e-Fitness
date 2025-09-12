@@ -201,3 +201,82 @@ export async function getStudents(): Promise<Student[]> {
     return [];
   }
 }
+
+export type HistoryEvent = {
+  date: string;
+  type: 'enrollment' | 'payment' | 'attendance';
+  title: string;
+  description: string;
+};
+
+export async function getStudentHistory(studentId: string): Promise<HistoryEvent[]> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    
+    const { data: enrollments, error: enrollmentsError } = await supabase
+        .from('enrollments')
+        .select(`created_at, classes ( name )`)
+        .eq('student_id', studentId);
+
+    const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select(`created_at, description, status, amount`)
+        .eq('student_id', studentId);
+        
+    const { data: attendance, error: attendanceError } = await supabase
+        .from('attendance')
+        .select(`created_at, status, classes ( name )`)
+        .eq('student_id', studentId);
+
+    if (enrollmentsError || paymentsError || attendanceError) {
+        console.error({ enrollmentsError, paymentsError, attendanceError });
+        throw new Error("Erro ao buscar histórico do aluno.");
+    }
+    
+    const history: HistoryEvent[] = [];
+
+    enrollments.forEach(e => {
+        history.push({
+            date: e.created_at,
+            type: 'enrollment',
+            title: `Matrícula realizada`,
+            description: `Aluno matriculado na turma "${e.classes?.name}".`,
+        });
+    });
+
+    payments.forEach(p => {
+        history.push({
+            date: p.created_at,
+            type: 'payment',
+            title: p.status === 'pago' ? `Pagamento Realizado` : `Cobrança Gerada`,
+            description: `${p.description} - R$ ${p.amount}`,
+        });
+    });
+
+    attendance.forEach(a => {
+        history.push({
+            date: a.created_at,
+            type: 'attendance',
+            title: a.status === 'presente' ? `Presença Registrada` : `Falta Registrada`,
+            description: `Status de ${a.status} na turma "${a.classes?.name}".`,
+        });
+    });
+    
+    // Adiciona o evento de cadastro do aluno
+    const { data: student, error: studentError } = await supabase.from('students').select('created_at').eq('id', studentId).single();
+    if (student) {
+      history.push({
+        date: student.created_at,
+        type: 'enrollment',
+        title: 'Cadastro Realizado',
+        description: 'Aluno cadastrado no sistema.',
+      });
+    }
+
+    return history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  } catch (error) {
+    console.error('Unexpected Error in getStudentHistory:', error);
+    return [];
+  }
+}

@@ -26,11 +26,15 @@ import {
   Pencil,
   FileText,
   ShieldAlert,
+  History,
+  BookUser,
 } from 'lucide-react';
 import type { Database } from '@/lib/database.types';
 import { format } from 'date-fns';
 import { EditStudentForm } from './edit-student-form';
 import { Separator } from '../ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import StudentHistoryTimeline from './student-history-timeline';
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -113,68 +117,79 @@ export function StudentDetailsDialog({ student, children }: StudentDetailsDialog
             </div>
           </div>
         </DialogHeader>
-        
-        <div className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-2">
-            {/* Dados Pessoais */}
-            <div className="space-y-3">
-                <h4 className="font-semibold text-base">Dados Pessoais</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <DetailItem icon={FileText} label="CPF" value={formatCPF(student.cpf)} />
-                    <DetailItem icon={Cake} label="Nascimento" value={student.birth_date ? `${format(new Date(student.birth_date), 'dd/MM/yyyy')} (${age} anos)` : 'Não informada'} />
-                </div>
-            </div>
-            <Separator />
-            {/* Contato */}
-            <div className="space-y-3">
-                <h4 className="font-semibold text-base">Contato</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <DetailItem icon={Mail} label="E-mail" value={student.email} />
-                    <div className='flex flex-col'>
-                        <DetailItem icon={Phone} label="Telefone" value={formatPhone(student.phone)} />
-                        {student.is_whatsapp && (
-                           <div className="flex items-center gap-1.5 text-xs text-green-600 mt-1">
-                                <MessageSquare className="h-3 w-3" /> <span>É WhatsApp</span>
-                           </div>
-                        )}
+
+        <Tabs defaultValue="cadastro" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="cadastro"><BookUser className="mr-2 h-4 w-4" />Dados Cadastrais</TabsTrigger>
+            <TabsTrigger value="historico"><History className="mr-2 h-4 w-4" />Histórico</TabsTrigger>
+          </TabsList>
+          <TabsContent value="cadastro">
+             <div className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-2">
+                {/* Dados Pessoais */}
+                <div className="space-y-3">
+                    <h4 className="font-semibold text-base">Dados Pessoais</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <DetailItem icon={FileText} label="CPF" value={formatCPF(student.cpf)} />
+                        <DetailItem icon={Cake} label="Nascimento" value={student.birth_date ? `${format(new Date(student.birth_date), 'dd/MM/yyyy')} (${age} anos)` : 'Não informada'} />
                     </div>
                 </div>
-            </div>
-            <Separator />
-            {/* Endereço */}
-            <div className="space-y-3">
-                <h4 className="font-semibold text-base">Endereço</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <DetailItem icon={MapPin} label="CEP" value={student.cep} />
-                    <DetailItem icon={MapPin} label="Rua" value={`${student.street || ''}, ${student.number || ''}`} />
-                    <DetailItem icon={MapPin} label="Complemento" value={student.complement} />
-                    <DetailItem icon={MapPin} label="Bairro" value={student.neighborhood} />
-                    <DetailItem icon={MapPin} label="Cidade/Estado" value={`${student.city || ''} - ${student.state || ''}`} />
-                </div>
-            </div>
-
-            {isMinor && (
-                <>
-                    <Separator />
-                    <div className="space-y-3 p-3 rounded-md bg-yellow-50 border border-yellow-200">
-                        <h4 className="font-semibold text-base text-yellow-800 flex items-center gap-2"><ShieldAlert className="h-5 w-5" /> Dados do Responsável</h4>
-                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            <DetailItem icon={User} label="Nome" value={student.responsible_name} />
-                            <DetailItem icon={Phone} label="Telefone" value={formatPhone(student.responsible_phone)} />
+                <Separator />
+                {/* Contato */}
+                <div className="space-y-3">
+                    <h4 className="font-semibold text-base">Contato</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <DetailItem icon={Mail} label="E-mail" value={student.email} />
+                        <div className='flex flex-col'>
+                            <DetailItem icon={Phone} label="Telefone" value={formatPhone(student.phone)} />
+                            {student.is_whatsapp && (
+                              <div className="flex items-center gap-1.5 text-xs text-green-600 mt-1">
+                                    <MessageSquare className="h-3 w-3" /> <span>É WhatsApp</span>
+                              </div>
+                            )}
                         </div>
                     </div>
-                </>
-            )}
-
-            {student.medical_observations && (
-                <>
-                    <Separator />
-                    <div className="space-y-2 p-3 rounded-md bg-red-50 border border-red-200">
-                        <h4 className="font-semibold text-base text-red-800 flex items-center gap-2"><HeartPulse className="h-5 w-5" /> Observações Médicas</h4>
-                        <p className="text-sm">{student.medical_observations}</p>
+                </div>
+                <Separator />
+                {/* Endereço */}
+                <div className="space-y-3">
+                    <h4 className="font-semibold text-base">Endereço</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <DetailItem icon={MapPin} label="CEP" value={student.cep} />
+                        <DetailItem icon={MapPin} label="Rua" value={`${student.street || ''}, ${student.number || ''}`} />
+                        <DetailItem icon={MapPin} label="Complemento" value={student.complement} />
+                        <DetailItem icon={MapPin} label="Bairro" value={student.neighborhood} />
+                        <DetailItem icon={MapPin} label="Cidade/Estado" value={`${student.city || ''} - ${student.state || ''}`} />
                     </div>
-                </>
-            )}
-        </div>
+                </div>
+
+                {isMinor && (
+                    <>
+                        <Separator />
+                        <div className="space-y-3 p-3 rounded-md bg-yellow-50 border border-yellow-200">
+                            <h4 className="font-semibold text-base text-yellow-800 flex items-center gap-2"><ShieldAlert className="h-5 w-5" /> Dados do Responsável</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <DetailItem icon={User} label="Nome" value={student.responsible_name} />
+                                <DetailItem icon={Phone} label="Telefone" value={formatPhone(student.responsible_phone)} />
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {student.medical_observations && (
+                    <>
+                        <Separator />
+                        <div className="space-y-2 p-3 rounded-md bg-red-50 border border-red-200">
+                            <h4 className="font-semibold text-base text-red-800 flex items-center gap-2"><HeartPulse className="h-5 w-5" /> Observações Médicas</h4>
+                            <p className="text-sm">{student.medical_observations}</p>
+                        </div>
+                    </>
+                )}
+            </div>
+          </TabsContent>
+          <TabsContent value="historico">
+            <StudentHistoryTimeline studentId={student.id} />
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter className="sm:justify-between">
             <DialogClose asChild>
