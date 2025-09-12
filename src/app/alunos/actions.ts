@@ -28,6 +28,7 @@ const studentFormSchema = z
     responsiblePhone: z.string().optional(),
     medicalObservations: z.string().optional(),
     status: z.enum(['ativo', 'inativo']).default('ativo'),
+    class_id: z.string().optional(), // Novo campo
   })
   .refine(
     (data) => {
@@ -66,7 +67,8 @@ export async function addStudent(formData: unknown) {
     const supabase = await createSupabaseServerClient();
     const cleanCpf = parsedData.data.cpf?.replace(/\D/g, '') || null;
 
-    const { error } = await supabase
+    // Inicia uma transação
+    const { data: newStudent, error } = await supabase
       .from('students')
       .insert([
         {
@@ -88,7 +90,9 @@ export async function addStudent(formData: unknown) {
           medical_observations: parsedData.data.medicalObservations,
           status: 'ativo',
         },
-      ]);
+      ])
+      .select()
+      .single();
 
     if (error) {
       console.error('Supabase Error:', error);
@@ -97,9 +101,27 @@ export async function addStudent(formData: unknown) {
       }
       return { success: false, message: `Erro ao cadastrar aluno: ${error.message}` };
     }
+    
+    let enrollmentMessage = '';
+    // Se uma turma foi selecionada, realiza a matrícula
+    if (parsedData.data.class_id && newStudent) {
+      const { error: enrollmentError } = await supabase
+        .from('enrollments')
+        .insert({
+          student_id: newStudent.id,
+          class_id: parsedData.data.class_id,
+        });
+
+      if (enrollmentError) {
+         return { success: false, message: `Aluno cadastrado, mas falha ao matricular: ${enrollmentError.message}` };
+      }
+      enrollmentMessage = ' e matriculado(a) com sucesso!';
+    }
+
 
     revalidatePath('/alunos');
-    return { success: true, message: 'Aluno cadastrado com sucesso!' };
+    revalidatePath('/turmas'); // Revalida a página de turmas também
+    return { success: true, message: `Aluno cadastrado${enrollmentMessage}` };
 
   } catch (error) {
     console.error('Unexpected Error:', error);

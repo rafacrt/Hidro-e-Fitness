@@ -42,6 +42,11 @@ import { WaveSpinner } from '../ui/wave-spinner';
 import { addStudent } from '@/app/alunos/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { getClasses } from '@/app/turmas/actions';
+import type { Database } from '@/lib/database.types';
+
+type ClassRow = Database['public']['Tables']['classes']['Row'];
 
 const studentFormSchema = z
   .object({
@@ -68,6 +73,7 @@ const studentFormSchema = z
     responsibleName: z.string().optional(),
     responsiblePhone: z.string().optional(),
     medicalObservations: z.string().optional(),
+    class_id: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -102,6 +108,8 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
   const [open, setOpen] = React.useState(false);
   const [isMinor, setIsMinor] = React.useState(false);
   const [isFetchingCep, setIsFetchingCep] = React.useState(false);
+  const [classes, setClasses] = React.useState<ClassRow[]>([]);
+  const [loadingClasses, setLoadingClasses] = React.useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -125,6 +133,16 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
       medicalObservations: '',
     },
   });
+
+  React.useEffect(() => {
+    if (open) {
+      setLoadingClasses(true);
+      getClasses()
+        .then(data => setClasses(data as ClassRow[]))
+        .catch(() => toast({ title: 'Erro', description: 'Não foi possível carregar as turmas.', variant: 'destructive' }))
+        .finally(() => setLoadingClasses(false));
+    }
+  }, [open, toast]);
 
   const watchBirthDate = form.watch('birthDate');
 
@@ -532,6 +550,30 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
                           {...field}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+             <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-lg font-medium">Matrícula Rápida (Opcional)</h3>
+                <p className="text-sm text-muted-foreground">Selecione uma turma para matricular o aluno assim que o cadastro for salvo.</p>
+                 <FormField
+                  control={form.control}
+                  name="class_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Turma</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loadingClasses}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder={loadingClasses ? "Carregando turmas..." : "Selecione uma turma"} />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
