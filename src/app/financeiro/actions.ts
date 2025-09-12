@@ -234,8 +234,8 @@ export async function generateMonthlyPayments(month: Date) {
     const { data: existingPayments, error: paymentsError } = await supabase
       .from('payments')
       .select('student_id')
-      .gte('due_date', monthStart.toISOString())
-      .lte('due_date', monthEnd.toISOString())
+      .gte('due_date', toDateOnlyISOString(monthStart))
+      .lte('due_date', toDateOnlyISOString(monthEnd))
       .like('description', `%Mensalidade%`);
 
     if (paymentsError) throw new Error(`Erro ao buscar pagamentos existentes: ${paymentsError.message}`);
@@ -314,3 +314,5 @@ export async function scheduleSelectedPayments(paymentIds: string[], newDueDate:
         return { success: false, message: `Erro ao agendar pagamentos: ${error.message}` };
     }
 }
+
+    

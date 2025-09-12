@@ -27,6 +27,7 @@ type Payment = Database['public']['Tables']['payments']['Row'];
 
 interface RecebimentosTableProps {
   recebimentos: Payment[];
+  onSuccess: () => void;
 }
 
 const statusConfig = {
@@ -40,7 +41,13 @@ const formatCurrency = (value: number | null) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
-export default function RecebimentosTable({ recebimentos }: RecebimentosTableProps) {
+const parseUTCDateAsLocal = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+};
+
+
+export default function RecebimentosTable({ recebimentos, onSuccess }: RecebimentosTableProps) {
   const { toast } = useToast();
   
   const handleActionClick = (description: string) => {
@@ -67,7 +74,7 @@ export default function RecebimentosTable({ recebimentos }: RecebimentosTablePro
             {recebimentos.map((item) => {
               const statusInfo = statusConfig[item.status as keyof typeof statusConfig] || statusConfig.pendente;
               return (
-              <DetalhesTransacaoDialog transacao={item} key={item.id}>
+              <DetalhesTransacaoDialog transacao={item} key={item.id} onSuccess={onSuccess}>
                 <TableRow className="cursor-pointer">
                   <TableCell>
                     <p className="font-medium text-sm">{item.description}</p>
@@ -77,8 +84,8 @@ export default function RecebimentosTable({ recebimentos }: RecebimentosTablePro
                     <p className="font-medium text-sm">{formatCurrency(item.amount)}</p>
                   </TableCell>
                   <TableCell>
-                    <p className="font-medium text-sm">{format(new Date(item.due_date), 'dd/MM/yyyy', { locale: ptBR })}</p>
-                    {item.paid_at && <p className="text-xs text-muted-foreground">Pago em {format(new Date(item.paid_at), 'dd/MM/yyyy')}</p>}
+                    <p className="font-medium text-sm">{format(parseUTCDateAsLocal(item.due_date), 'dd/MM/yyyy', { locale: ptBR })}</p>
+                    {item.paid_at && <p className="text-xs text-muted-foreground">Pago em {format(parseUTCDateAsLocal(item.paid_at), 'dd/MM/yyyy')}</p>}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={cn("font-medium capitalize", statusInfo.class)}>
@@ -97,7 +104,7 @@ export default function RecebimentosTable({ recebimentos }: RecebimentosTablePro
                             <p>Enviar Lembrete</p>
                           </TooltipContent>
                         </Tooltip>
-                        <EditTransacaoDialog transacao={item}>
+                        <EditTransacaoDialog transacao={item} onSuccess={onSuccess}>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
@@ -109,7 +116,7 @@ export default function RecebimentosTable({ recebimentos }: RecebimentosTablePro
                             </TooltipContent>
                           </Tooltip>
                         </EditTransacaoDialog>
-                        <DeleteTransacaoAlert transacaoId={item.id}>
+                        <DeleteTransacaoAlert transacaoId={item.id} onSuccess={onSuccess}>
                           <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={(e) => e.stopPropagation()}>
@@ -132,3 +139,5 @@ export default function RecebimentosTable({ recebimentos }: RecebimentosTablePro
     </div>
   );
 }
+
+    

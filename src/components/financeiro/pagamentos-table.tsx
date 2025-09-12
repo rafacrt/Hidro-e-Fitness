@@ -101,8 +101,8 @@ export default function PagamentosTable({ pagamentos, selectedPayments, setSelec
                       <p className="font-medium text-sm">{formatCurrency(item.amount)}</p>
                     </TableCell>
                     <TableCell>
-                      <p className="font-medium text-sm">{format(new Date(item.due_date), 'dd/MM/yyyy', { locale: ptBR })}</p>
-                      {item.paid_at && <p className="text-xs text-muted-foreground">Pago em {format(new Date(item.paid_at), 'dd/MM/yyyy')}</p>}
+                      <p className="font-medium text-sm">{format(parseUTCDateAsLocal(item.due_date), 'dd/MM/yyyy', { locale: ptBR })}</p>
+                      {item.paid_at && <p className="text-xs text-muted-foreground">Pago em {format(parseUTCDateAsLocal(item.paid_at), 'dd/MM/yyyy')}</p>}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={cn("font-medium capitalize", statusInfo.class)}>
@@ -135,3 +135,10 @@ export default function PagamentosTable({ pagamentos, selectedPayments, setSelec
     </div>
   );
 }
+
+const parseUTCDateAsLocal = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+};
+
+    

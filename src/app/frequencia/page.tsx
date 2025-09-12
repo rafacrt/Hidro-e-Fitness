@@ -30,7 +30,7 @@ type Instructor = Database['public']['Tables']['instructors']['Row'];
 type UpcomingClass = ClassRow & { instructors: Pick<Instructor, 'name'> | null };
 
 
-export type ActiveTabFrequencia = "Visão Geral" | "Controle de Presença" | "Histórico";
+export type ActiveTabFrequencia = "Visão Geral" | "Controle de Pagamentos" | "Histórico";
 
 export default function FrequenciaPage() {
   const searchParams = useSearchParams();
@@ -114,7 +114,7 @@ export default function FrequenciaPage() {
             </div>
           )}
 
-          {!loading && activeTab === 'Controle de Presença' && (
+          {!loading && activeTab === 'Controle de Pagamentos' && (
             <ControlePresencaTab classes={upcomingClasses} />
           )}
 
@@ -127,3 +127,5 @@ export default function FrequenciaPage() {
     </div>
   );
 }
+
+    

@@ -23,7 +23,7 @@ export default function PagamentosBatchActions({ selectedPayments, onSuccess }: 
         <div className="p-4 border-t">
             <h3 className="text-sm font-semibold mb-2">Ações em Lote</h3>
             <div className="flex flex-wrap gap-2">
-                <AddTransacaoDialog>
+                <AddTransacaoDialog onSuccess={onSuccess}>
                     <Button variant="default">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Nova Despesa
@@ -53,3 +53,5 @@ export default function PagamentosBatchActions({ selectedPayments, onSuccess }: 
         </div>
     )
 }
+
+    

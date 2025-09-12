@@ -342,3 +342,5 @@ export function EditTransacaoDialog({ children, transacao, onSuccess }: EditTran
     </Dialog>
   );
 }
+
+    
