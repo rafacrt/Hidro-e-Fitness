@@ -154,7 +154,7 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Modalidade</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading.modalities}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={loading.modalities}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={loading.modalities ? "Carregando..." : "Selecione..."} />
@@ -174,7 +174,7 @@ export function AddClassForm({ children, onSuccess }: AddClassFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Professor</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading.instructors}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={loading.instructors}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={loading.instructors ? "Carregando..." : "Selecione..."} />

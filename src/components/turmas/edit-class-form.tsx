@@ -162,7 +162,7 @@ export function EditClassForm({ classData, children }: EditClassFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Modalidade</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={loading}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione..." />
@@ -182,7 +182,7 @@ export function EditClassForm({ classData, children }: EditClassFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Professor</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={loading}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione..." />
