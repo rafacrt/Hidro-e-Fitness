@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -28,20 +29,18 @@ import { Loader2, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { IMaskInput } from 'react-imask';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 // Schema de validação para o formulário do terminal virtual
 const terminalSchema = z.object({
   amount: z.string().min(1, 'O valor é obrigatório.'),
   description: z.string().min(3, 'A descrição é obrigatória.'),
-  cardName: z.string().min(3, 'O nome no cartão é obrigatório.'),
-  cardNumber: z.string().refine((val) => val.replace(/\s/g, '').length >= 13 && val.replace(/\s/g, '').length <= 19, {
-    message: 'Número de cartão inválido.',
-  }),
-  cardExpiry: z.string().regex(/^(0[1-9]|1[0-2])\s?\/\s?([0-9]{2})$/, 'Data de validade inválida (MM/AA).'),
-  cardCvv: z.string().min(3, 'CVV inválido.').max(4, 'CVV inválido.'),
+  payment_method: z.string({ required_error: 'Selecione um método de pagamento.' }),
 });
 
 type TerminalFormValues = z.infer<typeof terminalSchema>;
+
+const paymentMethods = ['PIX', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto', 'Transferência'];
 
 export function VirtualTerminalDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
@@ -51,10 +50,6 @@ export function VirtualTerminalDialog({ children }: { children: React.ReactNode 
     defaultValues: {
       amount: '',
       description: '',
-      cardName: '',
-      cardNumber: '',
-      cardExpiry: '',
-      cardCvv: '',
     },
   });
 
@@ -64,7 +59,7 @@ export function VirtualTerminalDialog({ children }: { children: React.ReactNode 
     setTimeout(() => {
         toast({
             title: "Pagamento Processado!",
-            description: `A cobrança de ${data.amount} foi realizada com sucesso.`,
+            description: `A cobrança de ${data.amount} via ${data.payment_method} foi realizada com sucesso.`,
         })
         setOpen(false);
         form.reset();
@@ -79,7 +74,7 @@ export function VirtualTerminalDialog({ children }: { children: React.ReactNode 
         <DialogHeader>
           <DialogTitle>Terminal Virtual</DialogTitle>
           <DialogDescription>
-            Processe pagamentos com cartão de crédito manualmente.
+            Registre um pagamento manual de forma rápida.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -96,7 +91,7 @@ export function VirtualTerminalDialog({ children }: { children: React.ReactNode 
                       blocks={{
                         num: { mask: Number, radix: ",", thousandsSeparator: ".", scale: 2, padFractionalZeros: true, normalizeZeros: true, mapToRadix: ['.'] }
                       }}
-                      value={field.value}
+                      value={field.value || ''}
                       onAccept={(value) => field.onChange(value)}
                       className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
                       placeholder="R$ 0,00"
@@ -119,87 +114,28 @@ export function VirtualTerminalDialog({ children }: { children: React.ReactNode 
                 </FormItem>
               )}
             />
-            <div className="pt-4 border-t">
-              <h4 className="text-sm font-medium mb-4">Dados do Cartão</h4>
-              <div className="space-y-4">
-                 <FormField
-                  control={form.control}
-                  name="cardName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome no Cartão</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: JOAO D SILVA" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="cardNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Número do Cartão</FormLabel>
-                      <FormControl>
-                         <div className="relative">
-                            <IMaskInput
-                                mask="0000 0000 0000 0000"
-                                value={field.value}
-                                onAccept={(value) => field.onChange(value)}
-                                className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
-                                placeholder="0000 0000 0000 0000"
-                            />
-                            <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                    control={form.control}
-                    name="cardExpiry"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Validade</FormLabel>
-                        <FormControl>
-                            <IMaskInput
-                                mask="00 / 00"
-                                value={field.value}
-                                onAccept={(value) => field.onChange(value)}
-                                className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
-                                placeholder="MM/AA"
-                            />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="cardCvv"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>CVV</FormLabel>
-                        <FormControl>
-                            <IMaskInput
-                                mask="000[0]"
-                                value={field.value}
-                                onAccept={(value) => field.onChange(value)}
-                                className={cn('flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm')}
-                                placeholder="123"
-                            />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                </div>
-              </div>
-            </div>
-
+             <FormField
+              control={form.control}
+              name="payment_method"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Método de Pagamento</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {paymentMethods.map(method => (
+                        <SelectItem key={method} value={method}>{method}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline">
