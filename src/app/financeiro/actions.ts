@@ -91,6 +91,8 @@ export async function addTransaction(formData: unknown) {
         payment_method: data.payment_method,
         status: data.status,
         student_id: student_id,
+        category: data.category,
+        type: data.type,
       },
     ]);
 
@@ -227,6 +229,8 @@ export async function updateTransaction(id: string, formData: unknown) {
                 due_date: toDateOnlyISOString(parsedData.data.due_date),
                 payment_method: parsedData.data.payment_method,
                 status: parsedData.data.status,
+                category: parsedData.data.category,
+                type: parsedData.data.type,
             })
             .eq('id', id);
 

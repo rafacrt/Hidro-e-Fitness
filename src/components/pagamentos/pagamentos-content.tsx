@@ -11,10 +11,6 @@ import TransacoesRecentes from '@/components/pagamentos/transacoes-recentes';
 import CobrancasPendentes from '@/components/pagamentos/cobrancas-pendentes';
 import AcoesRapidasPagamentos from '@/components/pagamentos/acoes-rapidas-pagamentos';
 import { AddPaymentForm } from '@/components/pagamentos/add-payment-form';
-import PlanosPrecosStats from '@/components/pagamentos/planos-precos-stats';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import PlanosList from '@/components/pagamentos/planos-list';
-import PlanosPrecosActions from '@/components/pagamentos/planos-precos-actions';
 import HistoricoStatsCards from '@/components/pagamentos/historico-stats-cards';
 import HistoricoFilters from '@/components/pagamentos/historico-filters';
 import HistoricoTable from '@/components/pagamentos/historico-table';
@@ -40,13 +36,6 @@ export default function PagamentosContent({ payments, stats, students, onSuccess
 
   const renderHeaderButtons = () => {
     switch (activeTab) {
-      case 'Planos e Preços':
-        return (
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Novo Plano
-          </Button>
-        );
       case 'Histórico':
       case 'Métodos de Pagamento':
          return (
@@ -106,26 +95,6 @@ export default function PagamentosContent({ payments, stats, students, onSuccess
       )}
 
       {activeTab === 'Métodos de Pagamento' && <MetodosPagamentoTab />}
-
-      {activeTab === 'Planos e Preços' && (
-        <div className="space-y-6">
-          <PlanosPrecosStats />
-          <div className='flex items-center justify-between'>
-            <Select defaultValue="all">
-              <SelectTrigger className="w-full md:w-[220px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as Modalidades</SelectItem>
-                <SelectItem value="natacao">Natação</SelectItem>
-                <SelectItem value="hidro">Hidroginástica</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <PlanosList />
-          <PlanosPrecosActions />
-        </div>
-      )}
 
       {activeTab === 'Histórico' && (
         <div className="space-y-6">

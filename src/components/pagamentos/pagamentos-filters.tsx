@@ -5,12 +5,11 @@ import * as React from 'react';
 import { Button } from "@/components/ui/button"
 import { Eye, CreditCard, DollarSign, History } from "lucide-react"
 
-type ActiveTab = "Visão Geral" | "Métodos de Pagamento" | "Planos e Preços" | "Histórico";
+type ActiveTab = "Visão Geral" | "Métodos de Pagamento" | "Histórico";
 
 const filters: { label: ActiveTab; icon: React.ElementType }[] = [
     { label: "Visão Geral", icon: Eye },
     { label: "Métodos de Pagamento", icon: CreditCard },
-    { label: "Planos e Preços", icon: DollarSign },
     { label: "Histórico", icon: History },
 ]
 
