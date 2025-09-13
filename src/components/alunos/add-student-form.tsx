@@ -564,7 +564,7 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Turma</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loadingClasses}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={loadingClasses}>
                         <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder={loadingClasses ? "Carregando turmas..." : "Selecione uma turma"} />
