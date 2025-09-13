@@ -26,7 +26,10 @@ const transactionFormSchema = z.object({
   category: z.string().min(1, 'Selecione uma categoria.'),
   payment_method: z.string().optional(),
   status: z.enum(['pago', 'pendente', 'vencido']).default('pago'),
+  student_id: z.string().optional(),
+  existing_payment_id: z.string().optional(),
 });
+
 
 // Helper function to convert a local date to a UTC-aligned ISO string for just the date part.
 const toDateOnlyISOString = (date: Date): string => {
@@ -46,24 +49,48 @@ export async function addTransaction(formData: unknown) {
       errors: parsedData.error.flatten().fieldErrors,
     };
   }
+  
+  const { existing_payment_id, student_id, ...data } = parsedData.data;
 
   try {
     const supabase = await createSupabaseServerClient();
     
     // Convert price string "R$ 180,00" to number 180.00
-    let amountAsNumber = Number(parsedData.data.amount.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
-
-    if (parsedData.data.type === 'despesa') {
+    let amountAsNumber = Number(data.amount.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
+    if (data.type === 'despesa') {
       amountAsNumber = -Math.abs(amountAsNumber);
     }
 
+    // If we are paying off an existing payment, update it
+    if (existing_payment_id) {
+        const { error } = await supabase
+            .from('payments')
+            .update({
+                status: 'pago',
+                paid_at: new Date().toISOString(),
+                payment_method: data.payment_method,
+                amount: amountAsNumber, // Allow amount adjustment
+            })
+            .eq('id', existing_payment_id);
+        
+        if (error) {
+            console.error('Supabase Error updating payment:', error);
+            return { success: false, message: `Erro ao quitar cobrança: ${error.message}` };
+        }
+        revalidatePath('/financeiro');
+        revalidatePath('/alunos');
+        return { success: true, message: 'Cobrança quitada com sucesso!' };
+    }
+
+    // Otherwise, create a new transaction
     const { error } = await supabase.from('payments').insert([
       {
-        description: `${parsedData.data.category} - ${parsedData.data.description}`,
+        description: `${data.category} - ${data.description}`,
         amount: amountAsNumber,
-        due_date: toDateOnlyISOString(parsedData.data.due_date),
-        payment_method: parsedData.data.payment_method,
-        status: parsedData.data.status,
+        due_date: toDateOnlyISOString(data.due_date),
+        payment_method: data.payment_method,
+        status: data.status,
+        student_id: student_id,
       },
     ]);
 
@@ -73,6 +100,7 @@ export async function addTransaction(formData: unknown) {
     }
 
     revalidatePath('/financeiro');
+    revalidatePath('/alunos');
     return { success: true, message: 'Transação registrada com sucesso!' };
 
   } catch (error: any) {
@@ -108,6 +136,29 @@ export async function getTransactions(type: 'receita' | 'despesa' | 'all'): Prom
         return [];
     }
 }
+
+export async function getPendingPayments(studentId: string): Promise<Payment[]> {
+    if (!studentId) return [];
+    try {
+        const supabase = await createSupabaseServerClient();
+        const { data, error } = await supabase
+            .from('payments')
+            .select('*')
+            .eq('student_id', studentId)
+            .in('status', ['pendente', 'vencido'])
+            .order('due_date', { ascending: true });
+
+        if (error) {
+            console.error('Supabase Error fetching pending payments:', error);
+            return [];
+        }
+        return data;
+    } catch (error) {
+        console.error('Unexpected error fetching pending payments:', error);
+        return [];
+    }
+}
+
 
 export async function getFinancialSummary(): Promise<FinancialSummary> {
   try {
@@ -314,5 +365,3 @@ export async function scheduleSelectedPayments(paymentIds: string[], newDueDate:
         return { success: false, message: `Erro ao agendar pagamentos: ${error.message}` };
     }
 }
-
-    

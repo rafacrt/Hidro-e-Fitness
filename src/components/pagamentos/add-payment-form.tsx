@@ -24,7 +24,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -32,52 +31,58 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { cn } from '@/lib/utils';
 import { IMaskInput } from 'react-imask';
-import { addTransaction } from '@/app/financeiro/actions';
+import { addTransaction, getPendingPayments } from '@/app/financeiro/actions';
 import { getStudents } from '@/app/alunos/actions';
 import type { Database } from '@/lib/database.types';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 type Student = Database['public']['Tables']['students']['Row'];
+type Payment = Database['public']['Tables']['payments']['Row'];
 
 const paymentFormSchema = z.object({
   student_id: z.string().min(1, 'É necessário selecionar um aluno.'),
   amount: z.string().min(1, 'O valor é obrigatório.'),
   payment_method: z.string({ required_error: 'Selecione um método de pagamento.' }),
-  description: z.string().optional(),
+  description: z.string().min(1, 'Selecione uma referência.'),
   due_date: z.date().default(new Date()),
   status: z.enum(['pago', 'pendente', 'vencido']).default('pago'),
   type: z.enum(['receita', 'despesa']).default('receita'),
-  category: z.string().default('Pagamentos Avulsos'),
+  category: z.string().min(1, 'Selecione o tipo de cobrança.'),
+  existing_payment_id: z.string().optional(),
 });
 
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
 const paymentMethods = ['PIX', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto'];
+const chargeTypes = ['Mensalidade', 'Matrícula', 'Venda Avulsa', 'Outros'];
+const months = Array.from({ length: 12 }, (_, i) => format(new Date(0, i), 'MMMM', { locale: ptBR }));
+
 
 interface AddPaymentFormProps {
   children: React.ReactNode;
   onSuccess?: () => void;
 }
 
+const formatCurrency = (value: number | null) => {
+    if (value === null) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+};
+
+
 export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
   const [students, setStudents] = React.useState<Student[]>([]);
-  const [loading, setLoading] = React.useState(false);
-
-  React.useEffect(() => {
-    if (open) {
-      setLoading(true);
-      getStudents()
-        .then(setStudents)
-        .catch(() => toast({ title: 'Erro', description: 'Não foi possível carregar os alunos.', variant: 'destructive' }))
-        .finally(() => setLoading(false));
-    }
-  }, [open, toast]);
+  const [pendingPayments, setPendingPayments] = React.useState<Payment[]>([]);
+  const [loadingStudents, setLoadingStudents] = React.useState(false);
+  const [loadingPayments, setLoadingPayments] = React.useState(false);
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
@@ -86,16 +91,40 @@ export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
       description: '',
       status: 'pago',
       type: 'receita',
-      category: 'Pagamentos Avulsos',
+      category: 'Mensalidade',
       due_date: new Date(),
     },
   });
+  
+  const studentId = form.watch('student_id');
+
+  React.useEffect(() => {
+    if (open) {
+      setLoadingStudents(true);
+      getStudents()
+        .then(setStudents)
+        .catch(() => toast({ title: 'Erro', description: 'Não foi possível carregar os alunos.', variant: 'destructive' }))
+        .finally(() => setLoadingStudents(false));
+    }
+  }, [open, toast]);
+  
+  React.useEffect(() => {
+    if (studentId) {
+        setLoadingPayments(true);
+        getPendingPayments(studentId)
+            .then(setPendingPayments)
+            .catch(() => toast({ title: 'Erro', description: 'Não foi possível buscar as pendências.', variant: 'destructive'}))
+            .finally(() => setLoadingPayments(false));
+    } else {
+        setPendingPayments([]);
+    }
+  }, [studentId, toast]);
 
   const onSubmit = async (data: PaymentFormValues) => {
     const result = await addTransaction(data);
     if (result.success) {
       toast({
-        title: 'Pagamento Registrado!',
+        title: 'Sucesso!',
         description: result.message,
       });
       setOpen(false);
@@ -103,12 +132,23 @@ export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
       onSuccess?.();
     } else {
       toast({
-        title: 'Erro ao registrar pagamento!',
+        title: 'Erro!',
         description: result.message,
         variant: 'destructive',
       });
     }
   };
+  
+  const handlePendingPaymentSelect = (paymentId: string) => {
+    const payment = pendingPayments.find(p => p.id === paymentId);
+    if (payment) {
+        form.setValue('existing_payment_id', payment.id);
+        form.setValue('amount', String(payment.amount || '').replace('.', ','));
+        const [category, description] = payment.description.split(' - ');
+        form.setValue('category', category || 'Outros');
+        form.setValue('description', description || '');
+    }
+  }
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return '';
@@ -120,7 +160,7 @@ export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Registrar Novo Pagamento</DialogTitle>
           <DialogDescription>
@@ -137,21 +177,25 @@ export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
                 <FormItem>
                   <FormLabel>Aluno</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                        field.onChange(value);
+                        form.resetField('existing_payment_id');
+                        form.resetField('amount');
+                    }}
                     defaultValue={field.value}
-                    disabled={loading}
+                    disabled={loadingStudents}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue
                           placeholder={
-                            loading ? 'Carregando...' : 'Selecione o aluno...'
+                            loadingStudents ? 'Carregando...' : 'Selecione o aluno...'
                           }
                         />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {loading ? (
+                      {loadingStudents ? (
                         <SelectItem value="loading" disabled>
                           Carregando alunos...
                         </SelectItem>
@@ -180,6 +224,38 @@ export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
               )}
             />
 
+            {studentId && (
+                <FormField
+                    control={form.control}
+                    name="existing_payment_id"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3">
+                        <FormLabel>Cobranças Pendentes</FormLabel>
+                        {loadingPayments ? <Loader2 className="h-5 w-5 animate-spin" /> :
+                         pendingPayments.length > 0 ? (
+                             <RadioGroup
+                                onValueChange={handlePendingPaymentSelect}
+                                className="gap-2"
+                              >
+                                {pendingPayments.map(p => (
+                                    <FormItem key={p.id} className="flex items-center space-x-3 space-y-0 border p-3 rounded-md has-[:checked]:bg-accent">
+                                        <FormControl>
+                                            <RadioGroupItem value={p.id} />
+                                        </FormControl>
+                                        <FormLabel className="font-normal w-full flex justify-between items-center">
+                                            <span>{p.description} - Vence em {format(new Date(p.due_date), 'dd/MM/yy')}</span>
+                                            <span className="font-bold">{formatCurrency(p.amount)}</span>
+                                        </FormLabel>
+                                    </FormItem>
+                                ))}
+                             </RadioGroup>
+                         ) : <p className="text-sm text-muted-foreground">Nenhuma cobrança pendente para este aluno.</p>
+                        }
+                        </FormItem>
+                    )}
+                />
+            )}
+            
             <FormField
               control={form.control}
               name="amount"
@@ -190,15 +266,7 @@ export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
                     <IMaskInput
                       mask="R$ num"
                       blocks={{
-                        num: {
-                          mask: Number,
-                          radix: ',',
-                          thousandsSeparator: '.',
-                          scale: 2,
-                          padFractionalZeros: true,
-                          normalizeZeros: true,
-                          mapToRadix: ['.'],
-                        },
+                        num: { mask: Number, radix: ',', thousandsSeparator: '.', scale: 2, padFractionalZeros: true, normalizeZeros: true, mapToRadix: ['.'] },
                       }}
                       value={field.value || ''}
                       onAccept={(value) => field.onChange(value)}
@@ -212,6 +280,45 @@ export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
                 </FormItem>
               )}
             />
+            
+            <div className="grid grid-cols-2 gap-4">
+                 <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Cobrança</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {chargeTypes.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Referência</FormLabel>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {months.map((m) => (<SelectItem key={m} value={m}><span className="capitalize">{m}</span></SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
 
             <FormField
               control={form.control}
@@ -237,21 +344,6 @@ export function AddPaymentForm({ children, onSuccess }: AddPaymentFormProps) {
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição (Opcional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Mensalidade de Janeiro" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline">
