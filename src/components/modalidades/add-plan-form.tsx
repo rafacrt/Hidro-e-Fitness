@@ -137,7 +137,7 @@ export function AddPlanForm({ children, onSuccess }: AddPlanFormProps) {
                     <FormLabel>Modalidade</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                       disabled={loadingModalities}
                     >
                       <FormControl>
