@@ -14,11 +14,13 @@ import {
   Upload,
   Download,
   ClipboardCheck,
-  FileText
+  FileText,
+  LayoutGrid
 } from 'lucide-react';
 
 export const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
+  { href: '/caixa', label: 'Caixa', icon: LayoutGrid },
   { href: '/alunos', label: 'Alunos', icon: Users },
   { href: '/turmas', label: 'Turmas', icon: Calendar },
   { href: '/modalidades', label: 'Modalidades', icon: Dumbbell },
