@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AddClassForm } from './add-class-form';
 import { EnrollStudentsDialog } from './enroll-students-dialog';
 import { ScheduleClassDialog } from './schedule-class-dialog';
-import { MarkAttendanceDialog } from '../turmas/mark-attendance-dialog';
+import { MarkAttendanceDialog } from './mark-attendance-dialog';
 import type { Database } from '@/lib/database.types';
 
 type ClassRow = Database['public']['Tables']['classes']['Row'];
