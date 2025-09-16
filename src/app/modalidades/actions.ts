@@ -19,7 +19,7 @@ const planFormSchema = z.object({
   name: z.string().min(3, 'O nome do plano deve ter pelo menos 3 caracteres.'),
   modality_id: z.string({ required_error: 'Selecione uma modalidade.' }).min(1, 'Selecione uma modalidade.'),
   price: z.string().min(1, 'O preço é obrigatório.'),
-  recurrence: z.enum(['mensal', 'bimestral', 'trimestral', 'semestral', 'anual']),
+  recurrence: z.enum(['diaria', 'semanal', 'mensal', 'bimestral', 'trimestral', 'semestral', 'anual']),
   benefits: z.string().optional(),
   status: z.enum(['ativo', 'inativo']).default('ativo'),
 });
@@ -309,4 +309,51 @@ export async function deletePlan(id: string) {
     console.error('Unexpected Error:', error);
     return { success: false, message: 'Ocorreu um erro inesperado.' };
   }
+}
+
+export async function getStudentPlans(studentId: string) {
+  if (!studentId) return [];
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('student_plans')
+    .select('plan_id, plans (*, modalities(name))')
+    .eq('student_id', studentId);
+
+  if (error) {
+    console.error('Error fetching student plans:', error);
+    return [];
+  }
+  
+  return data.map(item => item.plans).filter(Boolean);
+}
+
+export async function updateStudentPlans(studentId: string, planIds: string[]) {
+  const supabase = await createSupabaseServerClient();
+  
+  // 1. Delete existing plans for the student
+  const { error: deleteError } = await supabase
+    .from('student_plans')
+    .delete()
+    .eq('student_id', studentId);
+
+  if (deleteError) {
+    console.error('Error deleting student plans:', deleteError);
+    return { success: false, message: 'Falha ao remover planos antigos.' };
+  }
+
+  // 2. Insert new plans if any are provided
+  if (planIds.length > 0) {
+    const newPlans = planIds.map(plan_id => ({ student_id: studentId, plan_id }));
+    const { error: insertError } = await supabase
+      .from('student_plans')
+      .insert(newPlans);
+    
+    if (insertError) {
+      console.error('Error inserting new student plans:', insertError);
+      return { success: false, message: 'Falha ao adicionar novos planos.' };
+    }
+  }
+
+  revalidatePath('/alunos');
+  return { success: true, message: 'Planos do aluno atualizados com sucesso!' };
 }
