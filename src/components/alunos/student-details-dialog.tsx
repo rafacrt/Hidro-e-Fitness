@@ -28,6 +28,7 @@ import {
   ShieldAlert,
   History,
   BookUser,
+  DollarSign,
 } from 'lucide-react';
 import type { Database } from '@/lib/database.types';
 import { format } from 'date-fns';
@@ -35,6 +36,7 @@ import { EditStudentForm } from './edit-student-form';
 import { Separator } from '../ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import StudentHistoryTimeline from './student-history-timeline';
+import StudentFinancialTab from './student-financial-tab';
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -119,8 +121,9 @@ export function StudentDetailsDialog({ student, children }: StudentDetailsDialog
         </DialogHeader>
 
         <Tabs defaultValue="cadastro" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="cadastro"><BookUser className="mr-2 h-4 w-4" />Dados Cadastrais</TabsTrigger>
+            <TabsTrigger value="financeiro"><DollarSign className="mr-2 h-4 w-4" />Financeiro / Planos</TabsTrigger>
             <TabsTrigger value="historico"><History className="mr-2 h-4 w-4" />Histórico</TabsTrigger>
           </TabsList>
           <TabsContent value="cadastro">
@@ -185,6 +188,9 @@ export function StudentDetailsDialog({ student, children }: StudentDetailsDialog
                     </>
                 )}
             </div>
+          </TabsContent>
+          <TabsContent value="financeiro">
+            <StudentFinancialTab studentId={student.id} />
           </TabsContent>
           <TabsContent value="historico">
             <StudentHistoryTimeline studentId={student.id} />
