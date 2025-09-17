@@ -459,6 +459,42 @@ export type Database = {
         }
         Relationships: []
       }
+      student_plans: {
+        Row: {
+          created_at: string
+          id: string
+          plan_id: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plan_id: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plan_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_plans_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_plans_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           birth_date: string | null
@@ -626,3 +662,4 @@ export type Enums<
     
 
     
+
