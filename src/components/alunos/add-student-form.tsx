@@ -135,6 +135,8 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
     defaultValues: {
       isWhatsApp: true,
       plan_ids: [],
+      class_id: '',
+      payment_method: '',
     },
   });
 
