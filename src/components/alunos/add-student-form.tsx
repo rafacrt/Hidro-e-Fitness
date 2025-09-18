@@ -34,7 +34,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { cn, validateCPF } from '@/lib/utils';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, DollarSign } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { IMaskInput } from 'react-imask';
@@ -44,9 +44,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { getClasses } from '@/app/turmas/actions';
+import { getPlans } from '@/app/modalidades/actions';
 import type { Database } from '@/lib/database.types';
+import { Checkbox } from '../ui/checkbox';
 
 type ClassRow = Database['public']['Tables']['classes']['Row'];
+type Plan = Database['public']['Tables']['plans']['Row'];
+const paymentMethods = ['PIX', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro', 'Boleto'];
 
 const studentFormSchema = z
   .object({
@@ -74,6 +78,9 @@ const studentFormSchema = z
     responsiblePhone: z.string().optional(),
     medicalObservations: z.string().optional(),
     class_id: z.string().optional(),
+    plan_ids: z.array(z.string()).optional(),
+    payment_method: z.string().optional(),
+    initial_payment_amount: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -104,12 +111,21 @@ interface AddStudentFormProps {
   onSuccess?: () => void;
 }
 
+const formatCurrencyForInput = (value: number | null) => {
+    if (value === null || typeof value === 'undefined') return '';
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    }).format(value).replace('R$', 'R$ ');
+}
+
 export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
   const [open, setOpen] = React.useState(false);
   const [isMinor, setIsMinor] = React.useState(false);
   const [isFetchingCep, setIsFetchingCep] = React.useState(false);
   const [classes, setClasses] = React.useState<ClassRow[]>([]);
-  const [loadingClasses, setLoadingClasses] = React.useState(false);
+  const [plans, setPlans] = React.useState<Plan[]>([]);
+  const [loadingData, setLoadingData] = React.useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -117,34 +133,25 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
     resolver: zodResolver(studentFormSchema),
     defaultValues: {
       isWhatsApp: true,
-      name: '',
-      cpf: '',
-      email: '',
-      phone: '',
-      cep: '',
-      street: '',
-      number: '',
-      complement: '',
-      neighborhood: '',
-      city: '',
-      state: '',
-      responsibleName: '',
-      responsiblePhone: '',
-      medicalObservations: '',
+      plan_ids: [],
     },
   });
 
   React.useEffect(() => {
     if (open) {
-      setLoadingClasses(true);
-      getClasses()
-        .then(data => setClasses(data as ClassRow[]))
-        .catch(() => toast({ title: 'Erro', description: 'Não foi possível carregar as turmas.', variant: 'destructive' }))
-        .finally(() => setLoadingClasses(false));
+      setLoadingData(true);
+      Promise.all([getClasses(), getPlans()])
+        .then(([classesData, plansData]) => {
+          setClasses(classesData as ClassRow[]);
+          setPlans(plansData as Plan[]);
+        })
+        .catch(() => toast({ title: 'Erro', description: 'Não foi possível carregar as turmas e planos.', variant: 'destructive' }))
+        .finally(() => setLoadingData(false));
     }
   }, [open, toast]);
 
   const watchBirthDate = form.watch('birthDate');
+  const watchPlanIds = form.watch('plan_ids');
 
   React.useEffect(() => {
     if (watchBirthDate) {
@@ -161,6 +168,16 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
     }
   }, [watchBirthDate]);
 
+  React.useEffect(() => {
+    if (plans.length > 0 && watchPlanIds && watchPlanIds.length > 0) {
+        const selectedPlans = plans.filter(p => watchPlanIds.includes(p.id));
+        const total = selectedPlans.reduce((sum, p) => sum + (p.price || 0), 0);
+        form.setValue('initial_payment_amount', formatCurrencyForInput(total));
+    } else {
+        form.setValue('initial_payment_amount', '');
+    }
+  }, [watchPlanIds, plans, form]);
+
   const handleCepChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const cep = event.target.value.replace(/\D/g, '');
     form.setValue('cep', cep);
@@ -171,7 +188,7 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
         const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
         const data = await response.json();
         if (!data.erro) {
-          form.setValue('street', data.logradouro);
+          form.setValue('street', data.logouro);
           form.setValue('neighborhood', data.bairro);
           form.setValue('city', data.localidade);
           form.setValue('state', data.uf);
@@ -556,18 +573,17 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
                 />
             </div>
              <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-lg font-medium">Matrícula Rápida (Opcional)</h3>
-                <p className="text-sm text-muted-foreground">Selecione uma turma para matricular o aluno assim que o cadastro for salvo.</p>
+                <h3 className="text-lg font-medium">Matrícula Rápida em Turma (Opcional)</h3>
                  <FormField
                   control={form.control}
                   name="class_id"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Turma</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={loadingClasses}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={loadingData}>
                         <FormControl>
                             <SelectTrigger>
-                                <SelectValue placeholder={loadingClasses ? "Carregando turmas..." : "Selecione uma turma"} />
+                                <SelectValue placeholder={loadingData ? "Carregando turmas..." : "Selecione uma turma"} />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -579,6 +595,88 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
                   )}
                 />
             </div>
+
+            <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-lg font-medium">Plano e Pagamento Inicial (Opcional)</h3>
+                 <FormField
+                  control={form.control}
+                  name="plan_ids"
+                  render={() => (
+                    <FormItem>
+                        <FormLabel>Planos</FormLabel>
+                         <div className="grid grid-cols-2 gap-x-4 gap-y-2 p-4 border rounded-md max-h-48 overflow-y-auto">
+                            {plans.map((item) => (
+                                <FormField
+                                key={item.id}
+                                control={form.control}
+                                name="plan_ids"
+                                render={({ field }) => {
+                                    return (
+                                    <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
+                                        <FormControl>
+                                        <Checkbox
+                                            checked={field.value?.includes(item.id)}
+                                            onCheckedChange={(checked) => {
+                                            return checked
+                                                ? field.onChange([...(field.value || []), item.id])
+                                                : field.onChange(field.value?.filter((value) => value !== item.id))
+                                            }}
+                                        />
+                                        </FormControl>
+                                        <FormLabel className="font-normal">{item.name}</FormLabel>
+                                    </FormItem>
+                                    )
+                                }}
+                                />
+                            ))}
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {(watchPlanIds && watchPlanIds.length > 0) && (
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                        control={form.control}
+                        name="initial_payment_amount"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Valor a Pagar</FormLabel>
+                                <div className="relative">
+                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <FormControl>
+                                        <Input className="pl-9" {...field} />
+                                    </FormControl>
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                         <FormField
+                        control={form.control}
+                        name="payment_method"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Método de Pagamento</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione..." />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {paymentMethods.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    </div>
+                )}
+            </div>
+            
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline">

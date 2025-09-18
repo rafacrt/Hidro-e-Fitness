@@ -28,7 +28,10 @@ const studentFormSchema = z
     responsiblePhone: z.string().optional(),
     medicalObservations: z.string().optional(),
     status: z.enum(['ativo', 'inativo']).default('ativo'),
-    class_id: z.string().optional(), // Novo campo
+    class_id: z.string().optional(), // Para matrícula rápida em turma
+    plan_ids: z.array(z.string()).optional(), // Para vincular planos
+    payment_method: z.string().optional(), // Para pagamento inicial
+    initial_payment_amount: z.string().optional(), // Valor do pagamento inicial
   })
   .refine(
     (data) => {
@@ -63,31 +66,33 @@ export async function addStudent(formData: unknown) {
     };
   }
 
+  const { data: studentData } = parsedData;
+
   try {
     const supabase = await createSupabaseServerClient();
-    const cleanCpf = parsedData.data.cpf?.replace(/\D/g, '') || null;
+    const cleanCpf = studentData.cpf?.replace(/\D/g, '') || null;
 
-    // Inicia uma transação
+    // 1. Cadastrar o Aluno
     const { data: newStudent, error } = await supabase
       .from('students')
       .insert([
         {
-          name: parsedData.data.name,
+          name: studentData.name,
           cpf: cleanCpf,
-          birth_date: parsedData.data.birthDate?.toISOString(),
-          email: parsedData.data.email,
-          phone: parsedData.data.phone?.replace(/\D/g, ''),
-          is_whatsapp: parsedData.data.isWhatsApp,
-          cep: parsedData.data.cep?.replace(/\D/g, ''),
-          street: parsedData.data.street,
-          number: parsedData.data.number,
-          complement: parsedData.data.complement,
-          neighborhood: parsedData.data.neighborhood,
-          city: parsedData.data.city,
-          state: parsedData.data.state,
-          responsible_name: parsedData.data.responsibleName,
-          responsible_phone: parsedData.data.responsiblePhone?.replace(/\D/g, ''),
-          medical_observations: parsedData.data.medicalObservations,
+          birth_date: studentData.birthDate?.toISOString(),
+          email: studentData.email,
+          phone: studentData.phone?.replace(/\D/g, ''),
+          is_whatsapp: studentData.isWhatsApp,
+          cep: studentData.cep?.replace(/\D/g, ''),
+          street: studentData.street,
+          number: studentData.number,
+          complement: studentData.complement,
+          neighborhood: studentData.neighborhood,
+          city: studentData.city,
+          state: studentData.state,
+          responsible_name: studentData.responsibleName,
+          responsible_phone: studentData.responsiblePhone?.replace(/\D/g, ''),
+          medical_observations: studentData.medicalObservations,
           status: 'ativo',
         },
       ])
@@ -101,27 +106,65 @@ export async function addStudent(formData: unknown) {
       }
       return { success: false, message: `Erro ao cadastrar aluno: ${error.message}` };
     }
+
+    let message = 'Aluno cadastrado com sucesso!';
     
-    let enrollmentMessage = '';
-    // Se uma turma foi selecionada, realiza a matrícula
-    if (parsedData.data.class_id && newStudent) {
+    // 2. Matricular em Turma (se selecionado)
+    if (studentData.class_id && newStudent) {
       const { error: enrollmentError } = await supabase
         .from('enrollments')
         .insert({
           student_id: newStudent.id,
-          class_id: parsedData.data.class_id,
+          class_id: studentData.class_id,
         });
 
       if (enrollmentError) {
-         return { success: false, message: `Aluno cadastrado, mas falha ao matricular: ${enrollmentError.message}` };
+         return { success: false, message: `Aluno cadastrado, mas falha ao matricular na turma: ${enrollmentError.message}` };
       }
-      enrollmentMessage = ' e matriculado(a) com sucesso!';
+      message += ' e matriculado na turma!';
     }
 
+    // 3. Vincular Planos (se selecionado)
+    if (studentData.plan_ids && studentData.plan_ids.length > 0 && newStudent) {
+      const studentPlans = studentData.plan_ids.map(plan_id => ({
+        student_id: newStudent.id,
+        plan_id: plan_id,
+      }));
+      const { error: planError } = await supabase.from('student_plans').insert(studentPlans);
+
+      if (planError) {
+        return { success: false, message: `Aluno cadastrado, mas falha ao vincular plano: ${planError.message}` };
+      }
+      message += ` Vinculado a ${studentData.plan_ids.length} plano(s).`;
+    }
+
+    // 4. Registrar Pagamento Inicial (se preenchido)
+    if (studentData.initial_payment_amount && studentData.payment_method && newStudent) {
+      const amountAsNumber = Number(studentData.initial_payment_amount.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
+      if (amountAsNumber > 0) {
+        const { error: paymentError } = await supabase.from('payments').insert({
+          student_id: newStudent.id,
+          description: `Pagamento Inicial - Matrícula`,
+          amount: amountAsNumber,
+          due_date: new Date().toISOString().split('T')[0],
+          status: 'pago',
+          paid_at: new Date().toISOString(),
+          payment_method: studentData.payment_method,
+          type: 'receita',
+          category: 'Matrículas',
+        });
+
+        if (paymentError) {
+          return { success: false, message: `Aluno cadastrado, mas falha ao registrar pagamento: ${paymentError.message}` };
+        }
+        message += ' Pagamento inicial registrado.';
+      }
+    }
 
     revalidatePath('/alunos');
-    revalidatePath('/turmas'); // Revalida a página de turmas também
-    return { success: true, message: `Aluno cadastrado${enrollmentMessage}` };
+    revalidatePath('/turmas');
+    revalidatePath('/financeiro');
+    return { success: true, message };
 
   } catch (error) {
     console.error('Unexpected Error:', error);
