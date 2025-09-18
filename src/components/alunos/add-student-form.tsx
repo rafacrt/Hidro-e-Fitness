@@ -34,7 +34,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { cn, validateCPF } from '@/lib/utils';
-import { CalendarIcon, Loader2, DollarSign } from 'lucide-react';
+import { CalendarIcon, Loader2, DollarSign, Search } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { IMaskInput } from 'react-imask';
@@ -126,6 +126,7 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
   const [classes, setClasses] = React.useState<ClassRow[]>([]);
   const [plans, setPlans] = React.useState<Plan[]>([]);
   const [loadingData, setLoadingData] = React.useState(false);
+  const [planSearchTerm, setPlanSearchTerm] = React.useState('');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -227,6 +228,10 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
       });
     }
   };
+
+  const filteredPlans = plans.filter(plan => 
+    plan.name.toLowerCase().includes(planSearchTerm.toLowerCase())
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -604,8 +609,17 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
                   render={() => (
                     <FormItem>
                         <FormLabel>Planos</FormLabel>
+                        <div className="relative mb-2">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                placeholder="Buscar plano..." 
+                                className="pl-9"
+                                value={planSearchTerm}
+                                onChange={(e) => setPlanSearchTerm(e.target.value)}
+                            />
+                        </div>
                          <div className="grid grid-cols-2 gap-x-4 gap-y-2 p-4 border rounded-md max-h-48 overflow-y-auto">
-                            {plans.map((item) => (
+                            {filteredPlans.map((item) => (
                                 <FormField
                                 key={item.id}
                                 control={form.control}
