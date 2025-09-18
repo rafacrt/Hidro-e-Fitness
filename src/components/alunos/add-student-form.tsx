@@ -602,93 +602,84 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
             </div>
 
             <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-lg font-medium">Plano e Pagamento Inicial (Opcional)</h3>
-                 <FormField
-                  control={form.control}
-                  name="plan_ids"
-                  render={() => (
-                    <FormItem>
-                        <FormLabel>Planos</FormLabel>
-                        <div className="relative mb-2">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                                placeholder="Buscar plano..." 
-                                className="pl-9"
-                                value={planSearchTerm}
-                                onChange={(e) => setPlanSearchTerm(e.target.value)}
-                            />
-                        </div>
-                         <div className="grid grid-cols-2 gap-x-4 gap-y-2 p-4 border rounded-md max-h-48 overflow-y-auto">
-                            {filteredPlans.map((item) => (
-                                <FormField
-                                key={item.id}
-                                control={form.control}
-                                name="plan_ids"
-                                render={({ field }) => {
-                                    return (
-                                    <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                                        <FormControl>
-                                        <Checkbox
-                                            checked={field.value?.includes(item.id)}
-                                            onCheckedChange={(checked) => {
-                                            return checked
-                                                ? field.onChange([...(field.value || []), item.id])
-                                                : field.onChange(field.value?.filter((value) => value !== item.id))
-                                            }}
-                                        />
-                                        </FormControl>
-                                        <FormLabel className="font-normal">{item.name}</FormLabel>
-                                    </FormItem>
-                                    )
-                                }}
-                                />
-                            ))}
-                        </div>
-                        <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {(watchPlanIds && watchPlanIds.length > 0) && (
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                        control={form.control}
-                        name="initial_payment_amount"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Valor a Pagar</FormLabel>
-                                <div className="relative">
-                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <FormControl>
-                                        <Input className="pl-9" {...field} />
-                                    </FormControl>
-                                </div>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                         <FormField
-                        control={form.control}
-                        name="payment_method"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Método de Pagamento</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecione..." />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {paymentMethods.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                        />
+              <h3 className="text-lg font-medium">Plano e Pagamento Inicial (Opcional)</h3>
+              <FormField
+                control={form.control}
+                name="plan_ids"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Planos</FormLabel>
+                    <div className="relative mb-2">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar plano..."
+                        className="pl-9"
+                        value={planSearchTerm}
+                        onChange={(e) => setPlanSearchTerm(e.target.value)}
+                      />
                     </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 p-4 border rounded-md max-h-48 overflow-y-auto">
+                      {filteredPlans.map((item) => (
+                        <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(item.id)}
+                              onCheckedChange={(checked) => {
+                                return checked
+                                  ? field.onChange([...(field.value || []), item.id])
+                                  : field.onChange(field.value?.filter((value) => value !== item.id));
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal">{item.name}</FormLabel>
+                        </FormItem>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
                 )}
+              />
+
+              {(watchPlanIds && watchPlanIds.length > 0) && (
+                  <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                      control={form.control}
+                      name="initial_payment_amount"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Valor a Pagar</FormLabel>
+                              <div className="relative">
+                                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <FormControl>
+                                      <Input className="pl-9" {...field} />
+                                  </FormControl>
+                              </div>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                      />
+                       <FormField
+                      control={form.control}
+                      name="payment_method"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Método de Pagamento</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                      <SelectTrigger>
+                                          <SelectValue placeholder="Selecione..." />
+                                      </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                      {paymentMethods.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                                  </SelectContent>
+                              </Select>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                      />
+                  </div>
+              )}
             </div>
             
             <DialogFooter>
