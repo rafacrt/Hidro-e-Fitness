@@ -31,7 +31,7 @@ const studentFormSchema = z
     class_id: z.string().optional(), // Para matrícula rápida em turma
     plan_ids: z.array(z.string()).optional(), // Para vincular planos
     payment_method: z.string().optional(), // Para pagamento inicial
-    initial_payment_amount: z.string().optional(), // Valor do pagamento inicial
+    initial_payment_amount: z.string().optional(), // Valor do pagamento inicial (como string R$ 123,45)
   })
   .refine(
     (data) => {
@@ -140,8 +140,8 @@ export async function addStudent(formData: unknown) {
 
     // 4. Registrar Pagamento Inicial (se preenchido)
     if (studentData.initial_payment_amount && studentData.payment_method && newStudent) {
-      const amountAsNumber = Number(studentData.initial_payment_amount.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
-      if (amountAsNumber > 0) {
+      const amountAsNumber = Number(studentData.initial_payment_amount.replace('R$', '').replace(/\./g, '').replace(',', '.'));
+      if (!isNaN(amountAsNumber) && amountAsNumber > 0) {
         const { error: paymentError } = await supabase.from('payments').insert({
           student_id: newStudent.id,
           description: `Pagamento Inicial - Matrícula`,
@@ -345,3 +345,5 @@ export async function getStudentHistory(studentId: string): Promise<HistoryEvent
     return [];
   }
 }
+
+    

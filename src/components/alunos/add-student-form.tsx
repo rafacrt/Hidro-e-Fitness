@@ -137,6 +137,7 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
       plan_ids: [],
       class_id: '',
       payment_method: '',
+      initial_payment_amount: '',
     },
   });
 
@@ -605,42 +606,45 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
 
             <div className="space-y-4 pt-4 border-t">
               <h3 className="text-lg font-medium">Plano e Pagamento Inicial (Opcional)</h3>
-              <FormField
-                control={form.control}
-                name="plan_ids"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Planos</FormLabel>
-                    <div className="relative mb-2">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar plano..."
-                        className="pl-9"
-                        value={planSearchTerm}
-                        onChange={(e) => setPlanSearchTerm(e.target.value)}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 p-4 border rounded-md max-h-48 overflow-y-auto">
-                      {filteredPlans.map((item) => (
-                        <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(item.id)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...(field.value || []), item.id])
-                                  : field.onChange(field.value?.filter((value) => value !== item.id));
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">{item.name}</FormLabel>
-                        </FormItem>
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+               <FormField
+                  control={form.control}
+                  name="plan_ids"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Planos</FormLabel>
+                      <div className="relative mb-2">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Buscar plano..."
+                          className="pl-9"
+                          value={planSearchTerm}
+                          onChange={(e) => setPlanSearchTerm(e.target.value)}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 p-4 border rounded-md max-h-48 overflow-y-auto">
+                        {filteredPlans.map((item) => (
+                          <FormItem key={item.id} className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(item.id)}
+                                onCheckedChange={(checked) => {
+                                  const currentValue = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...currentValue, item.id]);
+                                  } else {
+                                    field.onChange(currentValue.filter((value) => value !== item.id));
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">{item.name}</FormLabel>
+                          </FormItem>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
               {(watchPlanIds && watchPlanIds.length > 0) && (
                   <div className="grid grid-cols-2 gap-4">
@@ -703,3 +707,5 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
     </Dialog>
   );
 }
+
+    
