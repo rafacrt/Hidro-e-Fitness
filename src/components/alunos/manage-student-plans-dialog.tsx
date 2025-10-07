@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -14,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getPlans } from '@/app/modalidades/actions';
+import { getStudentPlans, updateStudentPlans } from '@/app/alunos/actions';
 import type { Database } from '@/lib/database.types';
 import { ScrollArea } from '../ui/scroll-area';
 import { Separator } from '../ui/separator';
@@ -24,7 +26,7 @@ type Plan = Database['public']['Tables']['plans']['Row'] & { modalities: { name:
 interface ManageStudentPlansDialogProps {
   children: React.ReactNode;
   studentId: string;
-  onSucceess: () => void;
+  onSuccess: () => void;
 }
 
 const formatCurrency = (value: number | null) => {
@@ -35,7 +37,7 @@ const formatCurrency = (value: number | null) => {
     }).format(value);
 };
 
-export function ManageStudentPlansDialog({ children, studentId, onSucceess }: ManageStudentPlansDialogProps) {
+export function ManageStudentPlansDialog({ children, studentId, onSuccess }: ManageStudentPlansDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [allPlans, setAllPlans] = React.useState<Plan[]>([]);
   const [studentPlanIds, setStudentPlanIds] = React.useState<Set<string>>(new Set());
@@ -45,12 +47,12 @@ export function ManageStudentPlansDialog({ children, studentId, onSucceess }: Ma
   const loadData = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      const [allPlansData] = await Promise.all([
+      const [allPlansData, studentPlanIdsData] = await Promise.all([
         getPlans(),
-        // getStudentPlans(studentId), // This function does not exist anymore
+        getStudentPlans(studentId),
       ]);
       setAllPlans(allPlansData as Plan[]);
-      // setStudentPlanIds(new Set(studentPlansData.map(p => p.id)));
+      setStudentPlanIds(new Set(studentPlanIdsData));
     } catch (error) {
       toast({ title: 'Erro ao carregar planos', variant: 'destructive' });
     } finally {
@@ -78,14 +80,14 @@ export function ManageStudentPlansDialog({ children, studentId, onSucceess }: Ma
   
   const handleSave = async () => {
     setIsLoading(true);
-    // const result = await updateStudentPlans(studentId, Array.from(studentPlanIds));
-    // if (result.success) {
-    //   toast({ title: 'Sucesso!', description: result.message });
-    //   onSucceess();
-    //   setOpen(false);
-    // } else {
-    //   toast({ title: 'Erro!', description: result.message, variant: 'destructive' });
-    // }
+    const result = await updateStudentPlans(studentId, Array.from(studentPlanIds));
+    if (result.success) {
+      toast({ title: 'Sucesso!', description: result.message });
+      onSuccess();
+      setOpen(false);
+    } else {
+      toast({ title: 'Erro!', description: result.message, variant: 'destructive' });
+    }
     setIsLoading(false);
   };
   
@@ -166,3 +168,5 @@ export function ManageStudentPlansDialog({ children, studentId, onSucceess }: Ma
     </Dialog>
   );
 }
+
+    

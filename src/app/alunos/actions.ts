@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { Database } from '@/lib/database.types';
 import { validateCPF } from '@/lib/utils';
+import { getPlans } from '../modalidades/actions';
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -345,5 +346,55 @@ export async function getStudentHistory(studentId: string): Promise<HistoryEvent
     return [];
   }
 }
+
+export async function getStudentPlans(studentId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('student_plans')
+    .select('plan_id')
+    .eq('student_id', studentId);
+
+  if (error) {
+    console.error('Error fetching student plans:', error);
+    return [];
+  }
+  return data.map(item => item.plan_id);
+}
+
+export async function updateStudentPlans(studentId: string, planIds: string[]) {
+  const supabase = await createSupabaseServerClient();
+  
+  // 1. Delete all existing plans for the student
+  const { error: deleteError } = await supabase
+    .from('student_plans')
+    .delete()
+    .eq('student_id', studentId);
+
+  if (deleteError) {
+    console.error('Error deleting student plans:', deleteError);
+    return { success: false, message: 'Falha ao remover planos antigos.' };
+  }
+
+  // 2. Insert new plans if any are provided
+  if (planIds.length > 0) {
+    const newPlans = planIds.map(plan_id => ({
+      student_id: studentId,
+      plan_id: plan_id,
+    }));
+    
+    const { error: insertError } = await supabase
+      .from('student_plans')
+      .insert(newPlans);
+
+    if (insertError) {
+      console.error('Error inserting new student plans:', insertError);
+      return { success: false, message: 'Falha ao adicionar novos planos.' };
+    }
+  }
+
+  revalidatePath('/alunos');
+  return { success: true, message: 'Planos do aluno atualizados com sucesso!' };
+}
+    
 
     

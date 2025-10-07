@@ -485,7 +485,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "plans"
             referencedColumns: ["id"]
-            onDelete: "CASCADE"
           },
           {
             foreignKeyName: "student_plans_student_id_fkey"
@@ -493,7 +492,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
-            onDelete: "CASCADE"
           },
         ]
       }
@@ -666,6 +664,9 @@ export type Enums<
     
 
 
+
+
+    
 
 
     
