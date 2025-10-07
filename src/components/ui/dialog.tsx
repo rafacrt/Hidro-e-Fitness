@@ -2,9 +2,10 @@
 
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { X } from "lucide-react"
+import { X, Save, CircleX } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { Button } from "./button"
 
 const Dialog = DialogPrimitive.Root
 
@@ -108,6 +109,31 @@ const DialogDescription = React.forwardRef<
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
 
+const DialogCancelButton = React.forwardRef<
+  React.ElementRef<typeof Button>,
+  React.ComponentPropsWithoutRef<typeof Button>
+>((props, ref) => (
+  <DialogClose asChild>
+    <Button type="button" variant="outline" ref={ref} {...props}>
+      <CircleX className="mr-2" />
+      {props.children || "Cancelar"}
+    </Button>
+  </DialogClose>
+));
+DialogCancelButton.displayName = "DialogCancelButton";
+
+const DialogSubmitButton = React.forwardRef<
+  React.ElementRef<typeof Button>,
+  React.ComponentPropsWithoutRef<typeof Button>
+>(({ children, ...props }, ref) => (
+  <Button type="submit" ref={ref} {...props}>
+    <Save className="mr-2" />
+    {children}
+  </Button>
+));
+DialogSubmitButton.displayName = "DialogSubmitButton";
+
+
 export {
   Dialog,
   DialogPortal,
@@ -119,4 +145,6 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  DialogCancelButton,
+  DialogSubmitButton
 }

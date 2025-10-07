@@ -6,7 +6,7 @@ interface SidebarProps {
 
 export default function Sidebar({ children }: SidebarProps) {
   return (
-    <aside className="hidden lg:block w-64 border-r bg-card flex-shrink-0">
+    <aside className="hidden lg:block w-64 border-r border-sidebar-border bg-sidebar flex-shrink-0">
       {children}
     </aside>
   );
