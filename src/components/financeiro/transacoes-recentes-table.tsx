@@ -15,9 +15,11 @@ import { cn } from '@/lib/utils';
 import type { Database } from '@/lib/database.types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowDownCircle, ArrowUpCircle, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, CheckCircle2, Clock, AlertCircle, Trash2 } from 'lucide-react';
 import { DetalhesTransacaoDialog } from './detalhes-transacao-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { DeleteTransacaoAlert } from './delete-transacao-alert';
 
 type Payment = Database['public']['Tables']['payments']['Row'];
 
@@ -55,6 +57,7 @@ export default function TransacoesRecentesTable({ transactions, onSuccess }: Tra
                     <TableHead>Descrição</TableHead>
                     <TableHead>Valor</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -87,6 +90,13 @@ export default function TransacoesRecentesTable({ transactions, onSuccess }: Tra
                                         <statusInfo.icon className="mr-1.5 h-3 w-3" />
                                         {statusInfo.text}
                                     </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <DeleteTransacaoAlert transacaoId={transacao.id} onSuccess={onSuccess}>
+                                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </DeleteTransacaoAlert>
                                 </TableCell>
                             </TableRow>
                         </DetalhesTransacaoDialog>
