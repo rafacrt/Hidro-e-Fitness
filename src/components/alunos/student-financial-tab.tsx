@@ -1,16 +1,14 @@
-
 'use client';
 
 import * as React from 'react';
 import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { DollarSign, CheckCircle } from 'lucide-react';
-import { getStudentPlans } from '@/app/modalidades/actions';
+import { getPendingPayments } from '@/app/financeiro/actions';
 import type { Database } from '@/lib/database.types';
-import { ManageStudentPlansDialog } from './manage-student-plans-dialog';
+import { Badge } from '../ui/badge';
+import { format } from 'date-fns';
 
-type Plan = Database['public']['Tables']['plans']['Row'] & { modalities: { name: string } | null };
+type Payment = Database['public']['Tables']['payments']['Row'];
 
 interface StudentFinancialTabProps {
   studentId: string;
@@ -24,20 +22,26 @@ const formatCurrency = (value: number | null) => {
     }).format(value);
 };
 
+const statusConfig: { [key: string]: { text: string, className: string } } = {
+  pago: { text: 'Pago', className: 'bg-green-100 text-green-800 border-green-200' },
+  pendente: { text: 'Pendente', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  vencido: { text: 'Vencido', className: 'bg-red-100 text-red-800 border-red-200' },
+};
+
 export default function StudentFinancialTab({ studentId }: StudentFinancialTabProps) {
   const [loading, setLoading] = React.useState(true);
-  const [plans, setPlans] = React.useState<Plan[]>([]);
+  const [pendingPayments, setPendingPayments] = React.useState<Payment[]>([]);
 
-  const loadPlans = React.useCallback(async () => {
+  const loadPendingPayments = React.useCallback(async () => {
     setLoading(true);
-    const studentPlans = await getStudentPlans(studentId);
-    setPlans(studentPlans as Plan[]);
+    const payments = await getPendingPayments(studentId);
+    setPendingPayments(payments);
     setLoading(false);
   }, [studentId]);
 
   React.useEffect(() => {
-    loadPlans();
-  }, [loadPlans]);
+    loadPendingPayments();
+  }, [loadPendingPayments]);
 
   if (loading) {
     return (
@@ -50,47 +54,39 @@ export default function StudentFinancialTab({ studentId }: StudentFinancialTabPr
   return (
     <div className="py-4 max-h-[60vh] overflow-y-auto pr-2 space-y-6">
         <Card>
-            <CardHeader className="flex flex-row justify-between items-center">
-                <div>
-                    <CardTitle>Planos e Assinaturas</CardTitle>
-                    <CardDescription>Planos que o aluno está atualmente vinculado.</CardDescription>
-                </div>
-                <ManageStudentPlansDialog studentId={studentId} onSucceess={loadPlans}>
-                    <Button>Gerenciar Planos</Button>
-                </ManageStudentPlansDialog>
+            <CardHeader>
+                <CardTitle>Cobranças Pendentes</CardTitle>
+                <CardDescription>Cobranças com status "Pendente" ou "Vencido" para este aluno.</CardDescription>
             </CardHeader>
             <CardContent>
-                {plans.length === 0 ? (
+                {pendingPayments.length === 0 ? (
                     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-8">
-                        <DollarSign className="h-10 w-10 mb-4" />
-                        <p className="font-semibold">Nenhum plano ativo</p>
-                        <p className="text-sm">Vincule o aluno a um plano para gerar cobranças recorrentes.</p>
+                        <p className="font-semibold">Nenhuma cobrança pendente</p>
+                        <p className="text-sm">Este aluno está com os pagamentos em dia.</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {plans.map(plan => (
-                            <div key={plan.id} className="p-4 border rounded-lg flex justify-between items-center">
-                                <div>
-                                    <p className="font-semibold">{plan.name}</p>
-                                    <p className="text-sm text-muted-foreground capitalize">{plan.modalities?.name} - {plan.recurrence}</p>
+                        {pendingPayments.map(payment => {
+                            const statusInfo = statusConfig[payment.status] || statusConfig.pendente;
+                            return (
+                                <div key={payment.id} className="p-4 border rounded-lg flex justify-between items-center">
+                                    <div>
+                                        <p className="font-semibold">{payment.description}</p>
+                                        <p className="text-sm text-muted-foreground capitalize">
+                                            Vence em: {format(new Date(payment.due_date), 'dd/MM/yyyy')}
+                                        </p>
+                                    </div>
+                                    <div className='text-right'>
+                                      <p className="font-bold text-lg">{formatCurrency(payment.amount)}</p>
+                                      <Badge variant="outline" className={statusInfo.className}>
+                                        {statusInfo.text}
+                                      </Badge>
+                                    </div>
                                 </div>
-                                <p className="font-bold text-lg">{formatCurrency(plan.price)}</p>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
-            </CardContent>
-        </Card>
-
-         <Card>
-            <CardHeader>
-                <CardTitle>Histórico de Cobranças</CardTitle>
-                <CardDescription>Todas as cobranças geradas para este aluno.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                 <div className="text-center text-muted-foreground p-8">
-                    <p>Nenhuma cobrança encontrada.</p>
-                </div>
             </CardContent>
         </Card>
     </div>

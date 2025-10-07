@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -14,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getStudentPlans, getPlans, updateStudentPlans } from '@/app/modalidades/actions';
+import { getPlans } from '@/app/modalidades/actions';
 import type { Database } from '@/lib/database.types';
 import { ScrollArea } from '../ui/scroll-area';
 import { Separator } from '../ui/separator';
@@ -46,12 +45,12 @@ export function ManageStudentPlansDialog({ children, studentId, onSucceess }: Ma
   const loadData = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      const [allPlansData, studentPlansData] = await Promise.all([
+      const [allPlansData] = await Promise.all([
         getPlans(),
-        getStudentPlans(studentId),
+        // getStudentPlans(studentId), // This function does not exist anymore
       ]);
       setAllPlans(allPlansData as Plan[]);
-      setStudentPlanIds(new Set(studentPlansData.map(p => p.id)));
+      // setStudentPlanIds(new Set(studentPlansData.map(p => p.id)));
     } catch (error) {
       toast({ title: 'Erro ao carregar planos', variant: 'destructive' });
     } finally {
@@ -79,14 +78,14 @@ export function ManageStudentPlansDialog({ children, studentId, onSucceess }: Ma
   
   const handleSave = async () => {
     setIsLoading(true);
-    const result = await updateStudentPlans(studentId, Array.from(studentPlanIds));
-    if (result.success) {
-      toast({ title: 'Sucesso!', description: result.message });
-      onSucceess();
-      setOpen(false);
-    } else {
-      toast({ title: 'Erro!', description: result.message, variant: 'destructive' });
-    }
+    // const result = await updateStudentPlans(studentId, Array.from(studentPlanIds));
+    // if (result.success) {
+    //   toast({ title: 'Sucesso!', description: result.message });
+    //   onSucceess();
+    //   setOpen(false);
+    // } else {
+    //   toast({ title: 'Erro!', description: result.message, variant: 'destructive' });
+    // }
     setIsLoading(false);
   };
   
