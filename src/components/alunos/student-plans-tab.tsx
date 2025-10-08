@@ -8,7 +8,8 @@ import type { Database } from '@/lib/database.types';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ManageStudentPlansDialog } from './manage-student-plans-dialog';
-import { getStudentPlans, getPlans } from '@/app/alunos/actions';
+import { getStudentPlans } from '@/app/alunos/actions';
+import { getPlans } from '@/app/modalidades/actions';
 import { useToast } from '@/hooks/use-toast';
 
 type Plan = Database['public']['Tables']['plans']['Row'];
@@ -47,7 +48,7 @@ export default function StudentPlansTab({ studentId, onSuccess }: StudentPlansTa
         getPlans(),
         getStudentPlans(studentId),
       ]);
-      setAllPlans(plansData);
+      setAllPlans(plansData as Plan[]);
       setStudentPlanIds(studentPlansData);
     } catch (err) {
       toast({ title: 'Erro ao carregar planos', variant: 'destructive' });
