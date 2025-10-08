@@ -124,9 +124,9 @@ export default function AlunosPage() {
       case 'Visão Geral':
         return (
           <div className="space-y-6">
-            <StudentsTable students={processedStudents} />
+            <StudentsTable students={processedStudents} onActionSuccess={loadData} />
             <StudentStats students={allStudents} />
-            <QuickActionsAlunos onSuccess={() => router.refresh()} />
+            <QuickActionsAlunos onSuccess={loadData} />
           </div>
         );
       case 'Controle de Pagamentos':
@@ -149,7 +149,7 @@ export default function AlunosPage() {
               <h1 className="text-2xl font-bold">Alunos</h1>
               <p className="text-muted-foreground">Gerencie todos os alunos cadastrados e seus pagamentos</p>
             </div>
-            <AddStudentForm onSuccess={() => router.refresh()}>
+            <AddStudentForm onSuccess={loadData}>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Novo Aluno

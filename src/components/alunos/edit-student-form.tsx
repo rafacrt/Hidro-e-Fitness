@@ -13,7 +13,6 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -34,7 +33,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { cn, validateCPF } from '@/lib/utils';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, CircleX, Loader2, Save } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { IMaskInput } from 'react-imask';
@@ -43,12 +42,14 @@ import { updateStudent } from '@/app/alunos/actions';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/lib/database.types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { DialogCancelButton, DialogClose, DialogSubmitButton } from '../ui/dialog';
 
 type Student = Database['public']['Tables']['students']['Row'];
 
 interface EditStudentFormProps {
     student: Student;
     children: React.ReactNode;
+    onSuccess: () => void;
 }
 
 const studentFormSchema = z
@@ -102,7 +103,7 @@ const studentFormSchema = z
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
 
-export function EditStudentForm({ student, children }: EditStudentFormProps) {
+export function EditStudentForm({ student, children, onSuccess }: EditStudentFormProps) {
   const [open, setOpen] = React.useState(false);
   const [isMinor, setIsMinor] = React.useState(false);
   const [isFetchingCep, setIsFetchingCep] = React.useState(false);
@@ -182,6 +183,7 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
         description: result.message,
       });
       setOpen(false);
+      onSuccess();
     } else {
       toast({
         title: 'Erro!',
@@ -486,13 +488,15 @@ export function EditStudentForm({ student, children }: EditStudentFormProps) {
                 />
             </div>
             <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline">Cancelar</Button>
-              </DialogClose>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? (<Loader2 className="mr-2 h-4 w-4 animate-spin" />) : null}
-                {form.formState.isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
-              </Button>
+              <DialogCancelButton />
+              <DialogSubmitButton disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : 'Salvar Alterações'}
+              </DialogSubmitButton>
             </DialogFooter>
           </form>
         </Form>

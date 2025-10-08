@@ -29,6 +29,7 @@ import {
   History,
   BookUser,
   DollarSign,
+  Tags,
 } from 'lucide-react';
 import type { Database } from '@/lib/database.types';
 import { format } from 'date-fns';
@@ -37,12 +38,14 @@ import { Separator } from '../ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import StudentHistoryTimeline from './student-history-timeline';
 import StudentFinancialTab from './student-financial-tab';
+import StudentPlansTab from './student-plans-tab';
 
 type Student = Database['public']['Tables']['students']['Row'];
 
 interface StudentDetailsDialogProps {
   student: Student;
   children: React.ReactNode;
+  onSuccess: () => void;
 }
 
 const getInitials = (name: string | null) => {
@@ -87,7 +90,7 @@ const DetailItem = ({ icon: Icon, label, value }: { icon: React.ElementType; lab
   </div>
 );
 
-export function StudentDetailsDialog({ student, children }: StudentDetailsDialogProps) {
+export function StudentDetailsDialog({ student, children, onSuccess }: StudentDetailsDialogProps) {
   const [open, setOpen] = React.useState(false);
   const age = calculateAge(student.birth_date);
   const isMinor = age !== null && age < 18;
@@ -121,9 +124,10 @@ export function StudentDetailsDialog({ student, children }: StudentDetailsDialog
         </DialogHeader>
 
         <Tabs defaultValue="cadastro" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="cadastro"><BookUser className="mr-2 h-4 w-4" />Dados Cadastrais</TabsTrigger>
-            <TabsTrigger value="financeiro"><DollarSign className="mr-2 h-4 w-4" />Financeiro / Planos</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="cadastro"><BookUser className="mr-2 h-4 w-4" />Cadastro</TabsTrigger>
+            <TabsTrigger value="pagamentos"><DollarSign className="mr-2 h-4 w-4" />Pagamentos</TabsTrigger>
+            <TabsTrigger value="planos"><Tags className="mr-2 h-4 w-4" />Planos</TabsTrigger>
             <TabsTrigger value="historico"><History className="mr-2 h-4 w-4" />Histórico</TabsTrigger>
           </TabsList>
           <TabsContent value="cadastro">
@@ -189,21 +193,24 @@ export function StudentDetailsDialog({ student, children }: StudentDetailsDialog
                 )}
             </div>
           </TabsContent>
-          <TabsContent value="financeiro">
+          <TabsContent value="pagamentos">
             <StudentFinancialTab studentId={student.id} />
+          </TabsContent>
+           <TabsContent value="planos">
+            <StudentPlansTab studentId={student.id} onSuccess={onSuccess} />
           </TabsContent>
           <TabsContent value="historico">
             <StudentHistoryTimeline studentId={student.id} />
           </TabsContent>
         </Tabs>
 
-        <DialogFooter className="sm:justify-between">
+        <DialogFooter className="sm:justify-between pt-4">
             <DialogClose asChild>
                 <Button type="button" variant="outline">
                     Fechar
                 </Button>
             </DialogClose>
-            <EditStudentForm student={student}>
+            <EditStudentForm student={student} onSuccess={onSuccess}>
                 <Button>
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar Aluno

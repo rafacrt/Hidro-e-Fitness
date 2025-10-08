@@ -47,6 +47,7 @@ type Student = Database['public']['Tables']['students']['Row'];
 
 interface StudentsTableProps {
   students: Student[];
+  onActionSuccess: () => void;
 }
 
 const getInitials = (name: string | null) => {
@@ -125,7 +126,7 @@ const SortableHeader = ({
   );
 };
 
-export default function StudentsTable({ students }: StudentsTableProps) {
+export default function StudentsTable({ students, onActionSuccess }: StudentsTableProps) {
   if (students.length === 0) {
     return (
       <Card>
@@ -157,7 +158,7 @@ export default function StudentsTable({ students }: StudentsTableProps) {
             {students.map((student) => {
               const ageInfo = calculateAge(student.birth_date);
               return (
-                <StudentDetailsDialog student={student} key={student.id}>
+                <StudentDetailsDialog student={student} key={student.id} onSuccess={onActionSuccess}>
                   <TableRow className="cursor-pointer">
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -244,7 +245,7 @@ export default function StudentsTable({ students }: StudentsTableProps) {
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <EditStudentForm student={student}>
+                                <EditStudentForm student={student} onSuccess={onActionSuccess}>
                                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                         <Pencil className="mr-2 h-4 w-4" />
                                         Editar
