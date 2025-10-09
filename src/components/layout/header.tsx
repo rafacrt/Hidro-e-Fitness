@@ -29,20 +29,7 @@ interface HeaderProps {
   userProfile: Profile | null;
 }
 
-const notifications = [
-    {
-        icon: UserPlus,
-        title: "Novo aluno matriculado",
-        description: "Maria Silva foi matriculada na Natação Adulto.",
-        time: "5 min atrás",
-    },
-    {
-        icon: CalendarCheck,
-        title: "Aula de hoje confirmada",
-        description: "Hidroginástica às 18:00 com Prof. Carlos.",
-        time: "1 hora atrás",
-    },
-];
+const notifications: any[] = []; // TODO: Implementar sistema de notificações real
 
 const getInitials = (name: string | null) => {
   if (!name) return 'U';
@@ -86,28 +73,38 @@ export default function Header({ settings, userProfile }: HeaderProps) {
             <Button variant="ghost" size="icon" className="rounded-full relative">
                 <Bell className="h-5 w-5" />
                 <span className="sr-only">Notificações</span>
-                <span className="absolute top-1 right-1.5 h-2 w-2 rounded-full bg-red-500" />
+                {notifications.length > 0 && (
+                  <span className="absolute top-1 right-1.5 h-2 w-2 rounded-full bg-red-500" />
+                )}
             </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel>Notificações</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-                {notifications.map((notification, index) => (
-                    <DropdownMenuItem key={index} className="flex items-start gap-3 p-3">
-                        <notification.icon className="h-5 w-5 text-muted-foreground mt-1" />
-                        <div className="flex-1">
-                            <p className="font-semibold text-sm">{notification.title}</p>
-                            <p className="text-xs text-muted-foreground">{notification.description}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{notification.time}</p>
-                        </div>
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="justify-center">
-                Ver todas as notificações
-            </DropdownMenuItem>
+            {notifications.length > 0 ? (
+              <>
+                <DropdownMenuGroup>
+                    {notifications.map((notification, index) => (
+                        <DropdownMenuItem key={index} className="flex items-start gap-3 p-3">
+                            <notification.icon className="h-5 w-5 text-muted-foreground mt-1" />
+                            <div className="flex-1">
+                                <p className="font-semibold text-sm">{notification.title}</p>
+                                <p className="text-xs text-muted-foreground">{notification.description}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{notification.time}</p>
+                            </div>
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="justify-center">
+                    Ver todas as notificações
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                Nenhuma notificação no momento
+              </div>
+            )}
         </DropdownMenuContent>
       </DropdownMenu>
 

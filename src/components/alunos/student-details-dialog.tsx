@@ -30,6 +30,7 @@ import {
   BookUser,
   DollarSign,
   Tags,
+  Users,
 } from 'lucide-react';
 import type { Database } from '@/lib/database.types';
 import { format } from 'date-fns';
@@ -114,7 +115,8 @@ export function StudentDetailsDialog({ student, children, onSuccess }: StudentDe
                     {student.status === 'ativo' ? 'Ativo' : 'Inativo'}
                 </Badge>
                 {isMinor && (
-                    <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                    <Badge variant="secondary" className="h-6 px-2.5 text-xs font-medium bg-amber-500/10 text-amber-700 border-amber-500/20">
+                        <Users className="w-3 h-3 mr-1.5" />
                         Menor de idade
                     </Badge>
                 )}

@@ -14,7 +14,6 @@ import { AddStudentForm } from '@/components/alunos/add-student-form';
 import { getStudents } from './actions';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import type { Database } from '@/lib/database.types';
-import { mockStudents } from '@/lib/mock-data';
 import { NavContent } from '@/components/layout/nav-content';
 import { useSearchParams, useRouter } from 'next/navigation';
 import ControlePagamentosTab from '@/components/alunos/controle-pagamentos-tab';
@@ -88,11 +87,7 @@ export default function AlunosPage() {
         getUserProfile()
       ]);
 
-      const studentsData = (process.env.NODE_ENV === 'development' && dbStudents.length === 0)
-        ? mockStudents
-        : dbStudents;
-      
-      setAllStudents(studentsData);
+      setAllStudents(dbStudents);
       setAcademySettings(settings);
       setUserProfile(profile);
     } catch (error) {

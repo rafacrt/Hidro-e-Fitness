@@ -6,7 +6,6 @@ import DicasConfiguracao from './dicas-configuracao';
 import MetodosPagamentoList from './metodos-pagamento-list';
 import MetodosPagamentoStats from './metodos-pagamento-stats';
 import { getPaymentMethods, type PaymentMethod } from '@/app/pagamentos/actions';
-import { mockPaymentMethods } from '@/lib/mock-data';
 import { Loader2 } from 'lucide-react';
 
 export default function MetodosPagamentoTab() {
@@ -16,12 +15,7 @@ export default function MetodosPagamentoTab() {
     const loadData = React.useCallback(async () => {
         setLoading(true);
         const dbMethods = await getPaymentMethods();
-
-        if (process.env.NODE_ENV === 'development' && dbMethods.length === 0) {
-            setMethods(mockPaymentMethods);
-        } else {
-            setMethods(dbMethods);
-        }
+        setMethods(dbMethods);
         setLoading(false);
     }, []);
 

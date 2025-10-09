@@ -190,3 +190,34 @@ CREATE POLICY "Anyone can upload an avatar." ON storage.objects
 DROP POLICY IF EXISTS "Anyone can update their own avatar." ON storage.objects;
 CREATE POLICY "Anyone can update their own avatar." ON storage.objects
   FOR UPDATE USING (auth.uid() = owner) WITH CHECK (bucket_id = 'avatars');
+
+-- Create Plans Table
+CREATE TABLE IF NOT EXISTS public.plans (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    name text NOT NULL,
+    modality_id uuid REFERENCES public.modalities(id) ON DELETE SET NULL,
+    price numeric NOT NULL,
+    recurrence text NOT NULL, -- 'mensal', 'trimestral', 'semestral', 'anual'
+    benefits text[],
+    status text DEFAULT 'ativo', -- 'ativo', 'inativo'
+    created_at timestamptz DEFAULT now()
+);
+ALTER TABLE public.plans ENABLE ROW LEVEL SECURITY;
+-- Policies for Plans
+DROP POLICY IF EXISTS "Authenticated users can manage plans." ON public.plans;
+CREATE POLICY "Authenticated users can manage plans." ON public.plans FOR ALL USING (auth.role() = 'authenticated');
+
+-- Create Student Plans Table (many-to-many relationship)
+CREATE TABLE IF NOT EXISTS public.student_plans (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    student_id uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+    plan_id uuid NOT NULL REFERENCES public.plans(id) ON DELETE CASCADE,
+    start_date date DEFAULT now(),
+    end_date date,
+    created_at timestamptz DEFAULT now(),
+    UNIQUE(student_id, plan_id)
+);
+ALTER TABLE public.student_plans ENABLE ROW LEVEL SECURITY;
+-- Policies for Student Plans
+DROP POLICY IF EXISTS "Authenticated users can manage student plans." ON public.student_plans;
+CREATE POLICY "Authenticated users can manage student plans." ON public.student_plans FOR ALL USING (auth.role() = 'authenticated');

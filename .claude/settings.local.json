@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(scoop:*)",
+      "Bash(npm:*)",
+      "Bash(powershell -Command \"Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression\")",
+      "Bash(choco:*)",
+      "Bash(powershell:*)",
+      "Bash(npx supabase:*)",
+      "Bash(node:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

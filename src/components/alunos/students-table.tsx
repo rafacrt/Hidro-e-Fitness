@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +15,6 @@ import {
   Mail,
   Phone,
   MessageSquare,
-  Calendar,
   Pencil,
   Trash2,
   Users,
@@ -127,6 +125,21 @@ const SortableHeader = ({
 };
 
 export default function StudentsTable({ students, onActionSuccess }: StudentsTableProps) {
+  const searchParams = useSearchParams();
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 20;
+
+  // Calcular paginação
+  const totalPages = Math.ceil(students.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentStudents = students.slice(startIndex, endIndex);
+
+  // Reset para página 1 quando mudar os filtros/busca
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchParams]);
+
   if (students.length === 0) {
     return (
       <Card>
@@ -149,47 +162,44 @@ export default function StudentsTable({ students, onActionSuccess }: StudentsTab
               <TableHead className="hidden md:table-cell">Contato</TableHead>
               <TableHead className="hidden md:table-cell"><SortableHeader sortKey="birth_date">Idade</SortableHeader></TableHead>
               <TableHead><SortableHeader sortKey="status">Status</SortableHeader></TableHead>
-              <TableHead className="hidden lg:table-cell"><SortableHeader sortKey="created_at">Matrícula</SortableHeader></TableHead>
-              <TableHead className="hidden md:table-cell">Responsável</TableHead>
+              <TableHead className="hidden lg:table-cell">Planos</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {students.map((student) => {
+            {currentStudents.map((student) => {
               const ageInfo = calculateAge(student.birth_date);
               return (
                 <StudentDetailsDialog student={student} key={student.id} onSuccess={onActionSuccess}>
                   <TableRow className="cursor-pointer">
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarFallback className="bg-cyan-100 text-cyan-700 font-semibold">{getInitials(student.name)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{student.name}</p>
-                          <p className="text-sm text-muted-foreground md:hidden">
-                            {student.email || formatPhone(student.phone)}
-                          </p>
-                          <p className="text-sm text-muted-foreground">CPF: {formatCPF(student.cpf)}</p>
-                          {student.medical_observations && (
-                            <div className="flex items-center text-yellow-600 text-xs mt-1">
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              Observações médicas
-                            </div>
-                          )}
-                        </div>
+                      <div className="flex flex-col">
+                        <p className="font-medium">{student.name}</p>
+                        <p className="text-sm text-muted-foreground md:hidden">
+                          {student.email || formatPhone(student.phone)}
+                        </p>
+                        {student.medical_observations && (
+                          <div className="flex items-center text-yellow-600 text-xs mt-1">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Observações médicas
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       <div className="space-y-1 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
-                          <span>{student.email}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4" />
-                          <span>{formatPhone(student.phone)}</span>
-                        </div>
+                        {student.email && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4" />
+                            <span>{student.email}</span>
+                          </div>
+                        )}
+                        {student.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4" />
+                            <span>{formatPhone(student.phone)}</span>
+                          </div>
+                        )}
                         {student.is_whatsapp && (
                           <div className="flex items-center gap-2 text-green-600">
                             <MessageSquare className="h-4 w-4" />
@@ -200,11 +210,12 @@ export default function StudentsTable({ students, onActionSuccess }: StudentsTab
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       {ageInfo && (
-                        <div className="flex flex-col">
+                        <div className="flex flex-col gap-1">
                           <span>{ageInfo.age} anos</span>
                           {ageInfo.isMinor && (
-                            <Badge variant="outline" className="mt-1 font-normal bg-yellow-100 text-yellow-800 border-yellow-200 w-fit">
-                                Menor de idade
+                            <Badge variant="secondary" className="h-5 px-2 text-xs font-medium bg-amber-500/10 text-amber-700 border-amber-500/20 hover:bg-amber-500/20 w-fit">
+                              <Users className="w-3 h-3 mr-1" />
+                              Menor
                             </Badge>
                           )}
                         </div>
@@ -216,23 +227,7 @@ export default function StudentsTable({ students, onActionSuccess }: StudentsTab
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>{format(new Date(student.created_at), 'dd/MM/yyyy')}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {ageInfo?.isMinor ? (
-                          <div className="space-y-1 text-sm text-muted-foreground">
-                            <p className="font-medium text-foreground">{student.responsible_name}</p>
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4" />
-                              <span>{formatPhone(student.responsible_phone)}</span>
-                            </div>
-                          </div>
-                      ) : (
-                          <span className="text-muted-foreground">Maior de idade</span>
-                      )}
+                      <StudentPlansCell studentId={student.id} />
                     </TableCell>
                     <TableCell className="text-right">
                         <DropdownMenu>
@@ -267,6 +262,103 @@ export default function StudentsTable({ students, onActionSuccess }: StudentsTab
           </TableBody>
         </Table>
       </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-6 py-4 border-t">
+          <div className="text-sm text-muted-foreground">
+            Mostrando {startIndex + 1} a {Math.min(endIndex, students.length)} de {students.length} alunos
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Anterior
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => {
+                  // Mostrar primeira, última, atual, e páginas próximas
+                  if (page === 1 || page === totalPages) return true;
+                  if (Math.abs(page - currentPage) <= 1) return true;
+                  return false;
+                })
+                .map((page, index, array) => {
+                  // Adicionar "..." entre números não consecutivos
+                  const prevPage = array[index - 1];
+                  const showEllipsis = prevPage && page - prevPage > 1;
+
+                  return (
+                    <React.Fragment key={page}>
+                      {showEllipsis && <span className="px-2 text-muted-foreground">...</span>}
+                      <Button
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        className="w-9"
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </Button>
+                    </React.Fragment>
+                  );
+                })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Próxima
+            </Button>
+          </div>
+        </div>
+      )}
     </Card>
+  );
+}
+
+function StudentPlansCell({ studentId }: { studentId: string | number }) {
+  const [plans, setPlans] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function loadPlans() {
+      const { getStudentPlans } = await import('@/app/alunos/actions');
+      const planIds = await getStudentPlans(String(studentId));
+
+      if (planIds.length > 0) {
+        const { getPlans } = await import('@/app/modalidades/actions');
+        const { data } = await getPlans();
+        const studentPlans = data?.filter(p => planIds.includes(p.id)) || [];
+        setPlans(studentPlans);
+      }
+      setLoading(false);
+    }
+    loadPlans();
+  }, [studentId]);
+
+  if (loading) {
+    return <span className="text-xs text-muted-foreground">Carregando...</span>;
+  }
+
+  if (plans.length === 0) {
+    return <span className="text-xs text-muted-foreground">Sem plano</span>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {plans.slice(0, 2).map((plan) => (
+        <Badge key={plan.id} variant="outline" className="text-xs">
+          {plan.name}
+        </Badge>
+      ))}
+      {plans.length > 2 && (
+        <Badge variant="outline" className="text-xs">
+          +{plans.length - 2}
+        </Badge>
+      )}
+    </div>
   );
 }

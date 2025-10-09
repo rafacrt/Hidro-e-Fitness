@@ -22,7 +22,6 @@ import { NavContent } from '@/components/layout/nav-content';
 import { getFinancialSummary, getTransactions, type FinancialSummary } from './actions';
 import { getModalities, getPlans } from '../modalidades/actions';
 import { Loader2 } from 'lucide-react';
-import { mockPayments } from '@/lib/mock-data';
 import TransacoesRecentesTable from '@/components/financeiro/transacoes-recentes-table';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
@@ -69,13 +68,7 @@ export default function FinanceiroPage() {
       setRecebimentos(receitasData);
       setModalities(modalitiesData);
       setPlans(plansData);
-      
-      if (process.env.NODE_ENV === 'development' && despesasData.length === 0) {
-        setPagamentos(mockPayments);
-      } else {
-        setPagamentos(despesasData);
-      }
-      
+      setPagamentos(despesasData);
       setSummary(financialSummary);
     } catch (error) {
       console.error("Failed to load financial data", error);
