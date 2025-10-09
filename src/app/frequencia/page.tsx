@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import { Suspense } from 'react';
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import { Button } from '@/components/ui/button';
@@ -32,10 +33,10 @@ type UpcomingClass = ClassRow & { instructors: Pick<Instructor, 'name'> | null }
 
 export type ActiveTabFrequencia = "Visão Geral" | "Controle de Presença" | "Histórico";
 
-export default function FrequenciaPage() {
+function FrequenciaContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const activeTab = (searchParams.get('tab') || "Visão Geral") as ActiveTabFrequencia;
+  const activeTab = (searchParams?.get('tab') || "Visão Geral") as ActiveTabFrequencia;
   
   const [settings, setSettings] = React.useState<AcademySettings | null>(null);
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
@@ -125,5 +126,17 @@ export default function FrequenciaPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function FrequenciaPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <FrequenciaContent />
+    </Suspense>
   );
 }
