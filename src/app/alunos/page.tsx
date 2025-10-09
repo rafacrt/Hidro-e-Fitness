@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import { Suspense } from 'react';
 import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import StudentsTable from '@/components/alunos/students-table';
@@ -63,7 +64,7 @@ function processStudents(
   return filteredStudents;
 }
 
-export default function AlunosPage() {
+function AlunosContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [loading, setLoading] = React.useState(true);
@@ -159,5 +160,17 @@ export default function AlunosPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AlunosPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <AlunosContent />
+    </Suspense>
   );
 }
