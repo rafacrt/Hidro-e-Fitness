@@ -338,7 +338,9 @@ function StudentPlansCell({ studentId }: { studentId: string | number }) {
       if (planIds.length > 0) {
         const { getPlans } = await import('@/app/modalidades/actions');
         const { data } = await getPlans();
-        const studentPlans = data?.filter(p => planIds.includes(p.id)) || [];
+        // Converter ambos para string para garantir comparação correta
+        const planIdsStr = planIds.map(id => String(id));
+        const studentPlans = data?.filter(p => planIdsStr.includes(String(p.id))) || [];
         setPlans(studentPlans);
       }
       setLoading(false);
