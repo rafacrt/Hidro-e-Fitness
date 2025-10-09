@@ -127,6 +127,7 @@ const SortableHeader = ({
 export default function StudentsTable({ students, onActionSuccess }: StudentsTableProps) {
   const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [refreshKey, setRefreshKey] = React.useState(0);
   const itemsPerPage = 20;
 
   // Calcular paginação
@@ -139,6 +140,12 @@ export default function StudentsTable({ students, onActionSuccess }: StudentsTab
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchParams]);
+
+  // Função para forçar refresh dos planos
+  const handleRefresh = React.useCallback(() => {
+    setRefreshKey(prev => prev + 1);
+    onActionSuccess();
+  }, [onActionSuccess]);
 
   if (students.length === 0) {
     return (
@@ -170,7 +177,7 @@ export default function StudentsTable({ students, onActionSuccess }: StudentsTab
             {currentStudents.map((student) => {
               const ageInfo = calculateAge(student.birth_date);
               return (
-                <StudentDetailsDialog student={student} key={student.id} onSuccess={onActionSuccess}>
+                <StudentDetailsDialog student={student} key={student.id} onSuccess={handleRefresh}>
                   <TableRow className="cursor-pointer">
                     <TableCell>
                       <div className="flex flex-col">
@@ -227,7 +234,7 @@ export default function StudentsTable({ students, onActionSuccess }: StudentsTab
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      <StudentPlansCell studentId={student.id} />
+                      <StudentPlansCell studentId={student.id} key={`${student.id}-${refreshKey}`} />
                     </TableCell>
                     <TableCell className="text-right">
                         <DropdownMenu>
