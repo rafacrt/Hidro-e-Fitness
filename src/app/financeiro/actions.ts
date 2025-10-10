@@ -335,7 +335,6 @@ export async function generateMonthlyPayments(month: Date) {
           amount: plan.price,
           due_date: toDateOnlyISOString(dueDate),
           status: 'pendente',
-          category: 'Mensalidades',
           type: 'receita',
         });
         billedStudentIds.add(enrollment.student_id); // Garante que não será cobrado de novo no mesmo lote

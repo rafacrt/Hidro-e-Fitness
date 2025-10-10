@@ -428,7 +428,6 @@ export async function updateStudentPlans(studentId: string, planIds: string[]) {
           due_date: today.toISOString().split('T')[0],
           status: 'pendente',
           type: 'receita',
-          category: 'Mensalidades',
         }));
 
         const { error: paymentError } = await supabase
@@ -491,7 +490,6 @@ export async function syncStudentPlanPayments(studentId: string) {
         due_date: today.toISOString().split('T')[0],
         status: 'pendente',
         type: 'receita',
-        category: 'Mensalidades',
       });
     }
   }
