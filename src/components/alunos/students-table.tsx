@@ -327,23 +327,21 @@ export default function StudentsTable({ students, onActionSuccess }: StudentsTab
 }
 
 function StudentPlansCell({ studentId }: { studentId: string | number }) {
-  const [plans, setPlans] = React.useState<any[]>([]);
+  const [plans, setPlans] = React.useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     async function loadPlans() {
-      const { getStudentPlans } = await import('@/app/alunos/actions');
-      const planIds = await getStudentPlans(String(studentId));
-
-      if (planIds.length > 0) {
-        const { getPlans } = await import('@/app/modalidades/actions');
-        const { data } = await getPlans();
-        // Converter ambos para string para garantir comparação correta
-        const planIdsStr = planIds.map(id => String(id));
-        const studentPlans = data?.filter(p => planIdsStr.includes(String(p.id))) || [];
+      try {
+        const { getStudentPlans } = await import('@/app/alunos/actions');
+        const studentPlans = await getStudentPlans(String(studentId));
         setPlans(studentPlans);
+      } catch (error) {
+        console.error('Error loading student plans:', error);
+        setPlans([]);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     loadPlans();
   }, [studentId]);

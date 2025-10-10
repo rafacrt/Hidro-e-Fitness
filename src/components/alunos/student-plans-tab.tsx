@@ -49,7 +49,8 @@ export default function StudentPlansTab({ studentId, onSuccess }: StudentPlansTa
         getStudentPlans(studentId),
       ]);
       setAllPlans(plansData as Plan[]);
-      setStudentPlanIds(studentPlansData);
+      // Extrair IDs dos planos retornados
+      setStudentPlanIds(studentPlansData.map(p => p.id));
     } catch (err) {
       toast({ title: 'Erro ao carregar planos', variant: 'destructive' });
     } finally {

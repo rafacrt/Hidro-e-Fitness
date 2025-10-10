@@ -347,18 +347,26 @@ export async function getStudentHistory(studentId: string): Promise<HistoryEvent
   }
 }
 
-export async function getStudentPlans(studentId: string) {
+export async function getStudentPlans(studentId: string): Promise<Array<{ id: string; name: string }>> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('student_plans')
-    .select('plan_id')
+    .select('plan_id, plans!inner(id, name)')
     .eq('student_id', studentId);
 
   if (error) {
     console.error('Error fetching student plans:', error);
     return [];
   }
-  return data.map(item => item.plan_id);
+
+  if (!data) {
+    return [];
+  }
+
+  // Retorna os planos completos
+  return data
+    .map(item => item.plans as { id: string; name: string })
+    .filter(plan => plan && plan.id && plan.name);
 }
 
 export async function updateStudentPlans(studentId: string, planIds: string[]) {

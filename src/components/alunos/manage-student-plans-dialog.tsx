@@ -47,12 +47,13 @@ export function ManageStudentPlansDialog({ children, studentId, onSuccess }: Man
   const loadData = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      const [allPlansData, studentPlanIdsData] = await Promise.all([
+      const [allPlansData, studentPlansData] = await Promise.all([
         getPlans(),
         getStudentPlans(studentId),
       ]);
       setAllPlans(allPlansData as Plan[]);
-      setStudentPlanIds(new Set(studentPlanIdsData));
+      // Extrair IDs dos planos retornados
+      setStudentPlanIds(new Set(studentPlansData.map(p => p.id)));
     } catch (error) {
       toast({ title: 'Erro ao carregar planos', variant: 'destructive' });
     } finally {
