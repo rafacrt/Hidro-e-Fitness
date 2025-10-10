@@ -13,10 +13,21 @@ interface CaixaInterfaceProps {
   students: Student[];
   fetchStudentDebts: (studentId: string) => Promise<Payment[]>;
   onSuccess: () => void;
+  preSelectedStudentId?: string | null;
 }
 
-export default function CaixaInterface({ students, fetchStudentDebts, onSuccess }: CaixaInterfaceProps) {
+export default function CaixaInterface({ students, fetchStudentDebts, onSuccess, preSelectedStudentId }: CaixaInterfaceProps) {
   const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
+
+  // Auto-select student if preSelectedStudentId is provided
+  React.useEffect(() => {
+    if (preSelectedStudentId && students.length > 0) {
+      const student = students.find(s => s.id === preSelectedStudentId);
+      if (student) {
+        setSelectedStudent(student);
+      }
+    }
+  }, [preSelectedStudentId, students]);
 
   const handleSelectStudent = (student: Student | null) => {
     setSelectedStudent(student);

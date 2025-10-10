@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react';
 import CaixaInterface from '@/components/caixa/caixa-interface';
 import { getStudents } from '../alunos/actions';
 import { getPendingPayments } from '../financeiro/actions';
+import { useSearchParams } from 'next/navigation';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -22,6 +23,8 @@ export default function CaixaPage() {
   const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
   const [students, setStudents] = React.useState<Student[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const searchParams = useSearchParams();
+  const preSelectedStudentId = searchParams.get('studentId');
 
   const loadInitialData = React.useCallback(async () => {
     setLoading(true);
@@ -68,10 +71,11 @@ export default function CaixaPage() {
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <CaixaInterface 
+            <CaixaInterface
               students={students}
               fetchStudentDebts={fetchStudentDebts}
               onSuccess={loadInitialData}
+              preSelectedStudentId={preSelectedStudentId}
             />
           )}
         </main>

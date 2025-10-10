@@ -371,8 +371,17 @@ export async function getStudentPlans(studentId: string): Promise<Array<{ id: st
 
 export async function updateStudentPlans(studentId: string, planIds: string[]) {
   const supabase = await createSupabaseServerClient();
-  
-  // 1. Delete all existing plans for the student
+
+  // 1. Get current plans to identify which are being added
+  const { data: currentPlans } = await supabase
+    .from('student_plans')
+    .select('plan_id')
+    .eq('student_id', studentId);
+
+  const currentPlanIds = currentPlans?.map(p => p.plan_id) || [];
+  const newPlanIds = planIds.filter(id => !currentPlanIds.includes(id));
+
+  // 2. Delete all existing plans for the student
   const { error: deleteError } = await supabase
     .from('student_plans')
     .delete()
@@ -383,13 +392,13 @@ export async function updateStudentPlans(studentId: string, planIds: string[]) {
     return { success: false, message: 'Falha ao remover planos antigos.' };
   }
 
-  // 2. Insert new plans if any are provided
+  // 3. Insert new plans if any are provided
   if (planIds.length > 0) {
     const newPlans = planIds.map(plan_id => ({
       student_id: studentId,
       plan_id: plan_id,
     }));
-    
+
     const { error: insertError } = await supabase
       .from('student_plans')
       .insert(newPlans);
@@ -398,9 +407,43 @@ export async function updateStudentPlans(studentId: string, planIds: string[]) {
       console.error('Error inserting new student plans:', insertError);
       return { success: false, message: 'Falha ao adicionar novos planos.' };
     }
+
+    // 4. Create initial payment for newly added plans
+    if (newPlanIds.length > 0) {
+      // Get plan details for the new plans
+      const { data: planDetails, error: planError } = await supabase
+        .from('plans')
+        .select('id, name, price, recurrence')
+        .in('id', newPlanIds);
+
+      if (planError) {
+        console.error('Error fetching plan details:', planError);
+      } else if (planDetails) {
+        // Create a payment for each new plan
+        const today = new Date();
+        const payments = planDetails.map(plan => ({
+          student_id: studentId,
+          description: `Mensalidade - ${plan.name}`,
+          amount: plan.price,
+          due_date: today.toISOString().split('T')[0],
+          status: 'pendente',
+          type: 'receita',
+          category: 'Mensalidades',
+        }));
+
+        const { error: paymentError } = await supabase
+          .from('payments')
+          .insert(payments);
+
+        if (paymentError) {
+          console.error('Error creating payments:', paymentError);
+        }
+      }
+    }
   }
 
   revalidatePath('/alunos');
+  revalidatePath('/financeiro');
   return { success: true, message: 'Planos do aluno atualizados com sucesso!' };
 }
     

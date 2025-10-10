@@ -161,6 +161,27 @@ export async function getPendingPayments(studentId: string): Promise<Payment[]> 
     }
 }
 
+export async function getAllStudentPayments(studentId: string): Promise<Payment[]> {
+    if (!studentId) return [];
+    try {
+        const supabase = await createSupabaseServerClient();
+        const { data, error } = await supabase
+            .from('payments')
+            .select('*')
+            .eq('student_id', studentId)
+            .order('due_date', { ascending: false });
+
+        if (error) {
+            console.error('Supabase Error fetching student payments:', error);
+            return [];
+        }
+        return data;
+    } catch (error) {
+        console.error('Unexpected error fetching student payments:', error);
+        return [];
+    }
+}
+
 
 export async function getFinancialSummary(): Promise<FinancialSummary> {
   try {
