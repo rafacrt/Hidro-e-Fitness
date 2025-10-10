@@ -2,15 +2,17 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2, ExternalLink, CreditCard } from 'lucide-react';
+import { Loader2, CreditCard, Calendar, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { getAllStudentPayments } from '@/app/financeiro/actions';
 import type { Database } from '@/lib/database.types';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
-import { Separator } from '../ui/separator';
+import { cn } from '@/lib/utils';
 
 type Payment = Database['public']['Tables']['payments']['Row'];
 
@@ -27,10 +29,22 @@ const formatCurrency = (value: number | null) => {
     }).format(value);
 };
 
-const statusConfig: { [key: string]: { text: string, className: string } } = {
-  pago: { text: 'Pago', className: 'bg-green-100 text-green-800 border-green-200' },
-  pendente: { text: 'Pendente', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  vencido: { text: 'Vencido', className: 'bg-red-100 text-red-800 border-red-200' },
+const statusConfig: { [key: string]: { text: string, className: string, rowClassName: string } } = {
+  pago: {
+    text: 'Pago',
+    className: 'bg-green-100 text-green-800 border-green-200',
+    rowClassName: 'bg-green-50/50'
+  },
+  pendente: {
+    text: 'Pendente',
+    className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    rowClassName: 'bg-yellow-50/50'
+  },
+  vencido: {
+    text: 'Vencido',
+    className: 'bg-red-100 text-red-800 border-red-200',
+    rowClassName: 'bg-red-50/50'
+  },
 };
 
 export default function StudentFinancialTab({ studentId, studentName }: StudentFinancialTabProps) {
@@ -62,95 +76,89 @@ export default function StudentFinancialTab({ studentId, studentName }: StudentF
     );
   }
 
-  const pendingPayments = allPayments.filter(p => p.status === 'pendente' || p.status === 'vencido');
-  const paidPayments = allPayments.filter(p => p.status === 'pago');
+  const hasPendingPayments = allPayments.some(p => p.status === 'pendente' || p.status === 'vencido');
 
   return (
-    <div className="py-4 max-h-[60vh] overflow-y-auto pr-2 space-y-6">
+    <div className="py-4 max-h-[60vh] overflow-y-auto pr-2 space-y-4">
         <Card>
-            <CardHeader className="flex-row items-center justify-between">
+            <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
                 <div>
-                    <CardTitle>Cobranças Pendentes</CardTitle>
-                    <CardDescription>Cobranças com status "Pendente" ou "Vencido"</CardDescription>
+                    <CardTitle className="flex items-center gap-2">
+                        <DollarSign className="h-5 w-5" />
+                        Pagamentos e Cobranças
+                    </CardTitle>
+                    <CardDescription>Histórico completo de pagamentos do aluno</CardDescription>
                 </div>
-                {pendingPayments.length > 0 && (
-                    <Button onClick={handleGoToCaixa} size="sm">
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Ir para Caixa
+                {hasPendingPayments && (
+                    <Button onClick={handleGoToCaixa} size="sm" className="gap-2">
+                        <CreditCard className="h-4 w-4" />
+                        Efetuar Pagamento
                     </Button>
                 )}
             </CardHeader>
             <CardContent>
-                {pendingPayments.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-8">
-                        <p className="font-semibold">Nenhuma cobrança pendente</p>
-                        <p className="text-sm">Este aluno está com os pagamentos em dia.</p>
+                {allPayments.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-12">
+                        <Calendar className="h-12 w-12 mb-4 opacity-50" />
+                        <p className="font-semibold text-lg">Nenhum pagamento registrado</p>
+                        <p className="text-sm">Ainda não há cobranças para este aluno.</p>
                     </div>
                 ) : (
-                    <div className="space-y-3">
-                        {pendingPayments.map(payment => {
-                            const statusInfo = statusConfig[payment.status] || statusConfig.pendente;
-                            return (
-                                <div
-                                    key={payment.id}
-                                    className="p-4 border rounded-lg flex justify-between items-center hover:bg-accent cursor-pointer transition-colors"
-                                    onClick={handleGoToCaixa}
-                                >
-                                    <div>
-                                        <p className="font-semibold">{payment.description}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Vence em: {format(new Date(payment.due_date), 'dd/MM/yyyy')}
-                                        </p>
-                                    </div>
-                                    <div className='text-right flex items-center gap-2'>
-                                      <div>
-                                        <p className="font-bold text-lg">{formatCurrency(payment.amount)}</p>
-                                        <Badge variant="outline" className={statusInfo.className}>
-                                          {statusInfo.text}
-                                        </Badge>
-                                      </div>
-                                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Descrição</TableHead>
+                                    <TableHead className="text-center">Valor</TableHead>
+                                    <TableHead className="text-center">Vencimento</TableHead>
+                                    <TableHead className="text-center">Status</TableHead>
+                                    <TableHead className="text-center">Data Pagamento</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {allPayments.map(payment => {
+                                    const statusInfo = statusConfig[payment.status] || statusConfig.pendente;
+                                    const dueDate = new Date(payment.due_date);
+                                    const monthYear = format(dueDate, 'MMM/yyyy', { locale: ptBR });
 
-        <Card>
-            <CardHeader>
-                <CardTitle>Histórico de Pagamentos</CardTitle>
-                <CardDescription>Todos os pagamentos já realizados</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {paidPayments.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-8">
-                        <p className="font-semibold">Nenhum pagamento registrado</p>
-                        <p className="text-sm">Ainda não há pagamentos realizados.</p>
-                    </div>
-                ) : (
-                    <div className="space-y-3">
-                        {paidPayments.map(payment => {
-                            const statusInfo = statusConfig[payment.status] || statusConfig.pago;
-                            return (
-                                <div key={payment.id} className="p-4 border rounded-lg flex justify-between items-center">
-                                    <div>
-                                        <p className="font-semibold">{payment.description}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Pago em: {payment.paid_at ? format(new Date(payment.paid_at), 'dd/MM/yyyy') : 'N/A'}
-                                        </p>
-                                    </div>
-                                    <div className='text-right'>
-                                      <p className="font-bold text-lg">{formatCurrency(payment.amount)}</p>
-                                      <Badge variant="outline" className={statusInfo.className}>
-                                        {statusInfo.text}
-                                      </Badge>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                    return (
+                                        <TableRow
+                                            key={payment.id}
+                                            className={cn(statusInfo.rowClassName)}
+                                        >
+                                            <TableCell className="font-medium">
+                                                {payment.description}
+                                            </TableCell>
+                                            <TableCell className="text-center font-semibold">
+                                                {formatCurrency(payment.amount)}
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <div className="flex flex-col items-center">
+                                                    <span className="capitalize font-medium">{monthYear}</span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {format(dueDate, 'dd/MM/yyyy')}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Badge variant="outline" className={statusInfo.className}>
+                                                    {statusInfo.text}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                {payment.paid_at ? (
+                                                    <span className="text-sm">
+                                                        {format(new Date(payment.paid_at), 'dd/MM/yyyy')}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-sm text-muted-foreground">-</span>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
                     </div>
                 )}
             </CardContent>
