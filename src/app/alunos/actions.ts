@@ -446,6 +446,76 @@ export async function updateStudentPlans(studentId: string, planIds: string[]) {
   revalidatePath('/financeiro');
   return { success: true, message: 'Planos do aluno atualizados com sucesso!' };
 }
-    
 
-    
+export async function syncStudentPlanPayments(studentId: string) {
+  const supabase = await createSupabaseServerClient();
+
+  // 1. Get student's active plans
+  const { data: studentPlans, error: plansError } = await supabase
+    .from('student_plans')
+    .select('plan_id, plans(id, name, price, recurrence)')
+    .eq('student_id', studentId);
+
+  if (plansError || !studentPlans) {
+    console.error('Error fetching student plans:', plansError);
+    return { success: false, message: 'Erro ao buscar planos do aluno.' };
+  }
+
+  // 2. Check which plans don't have pending payments
+  const { data: existingPayments } = await supabase
+    .from('payments')
+    .select('description')
+    .eq('student_id', studentId)
+    .eq('status', 'pendente');
+
+  const existingPaymentDescriptions = new Set(
+    existingPayments?.map(p => p.description) || []
+  );
+
+  // 3. Create payments for plans without pending charges
+  const paymentsToCreate = [];
+  const today = new Date();
+
+  for (const sp of studentPlans) {
+    const plan = sp.plans as { id: string; name: string; price: number; recurrence: string } | null;
+    if (!plan) continue;
+
+    const description = `Mensalidade - ${plan.name}`;
+
+    // Only create if no pending payment exists for this plan
+    if (!existingPaymentDescriptions.has(description)) {
+      paymentsToCreate.push({
+        student_id: studentId,
+        description,
+        amount: plan.price,
+        due_date: today.toISOString().split('T')[0],
+        status: 'pendente',
+        type: 'receita',
+        category: 'Mensalidades',
+      });
+    }
+  }
+
+  // 4. Insert new payments
+  if (paymentsToCreate.length > 0) {
+    const { error: paymentError } = await supabase
+      .from('payments')
+      .insert(paymentsToCreate);
+
+    if (paymentError) {
+      console.error('Error creating payments:', paymentError);
+      return { success: false, message: 'Erro ao criar cobranças.' };
+    }
+
+    revalidatePath('/alunos');
+    revalidatePath('/financeiro');
+    return {
+      success: true,
+      message: `${paymentsToCreate.length} cobrança(s) criada(s) com sucesso!`
+    };
+  }
+
+  return { success: true, message: 'Nenhuma cobrança pendente para criar.' };
+}
+
+

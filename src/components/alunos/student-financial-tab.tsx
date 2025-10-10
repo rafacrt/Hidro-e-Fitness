@@ -2,9 +2,10 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2, CreditCard, Calendar, DollarSign } from 'lucide-react';
+import { Loader2, CreditCard, Calendar, DollarSign, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { getAllStudentPayments } from '@/app/financeiro/actions';
+import { syncStudentPlanPayments } from '@/app/alunos/actions';
 import type { Database } from '@/lib/database.types';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -13,6 +14,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 type Payment = Database['public']['Tables']['payments']['Row'];
 
@@ -49,8 +51,10 @@ const statusConfig: { [key: string]: { text: string, className: string, rowClass
 
 export default function StudentFinancialTab({ studentId, studentName }: StudentFinancialTabProps) {
   const [loading, setLoading] = React.useState(true);
+  const [syncing, setSyncing] = React.useState(false);
   const [allPayments, setAllPayments] = React.useState<Payment[]>([]);
   const router = useRouter();
+  const { toast } = useToast();
 
   const loadPayments = React.useCallback(async () => {
     setLoading(true);
@@ -66,6 +70,23 @@ export default function StudentFinancialTab({ studentId, studentName }: StudentF
   const handleGoToCaixa = () => {
     // Navigate to caixa page with student pre-selected
     router.push(`/caixa?studentId=${studentId}`);
+  };
+
+  const handleSyncPayments = async () => {
+    setSyncing(true);
+    try {
+      const result = await syncStudentPlanPayments(studentId);
+      if (result.success) {
+        toast({ title: 'Sucesso!', description: result.message });
+        await loadPayments(); // Reload payments
+      } else {
+        toast({ title: 'Erro', description: result.message, variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Erro ao sincronizar cobranças.', variant: 'destructive' });
+    } finally {
+      setSyncing(false);
+    }
   };
 
   if (loading) {
@@ -101,7 +122,26 @@ export default function StudentFinancialTab({ studentId, studentName }: StudentF
                     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-12">
                         <Calendar className="h-12 w-12 mb-4 opacity-50" />
                         <p className="font-semibold text-lg">Nenhum pagamento registrado</p>
-                        <p className="text-sm">Ainda não há cobranças para este aluno.</p>
+                        <p className="text-sm mb-4">Ainda não há cobranças para este aluno.</p>
+                        <Button
+                            onClick={handleSyncPayments}
+                            disabled={syncing}
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                        >
+                            {syncing ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Sincronizando...
+                                </>
+                            ) : (
+                                <>
+                                    <RefreshCw className="h-4 w-4" />
+                                    Gerar Cobranças dos Planos
+                                </>
+                            )}
+                        </Button>
                     </div>
                 ) : (
                     <div className="rounded-md border">
