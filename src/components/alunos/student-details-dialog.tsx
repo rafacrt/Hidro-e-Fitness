@@ -9,8 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -132,7 +130,7 @@ export function StudentDetailsDialog({ student, children, onSuccess }: StudentDe
             <TabsTrigger value="planos"><Tags className="mr-2 h-4 w-4" />Planos</TabsTrigger>
             <TabsTrigger value="historico"><History className="mr-2 h-4 w-4" />Histórico</TabsTrigger>
           </TabsList>
-          <TabsContent value="cadastro">
+          <TabsContent value="cadastro" className="space-y-4">
              <div className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-2">
                 {/* Dados Pessoais */}
                 <div className="space-y-3">
@@ -194,6 +192,14 @@ export function StudentDetailsDialog({ student, children, onSuccess }: StudentDe
                     </>
                 )}
             </div>
+            <div className="flex justify-end pt-4 border-t">
+              <EditStudentForm student={student} onSuccess={onSuccess}>
+                <Button>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Editar Aluno
+                </Button>
+              </EditStudentForm>
+            </div>
           </TabsContent>
           <TabsContent value="pagamentos">
             <StudentFinancialTab studentId={student.id} />
@@ -205,20 +211,6 @@ export function StudentDetailsDialog({ student, children, onSuccess }: StudentDe
             <StudentHistoryTimeline studentId={student.id} />
           </TabsContent>
         </Tabs>
-
-        <DialogFooter className="sm:justify-between pt-4">
-            <DialogClose asChild>
-                <Button type="button" variant="outline">
-                    Fechar
-                </Button>
-            </DialogClose>
-            <EditStudentForm student={student} onSuccess={onSuccess}>
-                <Button>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Editar Aluno
-                </Button>
-            </EditStudentForm>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
