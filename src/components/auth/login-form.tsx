@@ -49,6 +49,7 @@ export default function LoginForm({ settings }: LoginFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
+  const logoUrl = settings?.logo_url || '/logo/logo.png';
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -90,7 +91,7 @@ export default function LoginForm({ settings }: LoginFormProps) {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
-          <Image src={'/logo/logo.png'} alt="Logo da Academia" width={48} height={48} className="object-contain" />
+          <Image src={logoUrl} alt="Logo da Academia" width={48} height={48} className="object-contain" />
         </div>
         <CardTitle>Bem-vindo ao {settings?.name || 'Hidro Fitness'}</CardTitle>
         <CardDescription>

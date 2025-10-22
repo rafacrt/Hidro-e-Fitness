@@ -47,6 +47,7 @@ export default function ForgotPasswordForm({ settings }: ForgotPasswordFormProps
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
   const [submitted, setSubmitted] = React.useState(false);
+  const logoUrl = settings?.logo_url || '/logo/logo.png';
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -79,7 +80,7 @@ export default function ForgotPasswordForm({ settings }: ForgotPasswordFormProps
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
-          <Image src={'/logo/logo.png'} alt="Logo da Academia" width={48} height={48} className="object-contain" />
+          <Image src={logoUrl} alt="Logo da Academia" width={48} height={48} className="object-contain" />
         </div>
         <CardTitle>Esqueceu a Senha?</CardTitle>
         <CardDescription>
