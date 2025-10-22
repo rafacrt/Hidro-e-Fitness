@@ -24,7 +24,7 @@ SET SESSION AUTHORIZATION DEFAULT;
 
 ALTER TABLE public.academy_settings DISABLE TRIGGER ALL;
 
-INSERT INTO public.academy_settings (id, name, logo_url, created_at) VALUES (1, 'Hidro & Fitness', 'https://supabase.app.rajo.com.br/storage/v1/object/public/logos/logo-1753922255202.png', '2025-07-30 20:18:51.4312+00');
+INSERT INTO public.academy_settings (id, name, logo_url, created_at) VALUES (1, 'Hidro & Fitness', '/storage/logos/system/logo-1753922255202.png', '2025-07-30 20:18:51.4312+00');
 
 
 ALTER TABLE public.academy_settings ENABLE TRIGGER ALL;
@@ -510,7 +510,7 @@ ALTER TABLE public.plans ENABLE TRIGGER ALL;
 ALTER TABLE public.profiles DISABLE TRIGGER ALL;
 
 INSERT INTO public.profiles (id, full_name, avatar_url, role) VALUES ('07827a3b-75e4-47b3-a15a-b26121d3e873', 'Teste', NULL, 'user');
-INSERT INTO public.profiles (id, full_name, avatar_url, role) VALUES ('480bd3ca-1809-44d1-8855-8dc2957f695c', 'Rafael Medeiros', 'https://supabase.app.rajo.com.br/storage/v1/object/public/avatars/480bd3ca-1809-44d1-8855-8dc2957f695c-0.38845846306873355.jpg', 'Desenvolvedor');
+INSERT INTO public.profiles (id, full_name, avatar_url, role) VALUES ('480bd3ca-1809-44d1-8855-8dc2957f695c', 'Rafael Medeiros', '/storage/avatars/480bd3ca-1809-44d1-8855-8dc2957f695c/480bd3ca-1809-44d1-8855-8dc2957f695c-0.38845846306873355.jpg', 'Desenvolvedor');
 INSERT INTO public.profiles (id, full_name, avatar_url, role) VALUES ('d811be5b-bd9d-41bb-b3a1-20ec43a95418', 'Janaina', NULL, 'user');
 
 
