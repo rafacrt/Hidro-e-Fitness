@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-hidrofitness}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  hasura:
+    image: hasura/graphql-engine:v2.38.0
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-hidrofitness}
+      HASURA_GRAPHQL_ENABLE_CONSOLE: 'false'
+      HASURA_GRAPHQL_DEV_MODE: 'false'
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, query-log
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET}
+      HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
+      # Opcional: defina CORS/roles públicos se necessário
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
+    ports:
+      - "8080:8080"
+
+  app:
+    build:
+      context: .
+      dockerfile: docker-config/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - hasura
+      - db
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: '1'
+      HASURA_GRAPHQL_ENDPOINT: http://hasura:8080/v1/graphql
+      HASURA_ADMIN_SECRET: ${HASURA_ADMIN_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      FILE_STORAGE_DIR: /app/storage
+      DB_HOST: db
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-hidrofitness}
+    volumes:
+      - storage:/app/storage
+    ports:
+      - "9002:9002"
+
+volumes:
+  db_data:
+  storage:
