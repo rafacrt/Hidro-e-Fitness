@@ -9,9 +9,10 @@ type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface UserManagementProps {
   users: Profile[];
+  currentUserRole?: string | null;
 }
 
-export default function UserManagement({ users }: UserManagementProps) {
+export default function UserManagement({ users, currentUserRole }: UserManagementProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -27,7 +28,7 @@ export default function UserManagement({ users }: UserManagementProps) {
         </AddUserDialog>
       </CardHeader>
       <CardContent>
-        <UsersTable users={users} />
+        <UsersTable users={users} currentUserRole={currentUserRole} />
       </CardContent>
     </Card>
   );

@@ -208,7 +208,7 @@ export async function deleteUser(userId: string) {
       process.env.SUPABASE_SERVICE_ROLE_KEY,
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
-    
+
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (authError) {
@@ -217,10 +217,10 @@ export async function deleteUser(userId: string) {
           return { success: false, message: `Erro ao excluir usuário da autenticação: ${authError.message}` };
       }
     }
-    
+
     const supabase = await createSupabaseServerClient();
     const { error: profileError } = await supabase.from('profiles').delete().eq('id', userId);
-    
+
     if (profileError) {
       console.error('Supabase Error deleting profile:', profileError);
     }
@@ -230,6 +230,51 @@ export async function deleteUser(userId: string) {
 
   } catch (error) {
     console.error('Unexpected Error deleting user:', error);
+    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  }
+}
+
+const resetPasswordSchema = z.object({
+  newPassword: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.'),
+});
+
+export async function resetUserPassword(userId: string, formData: unknown) {
+  // Verificar se o usuário atual é desenvolvedor
+  const currentUser = await getUserProfile();
+  if (!currentUser || currentUser.role !== 'Desenvolvedor') {
+    return { success: false, message: 'Apenas desenvolvedores podem redefinir senhas.' };
+  }
+
+  const parsedData = resetPasswordSchema.safeParse(formData);
+  if (!parsedData.success) {
+    return { success: false, message: 'Dados inválidos.', errors: parsedData.error.flatten().fieldErrors };
+  }
+
+  const { newPassword } = parsedData.data;
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { success: false, message: 'Variáveis de ambiente do Supabase não configuradas para esta ação.' };
+  }
+
+  try {
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: newPassword,
+    });
+
+    if (error) {
+      console.error('Supabase Admin Error resetting password:', error);
+      return { success: false, message: `Erro ao redefinir senha: ${error.message}` };
+    }
+
+    return { success: true, message: 'Senha redefinida com sucesso!' };
+  } catch (error) {
+    console.error('Unexpected Error resetting password:', error);
     return { success: false, message: 'Ocorreu um erro inesperado.' };
   }
 }

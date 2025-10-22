@@ -34,7 +34,7 @@ export default async function ConfiguracoesPage() {
             </div>
             <div className="lg:col-span-2 space-y-6">
               <AcademySettings settings={academySettings} />
-              <UserManagement users={users} />
+              <UserManagement users={users} currentUserRole={userProfile?.role} />
             </div>
           </div>
         </main>

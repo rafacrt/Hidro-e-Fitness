@@ -9,17 +9,19 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, KeyRound } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { EditUserDialog } from './edit-user-dialog';
 import type { Database } from '@/lib/database.types';
 import { DeleteUserAlert } from './delete-user-alert';
+import { ResetPasswordDialog } from './reset-password-dialog';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface UsersTableProps {
   users: Profile[];
+  currentUserRole?: string | null;
 }
 
 const getInitials = (name: string | null) => {
@@ -37,7 +39,9 @@ const roleStyles: { [key: string]: string } = {
     'Recepção': 'bg-green-100 text-green-800 border-green-200',
 };
 
-export default function UsersTable({ users }: UsersTableProps) {
+export default function UsersTable({ users, currentUserRole }: UsersTableProps) {
+  const isDeveloper = currentUserRole === 'Desenvolvedor';
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -76,6 +80,13 @@ export default function UsersTable({ users }: UsersTableProps) {
                       <Edit className="h-4 w-4" />
                     </Button>
                   </EditUserDialog>
+                  {isDeveloper && (
+                    <ResetPasswordDialog userId={user.id} userName={user.full_name || 'Usuário'}>
+                      <Button variant="ghost" size="icon" title="Redefinir senha">
+                        <KeyRound className="h-4 w-4" />
+                      </Button>
+                    </ResetPasswordDialog>
+                  )}
                   <DeleteUserAlert userId={user.id}>
                     <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" disabled={user.role === 'Desenvolvedor'}>
                         <Trash2 className="h-4 w-4" />
