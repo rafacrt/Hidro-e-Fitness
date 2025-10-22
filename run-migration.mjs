@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://supabase.app.rajo.com.br';
+const supabaseUrl = 'https://gestao.hidroefitness.com.br';
 const supabaseKey = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc1Mzc0NDY4MCwiZXhwIjo0OTA5NDE4MjgwLCJyb2xlIjoiYW5vbiJ9.Adsq8AWsK6OsDIgIfR469z60u8zvtSqwg-ww6I3--_0';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -39,7 +39,7 @@ async function applyMigration() {
 
   console.log('📝 Você precisa executar o SQL manualmente no Supabase Studio:');
   console.log('');
-  console.log('URL: https://supabase.app.rajo.com.br');
+  console.log('URL: https://gestao.hidroefitness.com.br');
   console.log('User: ka1JQ1061ESXYOxd');
   console.log('Password: S9r0H9jAol9y9OEed8jcWZJA9TsE352H');
   console.log('');
