@@ -192,7 +192,7 @@ export function AddStudentForm({ children, onSuccess }: AddStudentFormProps) {
         const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
         const data = await response.json();
         if (!data.erro) {
-          form.setValue('street', data.logouro);
+          form.setValue('street', data.logradouro);
           form.setValue('neighborhood', data.bairro);
           form.setValue('city', data.localidade);
           form.setValue('state', data.uf);
