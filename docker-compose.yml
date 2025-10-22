@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hidrofitness
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+
+  hasura:
+    image: hasura/graphql-engine:v2.38.0
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:postgres@db:5432/hidrofitness
+      - HASURA_GRAPHQL_ENABLE_CONSOLE=true
+      - HASURA_GRAPHQL_DEV_MODE=true
+      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
+      - HASURA_GRAPHQL_ADMIN_SECRET=hasuraadminsecret
+      - HASURA_GRAPHQL_JWT_SECRET={"type":"HS256","key":"superjwtsecretwithrandom"}
+    ports:
+      - "8080:8080"
+
+  app:
+    build:
+      context: .
+      dockerfile: docker-config/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - hasura
+      - db
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      - HASURA_GRAPHQL_ENDPOINT=http://hasura:8080/v1/graphql
+      - HASURA_ADMIN_SECRET=hasuraadminsecret
+      - JWT_SECRET=superjwtsecretwithrandom
+      - FILE_STORAGE_DIR=/app/storage
+      - DB_HOST=db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=hidrofitness
+    volumes:
+      - storage:/app/storage
+    ports:
+      - "9002:9002"
+
+volumes:
+  db_data:
+  storage:

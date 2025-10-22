@@ -28,7 +28,7 @@ import { Icons } from '../icons';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { login } from '@/app/auth/actions';
+// import { login } from '@/app/auth/actions'; // migrated to internal API
 import type { Database } from '@/lib/database.types';
 import Image from 'next/image';
 
@@ -60,59 +60,28 @@ export default function LoginForm({ settings }: LoginFormProps) {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    
     try {
-      const result = await login(data);
-      
-      if (result?.error) {
-        let errorMessage = result.error.message;
-        let errorTitle = "Erro no Login";
-        
-        if (errorMessage.includes("Invalid login credentials")) {
-          errorTitle = "Credenciais Inválidas";
-          errorMessage = "E-mail ou senha incorretos. Verifique seus dados e tente novamente.";
-        } else if (errorMessage.includes("Email not confirmed")) {
-          errorTitle = "E-mail Não Confirmado";
-          errorMessage = "Verifique seu e-mail e confirme sua conta antes de fazer login.";
-        } else if (errorMessage.includes("Too many requests")) {
-          errorTitle = "Muitas Tentativas";
-          errorMessage = "Aguarde alguns minutos antes de tentar novamente.";
-        }
-        
-        toast({
-          title: errorTitle,
-          description: errorMessage,
-          variant: 'destructive',
-        });
-        
-        setIsLoading(false);
-        
-      } else if (result?.success) {
-        toast({
-          title: "Login realizado com sucesso!",
-          description: "Redirecionando para o dashboard...",
-        });
-        
-        setTimeout(() => {
-          router.push('/dashboard');
-          router.refresh();
-        }, 1000);
-        
-      } else {
-        toast({
-          title: "Erro Inesperado",
-          description: "Resposta inesperada do servidor. Tente novamente.",
-          variant: 'destructive',
-        });
-        setIsLoading(false);
-      }
-    } catch (error) {
-      toast({
-        title: "Erro Inesperado",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
-        variant: 'destructive',
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.email, password: data.password }),
       });
-      
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({ error: 'Falha no login' }));
+        const errMsg = typeof payload.error === 'string' ? payload.error : (payload.error?.message || 'E-mail ou senha incorretos.');
+        toast({ title: 'Erro no Login', description: errMsg, variant: 'destructive' });
+        setIsLoading(false);
+        return;
+      }
+
+      toast({ title: 'Login realizado com sucesso!', description: 'Redirecionando para o dashboard...' });
+      setTimeout(() => {
+        router.push('/dashboard');
+        router.refresh();
+      }, 500);
+    } catch (error) {
+      toast({ title: 'Erro Inesperado', description: 'Ocorreu um erro inesperado. Tente novamente.', variant: 'destructive' });
       setIsLoading(false);
     }
   };
@@ -186,8 +155,8 @@ export default function LoginForm({ settings }: LoginFormProps) {
           {process.env.NODE_ENV === 'development' && (
             <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
               <strong>Para teste:</strong><br />
-              E-mail: tecnorafa12@gmail.com<br />
-              Senha: sua senha
+              E-mail: admin@example.com<br />
+              Senha: admin123
             </div>
           )}
         </div>

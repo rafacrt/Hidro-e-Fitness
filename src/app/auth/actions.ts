@@ -1,9 +1,10 @@
 'use server';
 
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import bcrypt from 'bcryptjs';
+import { getGraphQLServerClient } from '@/lib/graphql/server';
+import { getServerUser } from '@/lib/auth/session';
 
 const strongPasswordSchema = z.string().min(8, 'A senha deve ter pelo menos 8 caracteres.')
   .regex(/[a-z]/, 'A senha deve conter pelo menos uma letra minúscula.')
@@ -43,46 +44,51 @@ export async function signup(formData: unknown, adminCreation = false) {
   const { name, email, password, role } = parsedData.data;
   
   try {
-    const supabase = await createSupabaseServerClient();
-    const headersList = await headers();
-    const origin = headersList.get('origin') || 'http://localhost:3000';
+    const client = await getGraphQLServerClient();
+    const password_hash = await bcrypt.hash(password, 10);
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name,
-          role: role || 'Recepção', 
-        },
-        emailRedirectTo: adminCreation ? undefined : `${origin}/auth/callback`,
-      },
+    const insertUserMutation = /* GraphQL */ `
+      mutation InsertUser($email: String!, $password_hash: String!, $full_name: String, $role: String) {
+        insert_users_one(object: { email: $email, password_hash: $password_hash, full_name: $full_name, role: $role }) { id }
+      }
+    `;
+
+    const userRes = await client.request(insertUserMutation, {
+      email: email.toLowerCase().trim(),
+      password_hash,
+      full_name: name,
+      role: role || 'user',
     });
 
-    if (signUpError) {
-      console.error('Erro no signup:', signUpError);
-      return { success: false, message: signUpError.message };
+    const userId = userRes?.insert_users_one?.id as string | undefined;
+    if (!userId) {
+      return { success: false, message: 'Falha ao criar usuário.' };
     }
 
-    if (adminCreation && signUpData.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ role: role || 'Recepção' })
-        .eq('id', signUpData.user.id);
-      
-      if (profileError) {
-        console.error('Erro ao atualizar perfil do usuário criado:', profileError);
+    const upsertProfileMutation = /* GraphQL */ `
+      mutation UpsertProfile($id: uuid!, $full_name: String, $role: String) {
+        insert_profiles_one(
+          object: { id: $id, full_name: $full_name, role: $role },
+          on_conflict: { constraint: profiles_pkey, update_columns: [full_name, role, updated_at] }
+        ) { id }
       }
-    }
+    `;
+
+    await client.request(upsertProfileMutation, {
+      id: userId,
+      full_name: name,
+      role: role || 'user',
+    });
 
     const message = adminCreation
       ? 'Usuário criado com sucesso!'
-      : 'Verifique seu e-mail para confirmar sua conta.';
+      : 'Cadastro realizado com sucesso. Faça login para continuar.';
 
     return { success: true, message };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro no signup:', error);
-    return { success: false, message: 'Erro interno do servidor' };
+    const msg = error?.response?.errors?.[0]?.message || 'Erro interno do servidor';
+    return { success: false, message: msg };
   }
 }
 
@@ -96,44 +102,24 @@ export async function login(formData: unknown) {
     const { email, password } = parsedData.data;
     
     try {
-      const supabase = await createSupabaseServerClient();
-      const { data, error } = await supabase.auth.signInWithPassword({
-          email: email.toLowerCase().trim(),
-          password
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       });
-
-      if (error) {
-          let errorMessage = 'E-mail ou senha incorretos';
-          
-          if (error.message.includes('Invalid login credentials')) {
-            errorMessage = 'E-mail ou senha incorretos';
-          } else if (error.message.includes('Email not confirmed')) {
-            errorMessage = 'E-mail não confirmado. Verifique sua caixa de entrada.';
-          } else if (error.message.includes('signups not allowed')) {
-            errorMessage = 'Cadastros não permitidos no momento.';
-          } else if (error.message.includes('Too many requests')) {
-            errorMessage = 'Muitas tentativas. Aguarde alguns minutos.';
-          } else {
-            errorMessage = error.message;
-          }
-          
-          return { error: { message: errorMessage } };
+      const data = await res.json();
+      if (!res.ok || data?.error) {
+        return { error: { message: data?.error?.message || 'E-mail ou senha incorretos' } };
       }
-
-      if (data.session && data.user) {
-          return { success: true, user: data.user };
-      }
-
-      return { error: { message: 'Falha na autenticação' } };
+      return { success: true, user: data.user };
     } catch (error) {
-        return { error: { message: 'Erro interno do servidor' } };
+      return { error: { message: 'Erro interno do servidor' } };
     }
 }
 
 export async function logout() {
     try {
-        const supabase = await createSupabaseServerClient();
-        await supabase.auth.signOut();
+        await fetch('/api/auth/logout', { method: 'POST' });
         redirect('/login');
     } catch (error) {
         console.error('❌ Erro no logout:', error);
@@ -148,20 +134,9 @@ export async function forgotPassword(formData: unknown) {
     return { success: false, message: 'E-mail inválido.' };
   }
 
-  const { email } = parsedData.data;
-  const supabase = await createSupabaseServerClient();
-  const headersList = await headers();
-  const origin = headersList.get('origin');
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/reset-password`,
-  });
-
-  if (error) {
-    return { success: false, message: `Erro ao enviar e-mail: ${error.message}` };
-  }
-
-  return { success: true, message: 'E-mail de redefinição de senha enviado com sucesso.' };
+  // Fluxo de e-mail de recuperação ainda não implementado sem serviço de e-mail.
+  // Podemos registrar uma solicitação para o admin ou implementar envio via provider posteriormente.
+  return { success: true, message: 'Se o e-mail existir, entraremos em contato com instruções de redefinição em breve.' };
 }
 
 export async function updatePassword(formData: unknown) {
@@ -172,13 +147,24 @@ export async function updatePassword(formData: unknown) {
     }
 
     const { password } = parsedData.data;
-    const supabase = await createSupabaseServerClient();
-
-    const { error } = await supabase.auth.updateUser({ password });
-
-    if (error) {
-        return { success: false, message: `Erro ao atualizar senha: ${error.message}` };
+    const user = getServerUser();
+    if (!user?.id) {
+      return { success: false, message: 'Usuário não autenticado.' };
     }
 
-    return { success: true, message: 'Senha atualizada com sucesso!' };
+    try {
+      const client = await getGraphQLServerClient();
+      const password_hash = await bcrypt.hash(password, 10);
+      const updatePasswordMutation = /* GraphQL */ `
+        mutation UpdatePassword($id: uuid!, $password_hash: String!) {
+          update_users_by_pk(pk_columns: {id: $id}, _set: { password_hash: $password_hash }) { id }
+        }
+      `;
+      await client.request(updatePasswordMutation, { id: user.id, password_hash });
+      return { success: true, message: 'Senha atualizada com sucesso!' };
+    } catch (error: any) {
+      console.error('Erro ao atualizar senha:', error);
+      const msg = error?.response?.errors?.[0]?.message || 'Erro interno do servidor';
+      return { success: false, message: msg };
+    }
 }
