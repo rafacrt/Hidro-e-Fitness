@@ -3,9 +3,10 @@ services:
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-hidrofitness}
+      # Removidos valores padrão inseguros; obrigar definição via env do Coolify
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d:ro
@@ -16,16 +17,14 @@ services:
     depends_on:
       - db
     environment:
-      HASURA_GRAPHQL_DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-hidrofitness}
+      HASURA_GRAPHQL_DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       HASURA_GRAPHQL_ENABLE_CONSOLE: 'false'
       HASURA_GRAPHQL_DEV_MODE: 'false'
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, query-log
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET}
       HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
-      # Opcional: defina CORS/roles públicos se necessário
       HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
-    # Removido o mapeamento de porta externa para evitar conflito (8080 já em uso)
-    # A aplicação consome Hasura via rede interna: http://hasura:8080/v1/graphql
+    # Hasura interno apenas; sem bind externo para evitar conflito de porta
 
   app:
     build:
@@ -43,9 +42,9 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       FILE_STORAGE_DIR: /app/storage
       DB_HOST: db
-      DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      DB_NAME: ${DB_NAME:-hidrofitness}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
     volumes:
       - storage:/app/storage
     ports:
