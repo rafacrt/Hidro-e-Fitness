@@ -24,8 +24,8 @@ services:
       HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
       # Opcional: defina CORS/roles públicos se necessário
       HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
-    ports:
-      - "8080:8080"
+    # Removido o mapeamento de porta externa para evitar conflito (8080 já em uso)
+    # A aplicação consome Hasura via rede interna: http://hasura:8080/v1/graphql
 
   app:
     build:
