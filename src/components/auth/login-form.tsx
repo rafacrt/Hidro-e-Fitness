@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Icons } from '../icons';
 import Link from 'next/link';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 // import { login } from '@/app/auth/actions'; // migrated to internal API
 import type { Database } from '@/lib/database.types';
@@ -49,7 +49,13 @@ export default function LoginForm({ settings }: LoginFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
   const logoUrl = settings?.logo_url || '/logo/logo.png';
+  // Fallback automático: se a imagem do logo falhar, usa a logo padrão do projeto
+  const [logoSrc, setLogoSrc] = React.useState<string>(logoUrl);
+  React.useEffect(() => {
+    setLogoSrc(logoUrl);
+  }, [logoUrl]);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -91,7 +97,7 @@ export default function LoginForm({ settings }: LoginFormProps) {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
-          <Image src={logoUrl} alt="Logo da Academia" width={48} height={48} className="object-contain" />
+          <Image src={logoSrc} alt="Logo da Academia" width={48} height={48} className="object-contain" onError={() => setLogoSrc('/logo/logo.png')} />
         </div>
         <CardTitle>Bem-vindo ao {settings?.name || 'Hidro Fitness'}</CardTitle>
         <CardDescription>
@@ -132,13 +138,24 @@ export default function LoginForm({ settings }: LoginFormProps) {
                     </Link>
                   </div>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      {...field}
-                      disabled={isLoading}
-                      autoComplete="current-password"
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        {...field}
+                        disabled={isLoading}
+                        autoComplete="current-password"
+                      />
+                      <button
+                        type="button"
+                        aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

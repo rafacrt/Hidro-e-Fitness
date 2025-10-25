@@ -9,9 +9,10 @@ type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface UserManagementProps {
   users: Profile[];
+  isDeveloper?: boolean;
 }
 
-export default function UserManagement({ users }: UserManagementProps) {
+export default function UserManagement({ users, isDeveloper = false }: UserManagementProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -27,7 +28,7 @@ export default function UserManagement({ users }: UserManagementProps) {
         </AddUserDialog>
       </CardHeader>
       <CardContent>
-        <UsersTable users={users} />
+        <UsersTable users={users} isDeveloper={isDeveloper} />
       </CardContent>
     </Card>
   );

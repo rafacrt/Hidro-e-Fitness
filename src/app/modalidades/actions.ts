@@ -1,7 +1,7 @@
 
 'use server';
 
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getGraphQLServerClient } from '@/lib/graphql/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { Database } from '@/lib/database.types';
@@ -26,69 +26,69 @@ const planFormSchema = z.object({
 
 export async function getModalities(): Promise<Modality[]> {
   try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
-      .from('modalities')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      throw new Error('Não foi possível buscar as modalidades.');
-    }
-
-    return data;
+    const client = getGraphQLServerClient();
+    const query = `
+      query GetModalities {
+        modalities(order_by: { created_at: desc }) {
+          id
+          name
+          description
+          price
+          created_at
+        }
+      }
+    `;
+    const data = await client.request(query);
+    return data.modalities as Modality[];
   } catch (error) {
-    console.error('Unexpected Error:', error);
+    console.error('GraphQL Error:', error);
     return [];
   }
 }
 
 export async function getPlans(): Promise<Plan[]> {
   try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
-      .from('plans')
-      .select(`
-        *,
-        modalities ( name )
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      throw new Error('Não foi possível buscar os planos.');
-    }
-    return data;
+    const client = getGraphQLServerClient();
+    const query = `
+      query GetPlans {
+        plans(order_by: { created_at: desc }) {
+          id
+          name
+          modality_id
+          price
+          recurrence
+          benefits
+          status
+          created_at
+          modalities { name }
+        }
+      }
+    `;
+    const data = await client.request(query);
+    return data.plans as Plan[];
   } catch (error) {
-    console.error('Unexpected Error:', error);
+    console.error('GraphQL Error:', error);
     return [];
   }
 }
 
 export async function getModalitiesStats() {
-    const supabase = await createSupabaseServerClient();
-
-    const { count: totalStudents, error: studentsError } = await supabase
-        .from('enrollments')
-        .select('*', { count: 'exact', head: true });
-
-    const { data: revenueData, error: revenueError } = await supabase
-        .from('payments')
-        .select('amount')
-        .gt('amount', 0);
-    
-    if (studentsError || revenueError) {
-        console.error('Error fetching modalities stats:', studentsError || revenueError);
-        return { totalStudents: 0, totalRevenue: 0 };
-    }
-
-    const totalRevenue = revenueData.reduce((sum, payment) => sum + (payment.amount || 0), 0);
-    
-    return {
-        totalStudents: totalStudents || 0,
-        totalRevenue: totalRevenue || 0,
-    }
+  try {
+    const client = getGraphQLServerClient();
+    const query = `
+      query GetModalitiesStats {
+        enrollments_aggregate { aggregate { count } }
+        payments_aggregate(where: { amount: { _gt: 0 } }) { aggregate { sum { amount } } }
+      }
+    `;
+    const data = await client.request(query);
+    const totalStudents = data.enrollments_aggregate?.aggregate?.count ?? 0;
+    const totalRevenue = data.payments_aggregate?.aggregate?.sum?.amount ?? 0;
+    return { totalStudents, totalRevenue };
+  } catch (error) {
+    console.error('GraphQL Error:', error);
+    return { totalStudents: 0, totalRevenue: 0 };
+  }
 }
 
 
@@ -104,25 +104,25 @@ export async function addModality(formData: unknown) {
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.from('modalities').insert([
-      {
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation AddModality($object: modalities_insert_input!) {
+        insert_modalities_one(object: $object) { id }
+      }
+    `;
+    await client.request(mutation, {
+      object: {
         name: parsedData.data.name,
-        description: parsedData.data.description,
+        description: parsedData.data.description ?? null,
       },
-    ]);
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      return { success: false, message: `Erro ao cadastrar modalidade: ${error.message}` };
-    }
+    });
 
     revalidatePath('/modalidades');
     revalidatePath('/financeiro');
     return { success: true, message: 'Modalidade cadastrada com sucesso!' };
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    return { success: false, message: `Erro ao cadastrar modalidade: ${error.message ?? 'Falha na requisição GraphQL'}` };
   }
 }
 
@@ -138,65 +138,65 @@ export async function updateModality(id: string, formData: unknown) {
   }
   
   try {
-    const supabase = await createSupabaseServerClient();
-    const { error } = await supabase
-      .from('modalities')
-      .update({
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation UpdateModality($id: uuid!, $changes: modalities_set_input!) {
+        update_modalities_by_pk(pk_columns: { id: $id }, _set: $changes) { id }
+      }
+    `;
+    await client.request(mutation, {
+      id,
+      changes: {
         name: parsedData.data.name,
-        description: parsedData.data.description,
-      })
-      .eq('id', id);
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      return { success: false, message: `Erro ao atualizar modalidade: ${error.message}` };
-    }
+        description: parsedData.data.description ?? null,
+      },
+    });
 
     revalidatePath('/modalidades');
     revalidatePath('/financeiro');
     return { success: true, message: 'Modalidade atualizada com sucesso!' };
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    return { success: false, message: `Erro ao atualizar modalidade: ${error.message ?? 'Falha na requisição GraphQL'}` };
   }
 }
 
 export async function deleteModality(id: string) {
   try {
-    const supabase = await createSupabaseServerClient();
+    const client = getGraphQLServerClient();
 
-    // 1. Check if any classes are using this modality
-    const { count, error: checkError } = await supabase
-      .from('classes')
-      .select('*', { count: 'exact', head: true })
-      .eq('modality_id', id);
+    // 1. Verificar se há turmas usando esta modalidade
+    const checkQuery = `
+      query CheckClasses($id: uuid!) {
+        classes_aggregate(where: { modality_id: { _eq: $id } }) {
+          aggregate { count }
+        }
+      }
+    `;
+    const checkRes = await client.request(checkQuery, { id });
+    const count = checkRes.classes_aggregate?.aggregate?.count ?? 0;
 
-    if (checkError) {
-      console.error('Supabase Check Error:', checkError);
-      return { success: false, message: `Erro ao verificar turmas: ${checkError.message}` };
-    }
-
-    if (count !== null && count > 0) {
-      return { 
-        success: false, 
-        message: `Não é possível excluir esta modalidade, pois ela está associada a ${count} turma(s). Por favor, altere ou remova as turmas antes.` 
+    if (count > 0) {
+      return {
+        success: false,
+        message: `Não é possível excluir esta modalidade, pois ela está associada a ${count} turma(s). Por favor, altere ou remova as turmas antes.`
       };
     }
 
-    // 2. If no classes are using it, proceed with deletion
-    const { error } = await supabase.from('modalities').delete().eq('id', id);
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      return { success: false, message: `Erro ao excluir modalidade: ${error.message}` };
-    }
+    // 2. Excluir modalidade
+    const mutation = `
+      mutation DeleteModality($id: uuid!) {
+        delete_modalities_by_pk(id: $id) { id }
+      }
+    `;
+    await client.request(mutation, { id });
 
     revalidatePath('/modalidades');
     revalidatePath('/financeiro');
     return { success: true, message: 'Modalidade excluída com sucesso!' };
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    return { success: false, message: `Erro ao excluir modalidade: ${error.message ?? 'Falha na requisição GraphQL'}` };
   }
 }
 
@@ -217,12 +217,17 @@ export async function addPlan(formData: unknown) {
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const client = getGraphQLServerClient();
     const priceAsNumber = Number(parsedData.data.price.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
     const benefitsArray = parsedData.data.benefits?.split(',').map(b => b.trim()).filter(b => b) || [];
 
-    const { error } = await supabase.from('plans').insert([
-      {
+    const mutation = `
+      mutation AddPlan($object: plans_insert_input!) {
+        insert_plans_one(object: $object) { id }
+      }
+    `;
+    await client.request(mutation, {
+      object: {
         name: parsedData.data.name,
         modality_id: parsedData.data.modality_id,
         price: priceAsNumber,
@@ -230,19 +235,14 @@ export async function addPlan(formData: unknown) {
         benefits: benefitsArray,
         status: parsedData.data.status,
       },
-    ]);
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      return { success: false, message: `Erro ao cadastrar plano: ${error.message}` };
-    }
+    });
 
     revalidatePath('/modalidades');
     revalidatePath('/financeiro');
     return { success: true, message: 'Plano cadastrado com sucesso!' };
   } catch (error: any) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: `Ocorreu um erro inesperado: ${error.message}` };
+    console.error('GraphQL Error:', error);
+    return { success: false, message: `Ocorreu um erro inesperado: ${error.message ?? 'Falha na requisição GraphQL'}` };
   }
 }
 
@@ -263,50 +263,51 @@ export async function updatePlan(id: string, formData: unknown) {
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const client = getGraphQLServerClient();
     const priceAsNumber = Number(parsedData.data.price.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
     const benefitsArray = parsedData.data.benefits?.split(',').map(b => b.trim()).filter(b => b) || [];
 
-    const { error } = await supabase.from('plans')
-      .update({
+    const mutation = `
+      mutation UpdatePlan($id: uuid!, $changes: plans_set_input!) {
+        update_plans_by_pk(pk_columns: { id: $id }, _set: $changes) { id }
+      }
+    `;
+    await client.request(mutation, {
+      id,
+      changes: {
         name: parsedData.data.name,
         modality_id: parsedData.data.modality_id,
         price: priceAsNumber,
         recurrence: parsedData.data.recurrence,
         benefits: benefitsArray,
         status: parsedData.data.status,
-      })
-      .eq('id', id);
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      return { success: false, message: `Erro ao atualizar plano: ${error.message}` };
-    }
+      },
+    });
 
     revalidatePath('/modalidades');
     revalidatePath('/financeiro');
     return { success: true, message: 'Plano atualizado com sucesso!' };
   } catch (error: any) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: `Ocorreu um erro inesperado: ${error.message}` };
+    console.error('GraphQL Error:', error);
+    return { success: false, message: `Ocorreu um erro inesperado: ${error.message ?? 'Falha na requisição GraphQL'}` };
   }
 }
 
 export async function deletePlan(id: string) {
   try {
-    const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.from('plans').delete().eq('id', id);
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      return { success: false, message: `Erro ao excluir plano: ${error.message}` };
-    }
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation DeletePlan($id: uuid!) {
+        delete_plans_by_pk(id: $id) { id }
+      }
+    `;
+    await client.request(mutation, { id });
 
     revalidatePath('/modalidades');
     revalidatePath('/financeiro');
     return { success: true, message: 'Plano excluído com sucesso!' };
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    return { success: false, message: `Ocorreu um erro inesperado: ${error.message ?? 'Falha na requisição GraphQL'}` };
   }
 }

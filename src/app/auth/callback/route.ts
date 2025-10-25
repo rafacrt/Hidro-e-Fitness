@@ -1,20 +1,17 @@
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get('code');
-  // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get('next') ?? '/';
+// Callback sem Supabase: redireciona de forma segura usando o parâmetro "next"
+// e/ou presença do cookie "token" (JWT) emitido pelo nosso backend.
+export async function GET(request: NextRequest) {
+  const { searchParams, origin } = new URL(request.url)
+  const next = searchParams.get('next')
+  const hasToken = !!request.cookies.get('token')?.value
 
-  if (code) {
-    const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
-    }
+  // Se houver destino explícito, respeita o parâmetro
+  if (next) {
+    return NextResponse.redirect(`${origin}${next}`)
   }
 
-  // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+  // Sem "next": encaminha para dashboard se autenticado, senão para login
+  return NextResponse.redirect(`${origin}${hasToken ? '/dashboard' : '/login'}`)
 }

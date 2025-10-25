@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import type { Database } from '@/lib/database.types';
 import Image from 'next/image';
 import { ScrollArea } from '../ui/scroll-area';
+import * as React from 'react';
 
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 
@@ -17,12 +18,17 @@ interface NavContentProps {
 export function NavContent({ settings }: NavContentProps) {
   const activePath = usePathname();
   const logoUrl = settings?.logo_url || '/logo/logo.png';
+  // Fallback automático para a logo no menu
+  const [logoSrc, setLogoSrc] = React.useState<string>(logoUrl);
+  React.useEffect(() => {
+    setLogoSrc(logoUrl);
+  }, [logoUrl]);
 
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-sidebar-border">
         <Link href="/" className="flex items-center gap-3 font-bold text-xl text-sidebar-foreground">
-            <Image src={logoUrl} alt="Logo da Academia" width={32} height={32} className="object-contain" data-ai-hint="water fitness" />
+            <Image src={logoSrc} alt="Logo da Academia" width={32} height={32} className="object-contain" onError={() => setLogoSrc('/logo/logo.png')} />
           <div className="flex flex-col">
             <span className="leading-tight">{settings?.name || 'Hidro Fitness'}</span>
             <span className="text-xs font-normal text-sidebar-muted-foreground leading-tight">Sistema de Gestão</span>

@@ -1,7 +1,7 @@
 
 'use server';
 
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getGraphQLServerClient } from '@/lib/graphql/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { Database } from '@/lib/database.types';
@@ -53,38 +53,43 @@ export async function addTransaction(formData: unknown) {
   const { existing_payment_id, student_id, ...data } = parsedData.data;
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const client = getGraphQLServerClient();
     
-    // Convert price string "R$ 180,00" to number 180.00
+    // Converter "R$ 180,00" para número 180.00
     let amountAsNumber = Number(data.amount.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
     if (data.type === 'despesa') {
       amountAsNumber = -Math.abs(amountAsNumber);
     }
 
-    // If we are paying off an existing payment, update it
+    // Se vamos quitar uma cobrança existente, atualizar pagamento
     if (existing_payment_id) {
-        const { error } = await supabase
-            .from('payments')
-            .update({
-                status: 'pago',
-                paid_at: new Date().toISOString(),
-                payment_method: data.payment_method,
-                amount: amountAsNumber, // Allow amount adjustment
-            })
-            .eq('id', existing_payment_id);
-        
-        if (error) {
-            console.error('Supabase Error updating payment:', error);
-            return { success: false, message: `Erro ao quitar cobrança: ${error.message}` };
+      const mutation = `
+        mutation QuitPayment($id: uuid!, $changes: payments_set_input!) {
+          update_payments_by_pk(pk_columns: { id: $id }, _set: $changes) { id }
         }
-        revalidatePath('/financeiro');
-        revalidatePath('/alunos');
-        return { success: true, message: 'Cobrança quitada com sucesso!' };
+      `;
+      await client.request(mutation, {
+        id: existing_payment_id,
+        changes: {
+          status: 'pago',
+          paid_at: new Date().toISOString(),
+          payment_method: data.payment_method,
+          amount: amountAsNumber,
+        },
+      });
+      revalidatePath('/financeiro');
+      revalidatePath('/alunos');
+      return { success: true, message: 'Cobrança quitada com sucesso!' };
     }
 
-    // Otherwise, create a new transaction
-    const { error } = await supabase.from('payments').insert([
-      {
+    // Caso contrário, criar nova transação
+    const mutation = `
+      mutation InsertPayment($object: payments_insert_input!) {
+        insert_payments_one(object: $object) { id }
+      }
+    `;
+    await client.request(mutation, {
+      object: {
         description: `${data.category} - ${data.description}`,
         amount: amountAsNumber,
         due_date: toDateOnlyISOString(data.due_date),
@@ -94,92 +99,111 @@ export async function addTransaction(formData: unknown) {
         category: data.category,
         type: data.type,
       },
-    ]);
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      return { success: false, message: `Erro ao registrar transação: ${error.message}` };
-    }
+    });
 
     revalidatePath('/financeiro');
     revalidatePath('/alunos');
     return { success: true, message: 'Transação registrada com sucesso!' };
 
   } catch (error: any) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: `Ocorreu um erro inesperado: ${error.message}` };
+    console.error('GraphQL Error:', error);
+    return { success: false, message: `Ocorreu um erro inesperado: ${error.message || 'Falha na requisição GraphQL'}` };
   }
 }
 
 export async function getTransactions(type: 'receita' | 'despesa' | 'all'): Promise<Payment[]> {
-    try {
-        const supabase = await createSupabaseServerClient();
-        let query = supabase
-            .from('payments')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (type === 'receita') {
-            query = query.gt('amount', 0);
-        } else if (type === 'despesa') {
-            query = query.lt('amount', 0);
+  try {
+    const client = getGraphQLServerClient();
+    const query = `
+      query Payments($where: payments_bool_exp, $orderBy: [payments_order_by!]) {
+        payments(where: $where, order_by: $orderBy) {
+          id
+          description
+          amount
+          due_date
+          payment_method
+          status
+          student_id
+          category
+          type
+          created_at
+          paid_at
         }
-
-        const { data, error } = await query;
-
-        if (error) {
-            console.error('Supabase Error:', error);
-            return [];
-        }
-
-        return data;
-    } catch (error) {
-        console.error('Unexpected Error:', error);
-        return [];
+      }
+    `;
+    let where: any = null;
+    if (type === 'receita') {
+      where = { amount: { _gt: 0 } };
+    } else if (type === 'despesa') {
+      where = { amount: { _lt: 0 } };
     }
+    const data = await client.request(query, {
+      where,
+      orderBy: [{ created_at: 'desc' }],
+    });
+    return data.payments as Payment[];
+  } catch (error) {
+    console.error('GraphQL Error:', error);
+    return [];
+  }
 }
 
 export async function getPendingPayments(studentId: string): Promise<Payment[]> {
-    if (!studentId) return [];
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { data, error } = await supabase
-            .from('payments')
-            .select('*')
-            .eq('student_id', studentId)
-            .in('status', ['pendente', 'vencido'])
-            .order('due_date', { ascending: true });
-
-        if (error) {
-            console.error('Supabase Error fetching pending payments:', error);
-            return [];
+  if (!studentId) return [];
+  try {
+    const client = getGraphQLServerClient();
+    const query = `
+      query PendingPayments($studentId: uuid!) {
+        payments(where: { student_id: { _eq: $studentId }, status: { _in: ["pendente", "vencido"] } }, order_by: { due_date: asc }) {
+          id
+          description
+          amount
+          due_date
+          payment_method
+          status
+          student_id
+          category
+          type
+          created_at
+          paid_at
         }
-        return data;
-    } catch (error) {
-        console.error('Unexpected error fetching pending payments:', error);
-        return [];
-    }
+      }
+    `;
+    const data = await client.request(query, { studentId });
+    return data.payments as Payment[];
+  } catch (error) {
+    console.error('GraphQL Error fetching pending payments:', error);
+    return [];
+  }
 }
 
 export async function getAllStudentPayments(studentId: string): Promise<Payment[]> {
-    if (!studentId) return [];
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { data, error } = await supabase
-            .from('payments')
-            .select('*')
-            .eq('student_id', studentId)
-            .order('due_date', { ascending: false });
-
-        if (error) {
-            console.error('Supabase Error fetching student payments:', error);
-            return [];
+  if (!studentId) return [];
+  try {
+    const client = getGraphQLServerClient();
+    const query = `
+      query AllStudentPayments($studentId: uuid!) {
+        payments(where: { student_id: { _eq: $studentId } }, order_by: { due_date: desc }) {
+          id
+          description
+          amount
+          due_date
+          payment_method
+          status
+          student_id
+          category
+          type
+          created_at
+          paid_at
         }
-        return data;
-    } catch (error) {
-        console.error('Unexpected error fetching student payments:', error);
-        return [];
-    }
+      }
+    `;
+    const data = await client.request(query, { studentId });
+    return data.payments as Payment[];
+  } catch (error) {
+    console.error('GraphQL Error fetching student payments:', error);
+    return [];
+  }
 }
 
 
@@ -224,99 +248,100 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
 
 
 export async function updateTransaction(id: string, formData: unknown) {
-    const parsedData = transactionFormSchema.safeParse(formData);
+  const parsedData = transactionFormSchema.safeParse(formData);
 
-    if (!parsedData.success) {
-        return {
-            success: false,
-            message: 'Dados do formulário inválidos.',
-            errors: parsedData.error.flatten().fieldErrors,
-        };
+  if (!parsedData.success) {
+    return {
+      success: false,
+      message: 'Dados do formulário inválidos.',
+      errors: parsedData.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    const client = getGraphQLServerClient();
+    let amountAsNumber = Number(parsedData.data.amount.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
+    
+    if (parsedData.data.type === 'despesa') {
+      amountAsNumber = -Math.abs(amountAsNumber);
     }
 
-    try {
-        const supabase = await createSupabaseServerClient();
-        let amountAsNumber = Number(parsedData.data.amount.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
-        
-        if (parsedData.data.type === 'despesa') {
-            amountAsNumber = -Math.abs(amountAsNumber);
-        }
+    const mutation = `
+      mutation UpdatePayment($id: uuid!, $changes: payments_set_input!) {
+        update_payments_by_pk(pk_columns: { id: $id }, _set: $changes) { id }
+      }
+    `;
+    await client.request(mutation, {
+      id,
+      changes: {
+        description: `${parsedData.data.category} - ${parsedData.data.description}`,
+        amount: amountAsNumber,
+        due_date: toDateOnlyISOString(parsedData.data.due_date),
+        payment_method: parsedData.data.payment_method,
+        status: parsedData.data.status,
+        category: parsedData.data.category,
+        type: parsedData.data.type,
+      },
+    });
 
-        const { error } = await supabase
-            .from('payments')
-            .update({
-                description: `${parsedData.data.category} - ${parsedData.data.description}`,
-                amount: amountAsNumber,
-                due_date: toDateOnlyISOString(parsedData.data.due_date),
-                payment_method: parsedData.data.payment_method,
-                status: parsedData.data.status,
-                category: parsedData.data.category,
-                type: parsedData.data.type,
-            })
-            .eq('id', id);
-
-        if (error) {
-            return { success: false, message: `Erro ao atualizar transação: ${error.message}` };
-        }
-
-        revalidatePath('/financeiro');
-        return { success: true, message: 'Transação atualizada com sucesso!' };
-    } catch (error) {
-        return { success: false, message: 'Ocorreu um erro inesperado.' };
-    }
+    revalidatePath('/financeiro');
+    return { success: true, message: 'Transação atualizada com sucesso!' };
+  } catch (error: any) {
+    return { success: false, message: `Ocorreu um erro inesperado: ${error.message || 'Falha na requisição GraphQL'}` };
+  }
 }
 
 export async function deleteTransaction(id: string) {
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { error } = await supabase.from('payments').delete().eq('id', id);
+  try {
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation DeletePayment($id: uuid!) {
+        delete_payments_by_pk(id: $id) { id }
+      }
+    `;
+    await client.request(mutation, { id });
 
-        if (error) {
-            return { success: false, message: `Erro ao excluir transação: ${error.message}` };
-        }
-
-        revalidatePath('/financeiro');
-        return { success: true, message: 'Transação excluída com sucesso!' };
-    } catch (error) {
-        return { success: false, message: 'Ocorreu um erro inesperado.' };
-    }
+    revalidatePath('/financeiro');
+    return { success: true, message: 'Transação excluída com sucesso!' };
+  } catch (error: any) {
+    return { success: false, message: `Ocorreu um erro inesperado: ${error.message || 'Falha na requisição GraphQL'}` };
+  }
 }
 
 export async function generateMonthlyPayments(month: Date) {
   try {
-    const supabase = await createSupabaseServerClient();
+    const client = getGraphQLServerClient();
     const monthStart = startOfMonth(month);
     const monthEnd = endOfMonth(month);
     const monthName = format(month, 'MMMM yyyy', { locale: ptBR });
     const dueDate = new Date(month.getFullYear(), month.getMonth(), 10); // Vencimento dia 10
 
-    // 1. Buscar todas as matrículas ativas com detalhes
-    const { data: enrollments, error: enrollmentsError } = await supabase
-      .from('enrollments')
-      .select(`
-        student_id,
-        students ( name, status ),
-        classes (
-          modalities (
-            plans ( name, price, recurrence )
-          )
-        )
-      `)
-      .eq('students.status', 'ativo');
-      
-    if (enrollmentsError) throw new Error(`Erro ao buscar matrículas: ${enrollmentsError.message}`);
+    // 1. Buscar matrículas ativas com planos da modalidade da turma
+    const query = `
+      query EnrollmentsAndExistingPayments($monthStart: date!, $monthEnd: date!) {
+        enrollments(where: { students: { status: { _eq: "ativo" } } }) {
+          student_id
+          students { name status }
+          classes {
+            modalities {
+              plans { name price recurrence }
+            }
+          }
+        }
+        payments(where: { due_date: { _gte: $monthStart, _lte: $monthEnd }, description: { _ilike: "%Mensalidade%" } }) {
+          student_id
+        }
+      }
+    `;
+    const data = await client.request(query, {
+      monthStart: toDateOnlyISOString(monthStart),
+      monthEnd: toDateOnlyISOString(monthEnd),
+    });
 
-    // 2. Buscar pagamentos já existentes para o mês
-    const { data: existingPayments, error: paymentsError } = await supabase
-      .from('payments')
-      .select('student_id')
-      .gte('due_date', toDateOnlyISOString(monthStart))
-      .lte('due_date', toDateOnlyISOString(monthEnd))
-      .like('description', `%Mensalidade%`);
+    const enrollments = data.enrollments || [];
+    const existingPayments = data.payments || [];
 
-    if (paymentsError) throw new Error(`Erro ao buscar pagamentos existentes: ${paymentsError.message}`);
-
-    const billedStudentIds = new Set(existingPayments.map(p => p.student_id));
+    const billedStudentIds = new Set(existingPayments.map((p: any) => p.student_id));
     const newPayments: any[] = [];
     let processedStudents = 0;
 
@@ -326,7 +351,7 @@ export async function generateMonthlyPayments(month: Date) {
       }
 
       // Simplificação: Assume o primeiro plano mensal encontrado para a modalidade da turma
-      const plan = (enrollment.classes?.modalities?.plans || []).find(p => p.recurrence === 'mensal');
+      const plan = (enrollment.classes?.modalities?.plans || []).find((p: any) => p.recurrence === 'mensal');
       
       if (plan) {
         newPayments.push({
@@ -336,14 +361,18 @@ export async function generateMonthlyPayments(month: Date) {
           due_date: toDateOnlyISOString(dueDate),
           status: 'pendente',
         });
-        billedStudentIds.add(enrollment.student_id); // Garante que não será cobrado de novo no mesmo lote
+        billedStudentIds.add(enrollment.student_id);
         processedStudents++;
       }
     }
 
     if (newPayments.length > 0) {
-      const { error: insertError } = await supabase.from('payments').insert(newPayments);
-      if (insertError) throw new Error(`Erro ao inserir novos pagamentos: ${insertError.message}`);
+      const mutation = `
+        mutation InsertPayments($objects: [payments_insert_input!]!) {
+          insert_payments(objects: $objects) { affected_rows }
+        }
+      `;
+      await client.request(mutation, { objects: newPayments });
     }
 
     revalidatePath('/financeiro');
@@ -356,35 +385,38 @@ export async function generateMonthlyPayments(month: Date) {
 }
 
 export async function paySelectedPayments(paymentIds: string[]) {
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { error } = await supabase
-            .from('payments')
-            .update({ status: 'pago', paid_at: new Date().toISOString() })
-            .in('id', paymentIds);
+  try {
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation PaySelected($ids: [uuid!]!, $paidAt: timestamptz!) {
+        update_payments(where: { id: { _in: $ids } }, _set: { status: "pago", paid_at: $paidAt }) { affected_rows }
+      }
+    `;
+    await client.request(mutation, { ids: paymentIds, paidAt: new Date().toISOString() });
 
-        if (error) throw error;
-
-        revalidatePath('/financeiro');
-        return { success: true, message: `${paymentIds.length} transação(ões) marcada(s) como paga(s).` };
-    } catch (error: any) {
-        return { success: false, message: `Erro ao pagar transações: ${error.message}` };
-    }
+    revalidatePath('/financeiro');
+    return { success: true, message: `${paymentIds.length} transação(ões) marcada(s) como paga(s).` };
+  } catch (error: any) {
+    return { success: false, message: `Erro ao pagar transações: ${error.message || 'Falha na requisição GraphQL'}` };
+  }
 }
 
 export async function scheduleSelectedPayments(paymentIds: string[], newDueDate: Date) {
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { error } = await supabase
-            .from('payments')
-            .update({ due_date: toDateOnlyISOString(newDueDate), status: 'pendente' })
-            .in('id', paymentIds);
+  try {
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation ScheduleSelected($ids: [uuid!]!, $newDueDate: date!) {
+        update_payments(
+          where: { id: { _in: $ids } },
+          _set: { due_date: $newDueDate, status: "pendente" }
+        ) { affected_rows }
+      }
+    `;
+    await client.request(mutation, { ids: paymentIds, newDueDate: toDateOnlyISOString(newDueDate) });
 
-        if (error) throw error;
-
-        revalidatePath('/financeiro');
-        return { success: true, message: `${paymentIds.length} transação(ões) reagendada(s).` };
-    } catch (error: any) {
-        return { success: false, message: `Erro ao agendar pagamentos: ${error.message}` };
-    }
+    revalidatePath('/financeiro');
+    return { success: true, message: `${paymentIds.length} transação(ões) reagendada(s).` };
+  } catch (error: any) {
+    return { success: false, message: `Erro ao agendar pagamentos: ${error.message || 'Falha na requisição GraphQL'}` };
+  }
 }

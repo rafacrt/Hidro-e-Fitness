@@ -1,7 +1,7 @@
 
 'use server';
 
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getGraphQLServerClient } from '@/lib/graphql/server';
 import type { Database } from '@/lib/database.types';
 import { startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
 
@@ -16,66 +16,56 @@ export interface DashboardStats {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const supabase = await createSupabaseServerClient();
+  const client = getGraphQLServerClient();
   const today = new Date();
 
   try {
-    // Alunos Ativos
-    const { count: activeStudents, error: studentsError } = await supabase
-      .from('students')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'ativo');
-    if (studentsError) throw new Error(`Error fetching active students: ${studentsError.message}`);
-
-    // Turmas Hoje
     const dayOfWeekMap = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const currentDayOfWeek = dayOfWeekMap[today.getDay()];
-    const { count: classesToday, error: classesError } = await supabase
-      .from('classes')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'ativa')
-      .contains('days_of_week', [currentDayOfWeek]);
-    if (classesError) throw new Error(`Error fetching classes today: ${classesError.message}`);
+    const startOfCurrentMonth = startOfMonth(today).toISOString();
+    const endOfCurrentMonth = endOfMonth(today).toISOString();
 
-    // Receita Mensal
-    const startOfCurrentMonth = startOfMonth(today);
-    const endOfCurrentMonth = endOfMonth(today);
-    const { data: revenueData, error: revenueError } = await supabase
-      .from('payments')
-      .select('amount')
-      .gt('amount', 0) // Considerar apenas entradas (valores positivos) como receita
-      .eq('status', 'pago')
-      .gte('created_at', startOfCurrentMonth.toISOString())
-      .lte('created_at', endOfCurrentMonth.toISOString());
-    if (revenueError) throw new Error(`Error fetching monthly revenue: ${revenueError.message}`);
-    
-    const monthlyRevenue = revenueData ? revenueData.reduce((sum, payment) => sum + (payment.amount || 0), 0) : 0;
-    
-    // Taxa de Presença (Mês Corrente)
-    const { data: attendanceData, error: attendanceError } = await supabase
-      .from('attendance')
-      .select('status')
-      .gte('created_at', startOfCurrentMonth.toISOString())
-      .lte('created_at', endOfCurrentMonth.toISOString());
-      
-    if (attendanceError) throw new Error(`Error fetching attendance data: ${attendanceError.message}`);
+    const query = `
+      query DashboardStats($start: timestamptz!, $end: timestamptz!, $currentDay: String!) {
+        active_students: students_aggregate(where: { status: { _eq: "ativo" } }) {
+          aggregate { count }
+        }
+        classes_today: classes_aggregate(
+          where: { status: { _eq: "ativa" }, days_of_week: { _contains: [$currentDay] } }
+        ) {
+          aggregate { count }
+        }
+        monthly_revenue: payments_aggregate(
+          where: { amount: { _gt: 0 }, status: { _eq: "pago" }, created_at: { _gte: $start, _lte: $end } }
+        ) {
+          aggregate { sum { amount } }
+        }
+        attendance_total: attendance_aggregate(where: { created_at: { _gte: $start, _lte: $end } }) {
+          aggregate { count }
+        }
+        attendance_present: attendance_aggregate(where: { status: { _eq: "presente" }, created_at: { _gte: $start, _lte: $end } }) {
+          aggregate { count }
+        }
+      }
+    `;
 
-    let attendanceRate = 0;
-    if (attendanceData && attendanceData.length > 0) {
-        const presentCount = attendanceData.filter(a => a.status === 'presente').length;
-        const totalCount = attendanceData.length;
-        attendanceRate = (presentCount / totalCount) * 100;
-    }
+    const data = await client.request(query, { start: startOfCurrentMonth, end: endOfCurrentMonth, currentDay: currentDayOfWeek });
 
+    const activeStudents = data.active_students?.aggregate?.count ?? 0;
+    const classesToday = data.classes_today?.aggregate?.count ?? 0;
+    const monthlyRevenue = data.monthly_revenue?.aggregate?.sum?.amount ?? 0;
+    const totalAttendance = data.attendance_total?.aggregate?.count ?? 0;
+    const presentAttendance = data.attendance_present?.aggregate?.count ?? 0;
+    const attendanceRate = totalAttendance > 0 ? (presentAttendance / totalAttendance) * 100 : 0;
 
     return {
-      activeStudents: activeStudents || 0,
-      classesToday: classesToday || 0,
-      monthlyRevenue: monthlyRevenue,
-      attendanceRate: attendanceRate,
+      activeStudents,
+      classesToday,
+      monthlyRevenue,
+      attendanceRate,
     };
   } catch (error: any) {
-    console.error('Error fetching dashboard stats:', error.message);
+    console.error('Error fetching dashboard stats (GraphQL):', error.message || error);
     return {
       activeStudents: 0,
       classesToday: 0,
@@ -87,30 +77,34 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
 export async function getUpcomingClasses(): Promise<(ClassRow & { instructors: Pick<Instructor, 'name'> | null })[]> {
   try {
-    const supabase = await createSupabaseServerClient();
+    const client = getGraphQLServerClient();
     const today = new Date();
     const dayOfWeekMap = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const currentDayOfWeek = dayOfWeekMap[today.getDay()];
-    
-    const { data, error } = await supabase
-        .from('classes')
-        .select(`
-            *,
-            instructors ( name )
-        `)
-        .eq('status', 'ativa')
-        .contains('days_of_week', [currentDayOfWeek])
-        .order('start_time', { ascending: true })
-        .limit(5);
 
-    if (error) {
-        console.error('Error fetching upcoming classes:', error);
-        throw new Error('Não foi possível buscar as próximas turmas.');
-    }
-    
-    return data;
+    const query = `
+      query UpcomingClasses($currentDay: String!) {
+        classes(
+          where: { status: { _eq: "ativa" }, days_of_week: { _contains: [$currentDay] } },
+          order_by: { start_time: asc },
+          limit: 5
+        ) {
+          id
+          name
+          status
+          days_of_week
+          start_time
+          end_time
+          instructor_id
+          instructors { name }
+        }
+      }
+    `;
+
+    const data = await client.request(query, { currentDay: currentDayOfWeek });
+    return (data.classes || []) as any;
   } catch (error) {
-    console.error('Unexpected error fetching upcoming classes:', error);
+    console.error('Unexpected error fetching upcoming classes (GraphQL):', error);
     return [];
   }
 }

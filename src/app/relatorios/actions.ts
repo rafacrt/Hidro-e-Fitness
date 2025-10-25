@@ -1,7 +1,7 @@
 
 'use server';
 
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getGraphQLServerClient } from '@/lib/graphql/server';
 import type { Database } from '@/lib/database.types';
 
 type Report = Database['public']['Tables']['reports']['Row'];
@@ -15,40 +15,37 @@ export interface ReportStats {
 
 export async function getReportStats(): Promise<ReportStats> {
   try {
-    const supabase = await createSupabaseServerClient();
-    
-    const { count: generatedReports, error: reportsError } = await supabase
-      .from('reports')
-      .select('*', { count: 'exact', head: true });
+    const client = getGraphQLServerClient();
 
-    const { data: payments, error: paymentsError } = await supabase
-      .from('payments')
-      .select('amount, type')
-      .eq('status', 'pago');
-    
-    let totalRevenue = 0;
-    if (!paymentsError && payments) {
-      totalRevenue = payments
-        .filter(p => p.type === 'receita')
-        .reduce((acc, p) => acc + (p.amount || 0), 0);
-    }
+    const query = `
+      query ReportStats {
+        generated_reports: reports_aggregate { aggregate { count } }
+        revenue_paid: payments_aggregate(where: { status: { _eq: "pago" }, type: { _eq: "receita" } }) {
+          aggregate { sum { amount } }
+        }
+        active_students: students_aggregate(where: { status: { _eq: "ativo" } }) { aggregate { count } }
+        attendance_total: attendance_aggregate { aggregate { count } }
+        attendance_present: attendance_aggregate(where: { status: { _eq: "presente" } }) { aggregate { count } }
+      }
+    `;
 
-    const { count: activeStudents } = await supabase
-      .from('students')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'ativo');
-    
-    // Placeholder for attendance rate as it's not implemented yet
-    const attendanceRate = 87.5;
+    const data = await client.request(query);
+
+    const generatedReports = data.generated_reports?.aggregate?.count ?? 0;
+    const totalRevenue = data.revenue_paid?.aggregate?.sum?.amount ?? 0;
+    const activeStudents = data.active_students?.aggregate?.count ?? 0;
+    const totalAttendance = data.attendance_total?.aggregate?.count ?? 0;
+    const presentAttendance = data.attendance_present?.aggregate?.count ?? 0;
+    const attendanceRate = totalAttendance > 0 ? (presentAttendance / totalAttendance) * 100 : 0;
 
     return {
-      generatedReports: reportsError ? 0 : generatedReports || 0,
-      totalRevenue: totalRevenue,
-      activeStudents: activeStudents || 0,
-      attendanceRate: attendanceRate,
+      generatedReports,
+      totalRevenue,
+      activeStudents,
+      attendanceRate,
     };
   } catch (error) {
-    console.error('Error fetching report stats:', error);
+    console.error('Error fetching report stats (GraphQL):', error);
     return {
       generatedReports: 0,
       totalRevenue: 0,
@@ -60,21 +57,21 @@ export async function getReportStats(): Promise<ReportStats> {
 
 export async function getMostUsedReports(): Promise<Report[]> {
   try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
-      .from('reports')
-      .select('*')
-      .order('times_generated', { ascending: false })
-      .limit(4);
-
-    if (error) {
-      // It's possible the table doesn't exist, so we'll just return an empty array
-      return [];
-    }
-
-    return data;
+    const client = getGraphQLServerClient();
+    const query = `
+      query MostUsedReports {
+        reports(order_by: { times_generated: desc }, limit: 4) {
+          id
+          name
+          times_generated
+          created_at
+          updated_at
+        }
+      }
+    `;
+    const data = await client.request(query);
+    return (data.reports || []) as Report[];
   } catch (error) {
-    // Also catch unexpected errors and return empty
     return [];
   }
 }

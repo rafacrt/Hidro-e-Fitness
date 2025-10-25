@@ -15,6 +15,8 @@ export default async function ConfiguracoesPage() {
     getUsers()
   ]);
 
+  const isDeveloper = (userProfile?.role || '').toLowerCase() === 'desenvolvedor';
+
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <Sidebar>
@@ -34,7 +36,7 @@ export default async function ConfiguracoesPage() {
             </div>
             <div className="lg:col-span-2 space-y-6">
               <AcademySettings settings={academySettings} />
-              <UserManagement users={users} />
+              <UserManagement users={users} isDeveloper={isDeveloper} />
             </div>
           </div>
         </main>

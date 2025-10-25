@@ -1,7 +1,7 @@
 
 'use server';
 
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getGraphQLServerClient } from '@/lib/graphql/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { Database } from '@/lib/database.types';
@@ -39,24 +39,30 @@ const enrollStudentsSchema = z.object({
 
 export async function getClasses(): Promise<(ClassRow & { instructors: Pick<Instructor, 'name'> | null } & { modalities: Pick<Modality, 'name'> | null })[]> {
   try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
-      .from('classes')
-      .select(`
-        *,
-        instructors ( name ),
-        modalities ( name )
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      throw new Error('Não foi possível buscar as turmas.');
-    }
-
-    return data;
+    const client = getGraphQLServerClient();
+    const query = `
+      query GetClasses {
+        classes(order_by: { created_at: desc }) {
+          id
+          name
+          modality_id
+          instructor_id
+          start_time
+          end_time
+          days_of_week
+          location
+          max_students
+          status
+          created_at
+          instructors { name }
+          modalities { name }
+        }
+      }
+    `;
+    const data = await client.request(query);
+    return data.classes as any[];
   } catch (error) {
-    console.error('Unexpected Error:', error);
+    console.error('GraphQL Error:', error);
     return [];
   }
 }
@@ -73,9 +79,14 @@ export async function addClass(formData: unknown) {
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.from('classes').insert([
-      {
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation InsertClass($object: classes_insert_input!) {
+        insert_classes_one(object: $object) { id }
+      }
+    `;
+    await client.request(mutation, {
+      object: {
         name: parsedData.data.name,
         modality_id: parsedData.data.modality_id,
         instructor_id: parsedData.data.instructor_id || null,
@@ -86,105 +97,111 @@ export async function addClass(formData: unknown) {
         max_students: parsedData.data.max_students,
         status: parsedData.data.status,
       },
-    ]);
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      return { success: false, message: `Erro ao cadastrar turma: ${error.message}` };
-    }
+    });
 
     revalidatePath('/turmas');
     return { success: true, message: 'Turma cadastrada com sucesso!' };
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    const msg = error?.message || 'Falha ao cadastrar turma';
+    return { success: false, message: `Erro ao cadastrar turma: ${msg}` };
   }
 }
 
 export async function updateClass(id: string, formData: unknown) {
-    const parsedData = classFormSchema.safeParse(formData);
+  const parsedData = classFormSchema.safeParse(formData);
 
-    if (!parsedData.success) {
-        return {
-        success: false,
-        message: 'Dados do formulário inválidos.',
-        errors: parsedData.error.flatten().fieldErrors,
-        };
-    }
-    
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { error } = await supabase
-        .from('classes')
-        .update({
-            name: parsedData.data.name,
-            modality_id: parsedData.data.modality_id,
-            instructor_id: parsedData.data.instructor_id,
-            start_time: parsedData.data.start_time,
-            end_time: parsedData.data.end_time,
-            days_of_week: parsedData.data.days_of_week,
-            location: parsedData.data.location,
-            max_students: parsedData.data.max_students,
-            status: parsedData.data.status,
-        })
-        .eq('id', id);
+  if (!parsedData.success) {
+    return {
+      success: false,
+      message: 'Dados do formulário inválidos.',
+      errors: parsedData.error.flatten().fieldErrors,
+    };
+  }
+  
+  try {
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation UpdateClass($id: uuid!, $changes: classes_set_input!) {
+        update_classes_by_pk(pk_columns: { id: $id }, _set: $changes) { id }
+      }
+    `;
+    await client.request(mutation, {
+      id,
+      changes: {
+        name: parsedData.data.name,
+        modality_id: parsedData.data.modality_id,
+        instructor_id: parsedData.data.instructor_id || null,
+        start_time: parsedData.data.start_time,
+        end_time: parsedData.data.end_time,
+        days_of_week: parsedData.data.days_of_week,
+        location: parsedData.data.location || null,
+        max_students: parsedData.data.max_students,
+        status: parsedData.data.status,
+      },
+    });
 
-        if (error) {
-        console.error('Supabase Error:', error);
-        return { success: false, message: `Erro ao atualizar turma: ${error.message}` };
-        }
+    revalidatePath('/turmas');
+    return { success: true, message: 'Turma atualizada com sucesso!' };
 
-        revalidatePath('/turmas');
-        return { success: true, message: 'Turma atualizada com sucesso!' };
-
-    } catch (error) {
-        console.error('Unexpected Error:', error);
-        return { success: false, message: 'Ocorreu um erro inesperado.' };
-    }
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    const msg = error?.message || 'Falha ao atualizar turma';
+    return { success: false, message: `Erro ao atualizar turma: ${msg}` };
+  }
 }
 
 
 export async function deleteClass(id: string) {
   try {
-    const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.from('classes').delete().eq('id', id);
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      return { success: false, message: `Erro ao excluir turma: ${error.message}` };
-    }
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation DeleteClass($id: uuid!) {
+        delete_classes_by_pk(id: $id) { id }
+      }
+    `;
+    await client.request(mutation, { id });
 
     revalidatePath('/turmas');
     return { success: true, message: 'Turma excluída com sucesso!' };
 
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    const msg = error?.message || 'Falha ao excluir turma';
+    return { success: false, message: `Erro ao excluir turma: ${msg}` };
   }
 }
 
 export async function getInstructorsForForm(): Promise<{ id: string, name: string }[]> {
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { data, error } = await supabase.from('instructors').select('id, name');
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error("Error fetching instructors for form:", error);
-        return [];
-    }
+  try {
+    const client = getGraphQLServerClient();
+    const query = `
+      query GetInstructors {
+        instructors { id, name }
+      }
+    `;
+    const data = await client.request(query);
+    return data.instructors as { id: string; name: string }[];
+  } catch (error) {
+    console.error('GraphQL Error fetching instructors for form:', error);
+    return [];
+  }
 }
 
 export async function getModalitiesForForm(): Promise<{ id: string, name: string }[]> {
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { data, error } = await supabase.from('modalities').select('id, name');
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error("Error fetching modalities for form:", error);
-        return [];
-    }
+  try {
+    const client = getGraphQLServerClient();
+    const query = `
+      query GetModalities {
+        modalities { id, name }
+      }
+    `;
+    const data = await client.request(query);
+    return data.modalities as { id: string; name: string }[];
+  } catch (error) {
+    console.error('GraphQL Error fetching modalities for form:', error);
+    return [];
+  }
 }
 
 export async function enrollStudents(formData: unknown) {
@@ -200,70 +217,63 @@ export async function enrollStudents(formData: unknown) {
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
-    const enrollments = student_ids.map(student_id => ({
-      class_id,
-      student_id,
-    }));
-
-    const { error } = await supabase.from('enrollments').insert(enrollments);
-
-    if (error) {
-      if (error.code === '23505') { // unique_violation
-        return { success: false, message: 'Um ou mais alunos selecionados já estão matriculados nesta turma.' };
+    const client = getGraphQLServerClient();
+    const enrollments = student_ids.map(student_id => ({ class_id, student_id }));
+    const mutation = `
+      mutation EnrollStudents($objects: [enrollments_insert_input!]!) {
+        insert_enrollments(objects: $objects) { affected_rows }
       }
-      throw error;
-    }
+    `;
+    await client.request(mutation, { objects: enrollments });
     
     revalidatePath('/turmas');
     return { success: true, message: `${student_ids.length} aluno(s) matriculado(s) com sucesso!` };
 
   } catch (error: any) {
+    const msg = error?.message || '';
+    if (msg.includes('enrollments') && msg.toLowerCase().includes('unique')) {
+      return { success: false, message: 'Um ou mais alunos selecionados já estão matriculados nesta turma.' };
+    }
     console.error('Enrollment Error:', error);
-    return { success: false, message: `Erro ao matricular alunos: ${error.message}` };
+    return { success: false, message: `Erro ao matricular alunos: ${msg || 'Falha na requisição GraphQL'}` };
   }
 }
 
 export async function unenrollStudents(class_id: string, student_ids: string[]) {
-    if (student_ids.length === 0) {
+  if (student_ids.length === 0) {
     return { success: true, message: 'Nenhum aluno selecionado para desmatricular.' };
   }
   
   try {
-    const supabase = await createSupabaseServerClient();
-    const { error } = await supabase
-        .from('enrollments')
-        .delete()
-        .eq('class_id', class_id)
-        .in('student_id', student_ids);
-
-     if (error) {
-      throw error;
-    }
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation Unenroll($classId: uuid!, $studentIds: [uuid!]!) {
+        delete_enrollments(where: { class_id: { _eq: $classId }, student_id: { _in: $studentIds } }) { affected_rows }
+      }
+    `;
+    await client.request(mutation, { classId: class_id, studentIds: student_ids });
     
     revalidatePath('/turmas');
     return { success: true, message: `${student_ids.length} aluno(s) desmatriculado(s) com sucesso!` };
   } catch (error: any) {
     console.error('Unenrollment Error:', error);
-    return { success: false, message: `Erro ao desmatricular alunos: ${error.message}` };
+    const msg = error?.message || 'Falha na requisição GraphQL';
+    return { success: false, message: `Erro ao desmatricular alunos: ${msg}` };
   }
 }
 
 export async function getEnrollments(): Promise<Enrollment[]> {
   try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
-      .from('enrollments')
-      .select('*');
-
-    if (error) {
-      console.error('Supabase Error fetching enrollments:', error);
-      throw new Error('Não foi possível buscar as matrículas.');
-    }
-
-    return data;
+    const client = getGraphQLServerClient();
+    const query = `
+      query GetEnrollments {
+        enrollments { id, student_id, class_id, created_at }
+      }
+    `;
+    const data = await client.request(query);
+    return data.enrollments as Enrollment[];
   } catch (error) {
-    console.error('Unexpected Error fetching enrollments:', error);
+    console.error('GraphQL Error fetching enrollments:', error);
     return [];
   }
 }
@@ -271,21 +281,18 @@ export async function getEnrollments(): Promise<Enrollment[]> {
 export async function getEnrolledStudents(classId: string): Promise<Pick<Student, 'id' | 'name'>[]> {
   if (!classId) return [];
   try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
-      .from('enrollments')
-      .select('students (id, name)')
-      .eq('class_id', classId);
-
-    if (error) {
-      console.error('Error fetching enrolled students:', error);
-      return [];
-    }
-
-    // A estrutura do retorno é [{ students: { id, name } }, ...]
-    // Precisamos extrair o objeto student de cada item.
-    return data.map(item => item.students).filter((student): student is Pick<Student, 'id' | 'name'> => student !== null);
-
+    const client = getGraphQLServerClient();
+    const query = `
+      query GetEnrolledStudents($classId: uuid!) {
+        enrollments(where: { class_id: { _eq: $classId } }) {
+          students { id, name }
+        }
+      }
+    `;
+    const data = await client.request(query, { classId });
+    return (data.enrollments || [])
+      .map((item: any) => item.students as { id: string; name: string } | null)
+      .filter((student: any) => student !== null) as Pick<Student, 'id' | 'name'>[];
   } catch (error) {
     console.error('Unexpected error fetching enrolled students:', error);
     return [];

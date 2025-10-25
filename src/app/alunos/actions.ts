@@ -1,7 +1,7 @@
 
 'use server';
 
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getGraphQLServerClient } from '@/lib/graphql/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { Database } from '@/lib/database.types';
@@ -70,72 +70,67 @@ export async function addStudent(formData: unknown) {
   const { data: studentData } = parsedData;
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const client = getGraphQLServerClient();
     const cleanCpf = studentData.cpf?.replace(/\D/g, '') || null;
 
     // 1. Cadastrar o Aluno
-    const { data: newStudent, error } = await supabase
-      .from('students')
-      .insert([
-        {
-          name: studentData.name,
-          cpf: cleanCpf,
-          birth_date: studentData.birthDate?.toISOString(),
-          email: studentData.email,
-          phone: studentData.phone?.replace(/\D/g, ''),
-          is_whatsapp: studentData.isWhatsApp,
-          cep: studentData.cep?.replace(/\D/g, ''),
-          street: studentData.street,
-          number: studentData.number,
-          complement: studentData.complement,
-          neighborhood: studentData.neighborhood,
-          city: studentData.city,
-          state: studentData.state,
-          responsible_name: studentData.responsibleName,
-          responsible_phone: studentData.responsiblePhone?.replace(/\D/g, ''),
-          medical_observations: studentData.medicalObservations,
-          status: 'ativo',
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      if (error.code === '23505' && error.message.includes('students_cpf_key')) {
-        return { success: false, message: 'Já existe um aluno cadastrado com este CPF.' };
+    const insertStudentMutation = `
+      mutation InsertStudent($object: students_insert_input!) {
+        insert_students_one(object: $object) { id, created_at }
       }
-      return { success: false, message: `Erro ao cadastrar aluno: ${error.message}` };
-    }
+    `;
+    const { insert_students_one: newStudent } = await client.request(insertStudentMutation, {
+      object: {
+        name: studentData.name,
+        cpf: cleanCpf,
+        birth_date: studentData.birthDate?.toISOString() ?? null,
+        email: studentData.email || null,
+        phone: studentData.phone?.replace(/\D/g, '') ?? null,
+        is_whatsapp: studentData.isWhatsApp,
+        cep: studentData.cep?.replace(/\D/g, '') ?? null,
+        street: studentData.street ?? null,
+        number: studentData.number ?? null,
+        complement: studentData.complement ?? null,
+        neighborhood: studentData.neighborhood ?? null,
+        city: studentData.city ?? null,
+        state: studentData.state ?? null,
+        responsible_name: studentData.responsibleName ?? null,
+        responsible_phone: studentData.responsiblePhone?.replace(/\D/g, '') ?? null,
+        medical_observations: studentData.medicalObservations ?? null,
+        status: 'ativo',
+      },
+    });
 
     let message = 'Aluno cadastrado com sucesso!';
-    
+
     // 2. Matricular em Turma (se selecionado)
     if (studentData.class_id && newStudent) {
-      const { error: enrollmentError } = await supabase
-        .from('enrollments')
-        .insert({
+      const enrollMutation = `
+        mutation Enroll($object: enrollments_insert_input!) {
+          insert_enrollments_one(object: $object) { id }
+        }
+      `;
+      await client.request(enrollMutation, {
+        object: {
           student_id: newStudent.id,
           class_id: studentData.class_id,
-        });
-
-      if (enrollmentError) {
-         return { success: false, message: `Aluno cadastrado, mas falha ao matricular na turma: ${enrollmentError.message}` };
-      }
+        },
+      });
       message += ' e matriculado na turma!';
     }
 
     // 3. Vincular Planos (se selecionado)
     if (studentData.plan_ids && studentData.plan_ids.length > 0 && newStudent) {
-      const studentPlans = studentData.plan_ids.map(plan_id => ({
+      const studentPlansObjects = studentData.plan_ids.map((plan_id: string) => ({
         student_id: newStudent.id,
-        plan_id: plan_id,
+        plan_id,
       }));
-      const { error: planError } = await supabase.from('student_plans').insert(studentPlans);
-
-      if (planError) {
-        return { success: false, message: `Aluno cadastrado, mas falha ao vincular plano: ${planError.message}` };
-      }
+      const insertStudentPlansMutation = `
+        mutation InsertStudentPlans($objects: [student_plans_insert_input!]!) {
+          insert_student_plans(objects: $objects) { affected_rows }
+        }
+      `;
+      await client.request(insertStudentPlansMutation, { objects: studentPlansObjects });
       message += ` Vinculado a ${studentData.plan_ids.length} plano(s).`;
     }
 
@@ -143,21 +138,24 @@ export async function addStudent(formData: unknown) {
     if (studentData.initial_payment_amount && studentData.payment_method && newStudent) {
       const amountAsNumber = Number(studentData.initial_payment_amount.replace('R$', '').replace(/\./g, '').replace(',', '.'));
       if (!isNaN(amountAsNumber) && amountAsNumber > 0) {
-        const { error: paymentError } = await supabase.from('payments').insert({
-          student_id: newStudent.id,
-          description: `Pagamento Inicial - Matrícula`,
-          amount: amountAsNumber,
-          due_date: new Date().toISOString().split('T')[0],
-          status: 'pago',
-          paid_at: new Date().toISOString(),
-          payment_method: studentData.payment_method,
-          type: 'receita',
-          category: 'Matrículas',
+        const insertPaymentMutation = `
+          mutation InsertPayment($object: payments_insert_input!) {
+            insert_payments_one(object: $object) { id }
+          }
+        `;
+        await client.request(insertPaymentMutation, {
+          object: {
+            student_id: newStudent.id,
+            description: `Pagamento Inicial - Matrícula`,
+            amount: amountAsNumber,
+            due_date: new Date().toISOString().split('T')[0],
+            status: 'pago',
+            paid_at: new Date().toISOString(),
+            payment_method: studentData.payment_method,
+            type: 'receita',
+            category: 'Matrículas',
+          },
         });
-
-        if (paymentError) {
-          return { success: false, message: `Aluno cadastrado, mas falha ao registrar pagamento: ${paymentError.message}` };
-        }
         message += ' Pagamento inicial registrado.';
       }
     }
@@ -167,9 +165,13 @@ export async function addStudent(formData: unknown) {
     revalidatePath('/financeiro');
     return { success: true, message };
 
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    const msg = error?.message || 'Falha na requisição GraphQL';
+    if (msg.includes('students_cpf_key')) {
+      return { success: false, message: 'Já existe um aluno cadastrado com este CPF.' };
+    }
+    return { success: false, message: `Erro ao cadastrar aluno: ${msg}` };
   }
 }
 
@@ -185,85 +187,103 @@ export async function updateStudent(id: string, formData: unknown) {
   }
   
   try {
-    const supabase = await createSupabaseServerClient();
+    const client = getGraphQLServerClient();
     const cleanCpf = parsedData.data.cpf?.replace(/\D/g, '') || null;
 
-    const { error } = await supabase
-      .from('students')
-      .update({
+    const mutation = `
+      mutation UpdateStudent($id: uuid!, $changes: students_set_input!) {
+        update_students_by_pk(pk_columns: { id: $id }, _set: $changes) { id }
+      }
+    `;
+    await client.request(mutation, {
+      id,
+      changes: {
         name: parsedData.data.name,
         cpf: cleanCpf,
-        birth_date: parsedData.data.birthDate?.toISOString(),
-        email: parsedData.data.email,
-        phone: parsedData.data.phone?.replace(/\D/g, ''),
+        birth_date: parsedData.data.birthDate?.toISOString() ?? null,
+        email: parsedData.data.email || null,
+        phone: parsedData.data.phone?.replace(/\D/g, '') ?? null,
         is_whatsapp: parsedData.data.isWhatsApp,
-        cep: parsedData.data.cep?.replace(/\D/g, ''),
-        street: parsedData.data.street,
-        number: parsedData.data.number,
-        complement: parsedData.data.complement,
-        neighborhood: parsedData.data.neighborhood,
-        city: parsedData.data.city,
-        state: parsedData.data.state,
-        responsible_name: parsedData.data.responsibleName,
-        responsible_phone: parsedData.data.responsiblePhone?.replace(/\D/g, ''),
-        medical_observations: parsedData.data.medicalObservations,
+        cep: parsedData.data.cep?.replace(/\D/g, '') ?? null,
+        street: parsedData.data.street ?? null,
+        number: parsedData.data.number ?? null,
+        complement: parsedData.data.complement ?? null,
+        neighborhood: parsedData.data.neighborhood ?? null,
+        city: parsedData.data.city ?? null,
+        state: parsedData.data.state ?? null,
+        responsible_name: parsedData.data.responsibleName ?? null,
+        responsible_phone: parsedData.data.responsiblePhone?.replace(/\D/g, '') ?? null,
+        medical_observations: parsedData.data.medicalObservations ?? null,
         status: parsedData.data.status,
-      })
-      .eq('id', id);
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      if (error.code === '23505' && error.message.includes('students_cpf_key')) {
-        return { success: false, message: 'Já existe um aluno cadastrado com este CPF.' };
-      }
-      return { success: false, message: `Erro ao atualizar aluno: ${error.message}` };
-    }
+      },
+    });
 
     revalidatePath('/alunos');
     return { success: true, message: 'Aluno atualizado com sucesso!' };
 
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    const msg = error?.message || 'Falha ao atualizar aluno';
+    if (msg.includes('students_cpf_key')) {
+      return { success: false, message: 'Já existe um aluno cadastrado com este CPF.' };
+    }
+    return { success: false, message: `Erro ao atualizar aluno: ${msg}` };
   }
 }
 
 export async function deleteStudent(id: string) {
   try {
-    const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.from('students').delete().eq('id', id);
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      return { success: false, message: `Erro ao excluir aluno: ${error.message}` };
-    }
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation DeleteStudent($id: uuid!) {
+        delete_students_by_pk(id: $id) { id }
+      }
+    `;
+    await client.request(mutation, { id });
 
     revalidatePath('/alunos');
     return { success: true, message: 'Aluno excluído com sucesso!' };
 
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    const msg = error?.message || 'Falha ao excluir aluno';
+    return { success: false, message: `Erro ao excluir aluno: ${msg}` };
   }
 }
 
 
 export async function getStudents(): Promise<Student[]> {
   try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
-      .from('students')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      throw new Error('Não foi possível buscar os alunos.');
-    }
-
-    return data;
+    const client = getGraphQLServerClient();
+    const query = `
+      query GetStudents {
+        students(order_by: { created_at: desc }) {
+          id
+          name
+          cpf
+          birth_date
+          email
+          phone
+          is_whatsapp
+          cep
+          street
+          number
+          complement
+          neighborhood
+          city
+          state
+          responsible_name
+          responsible_phone
+          medical_observations
+          status
+          created_at
+        }
+      }
+    `;
+    const data = await client.request(query);
+    return data.students as Student[];
   } catch (error) {
-    console.error('Unexpected Error:', error);
+    console.error('GraphQL Error:', error);
     return [];
   }
 }
@@ -277,62 +297,61 @@ export type HistoryEvent = {
 
 export async function getStudentHistory(studentId: string): Promise<HistoryEvent[]> {
   try {
-    const supabase = await createSupabaseServerClient();
-    
-    const { data: enrollments, error: enrollmentsError } = await supabase
-        .from('enrollments')
-        .select(`created_at, classes ( name )`)
-        .eq('student_id', studentId);
+    const client = getGraphQLServerClient();
+    const query = `
+      query StudentHistory($studentId: uuid!) {
+        students_by_pk(id: $studentId) { created_at }
+        enrollments(where: { student_id: { _eq: $studentId } }) {
+          created_at
+          classes { name }
+        }
+        payments(where: { student_id: { _eq: $studentId } }) {
+          created_at
+          description
+          status
+          amount
+        }
+        attendance(where: { student_id: { _eq: $studentId } }) {
+          created_at
+          status
+          classes { name }
+        }
+      }
+    `;
+    const data = await client.request(query, { studentId });
 
-    const { data: payments, error: paymentsError } = await supabase
-        .from('payments')
-        .select(`created_at, description, status, amount`)
-        .eq('student_id', studentId);
-        
-    const { data: attendance, error: attendanceError } = await supabase
-        .from('attendance')
-        .select(`created_at, status, classes ( name )`)
-        .eq('student_id', studentId);
-
-    if (enrollmentsError || paymentsError || attendanceError) {
-        console.error({ enrollmentsError, paymentsError, attendanceError });
-        throw new Error("Erro ao buscar histórico do aluno.");
-    }
-    
     const history: HistoryEvent[] = [];
 
-    enrollments.forEach(e => {
-        history.push({
-            date: e.created_at,
-            type: 'enrollment',
-            title: `Matrícula realizada`,
-            description: `Aluno matriculado na turma "${e.classes?.name}".`,
-        });
-    });
-
-    payments.forEach(p => {
-        history.push({
-            date: p.created_at,
-            type: 'payment',
-            title: p.status === 'pago' ? `Pagamento Realizado` : `Cobrança Gerada`,
-            description: `${p.description} - R$ ${p.amount}`,
-        });
-    });
-
-    attendance.forEach(a => {
-        history.push({
-            date: a.created_at,
-            type: 'attendance',
-            title: a.status === 'presente' ? `Presença Registrada` : `Falta Registrada`,
-            description: `Status de ${a.status} na turma "${a.classes?.name}".`,
-        });
-    });
-    
-    // Adiciona o evento de cadastro do aluno
-    const { data: student, error: studentError } = await supabase.from('students').select('created_at').eq('id', studentId).single();
-    if (student) {
+    data.enrollments?.forEach((e: any) => {
       history.push({
-        date: student.created_at,
+        date: e.created_at,
+        type: 'enrollment',
+        title: 'Matrícula realizada',
+        description: `Aluno matriculado na turma "${e.classes?.name}".`,
+      });
+    });
+
+    data.payments?.forEach((p: any) => {
+      history.push({
+        date: p.created_at,
+        type: 'payment',
+        title: p.status === 'pago' ? 'Pagamento Realizado' : 'Cobrança Gerada',
+        description: `${p.description} - R$ ${p.amount}`,
+      });
+    });
+
+    data.attendance?.forEach((a: any) => {
+      history.push({
+        date: a.created_at,
+        type: 'attendance',
+        title: a.status === 'presente' ? 'Presença Registrada' : 'Falta Registrada',
+        description: `Status de ${a.status} na turma "${a.classes?.name}".`,
+      });
+    });
+
+    if (data.students_by_pk?.created_at) {
+      history.push({
+        date: data.students_by_pk.created_at,
         type: 'enrollment',
         title: 'Cadastro Realizado',
         description: 'Aluno cadastrado no sistema.',
@@ -340,178 +359,158 @@ export async function getStudentHistory(studentId: string): Promise<HistoryEvent
     }
 
     return history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
   } catch (error) {
-    console.error('Unexpected Error in getStudentHistory:', error);
+    console.error('GraphQL Error in getStudentHistory:', error);
     return [];
   }
 }
 
 export async function getStudentPlans(studentId: string): Promise<Array<{ id: string; name: string }>> {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from('student_plans')
-    .select('plan_id, plans!inner(id, name)')
-    .eq('student_id', studentId);
-
-  if (error) {
-    console.error('Error fetching student plans:', error);
+  try {
+    const client = getGraphQLServerClient();
+    const query = `
+      query StudentPlans($studentId: uuid!) {
+        student_plans(where: { student_id: { _eq: $studentId } }) {
+          plans { id, name }
+        }
+      }
+    `;
+    const data = await client.request(query, { studentId });
+    return (data.student_plans || [])
+      .map((sp: any) => sp.plans as { id: string; name: string })
+      .filter((plan: any) => plan && plan.id && plan.name);
+  } catch (error) {
+    console.error('GraphQL Error fetching student plans:', error);
     return [];
   }
-
-  if (!data) {
-    return [];
-  }
-
-  // Retorna os planos completos
-  return data
-    .map(item => item.plans as { id: string; name: string })
-    .filter(plan => plan && plan.id && plan.name);
 }
 
 export async function updateStudentPlans(studentId: string, planIds: string[]) {
-  const supabase = await createSupabaseServerClient();
+  try {
+    const client = getGraphQLServerClient();
 
-  // 1. Get current plans to identify which are being added
-  const { data: currentPlans } = await supabase
-    .from('student_plans')
-    .select('plan_id')
-    .eq('student_id', studentId);
+    // 1. Buscar planos atuais
+    const currentQuery = `
+      query CurrentPlans($studentId: uuid!) {
+        student_plans(where: { student_id: { _eq: $studentId } }) { plan_id }
+      }
+    `;
+    const currentRes = await client.request(currentQuery, { studentId });
+    const currentPlanIds: string[] = (currentRes.student_plans || []).map((p: any) => p.plan_id);
+    const newPlanIds = planIds.filter(id => !currentPlanIds.includes(id));
 
-  const currentPlanIds = currentPlans?.map(p => p.plan_id) || [];
-  const newPlanIds = planIds.filter(id => !currentPlanIds.includes(id));
+    // 2. Remover planos existentes do aluno
+    const deleteMutation = `
+      mutation DeleteStudentPlans($studentId: uuid!) {
+        delete_student_plans(where: { student_id: { _eq: $studentId } }) { affected_rows }
+      }
+    `;
+    await client.request(deleteMutation, { studentId });
 
-  // 2. Delete all existing plans for the student
-  const { error: deleteError } = await supabase
-    .from('student_plans')
-    .delete()
-    .eq('student_id', studentId);
+    // 3. Inserir novos planos
+    if (planIds.length > 0) {
+      const insertMutation = `
+        mutation InsertStudentPlans($objects: [student_plans_insert_input!]!) {
+          insert_student_plans(objects: $objects) { affected_rows }
+        }
+      `;
+      const objects = planIds.map(plan_id => ({ student_id: studentId, plan_id }));
+      await client.request(insertMutation, { objects });
 
-  if (deleteError) {
-    console.error('Error deleting student plans:', deleteError);
-    return { success: false, message: 'Falha ao remover planos antigos.' };
-  }
-
-  // 3. Insert new plans if any are provided
-  if (planIds.length > 0) {
-    const newPlans = planIds.map(plan_id => ({
-      student_id: studentId,
-      plan_id: plan_id,
-    }));
-
-    const { error: insertError } = await supabase
-      .from('student_plans')
-      .insert(newPlans);
-
-    if (insertError) {
-      console.error('Error inserting new student plans:', insertError);
-      return { success: false, message: 'Falha ao adicionar novos planos.' };
-    }
-
-    // 4. Create initial payment for newly added plans
-    if (newPlanIds.length > 0) {
-      // Get plan details for the new plans
-      const { data: planDetails, error: planError } = await supabase
-        .from('plans')
-        .select('id, name, price, recurrence')
-        .in('id', newPlanIds);
-
-      if (planError) {
-        console.error('Error fetching plan details:', planError);
-      } else if (planDetails) {
-        // Create a payment for each new plan
+      // 4. Criar cobrança inicial para planos recém-adicionados
+      if (newPlanIds.length > 0) {
+        const plansQuery = `
+          query PlansDetails($ids: [uuid!]!) {
+            plans(where: { id: { _in: $ids } }) { id, name, price, recurrence }
+          }
+        `;
+        const plansRes = await client.request(plansQuery, { ids: newPlanIds });
         const today = new Date();
-        const payments = planDetails.map(plan => ({
+        const payments = (plansRes.plans || []).map((plan: any) => ({
           student_id: studentId,
           description: `Mensalidade - ${plan.name}`,
           amount: plan.price,
           due_date: today.toISOString().split('T')[0],
-          status: 'pendente',
+          status: 'pendente' as const,
         }));
 
-        const { error: paymentError } = await supabase
-          .from('payments')
-          .insert(payments);
-
-        if (paymentError) {
-          console.error('Error creating payments:', paymentError);
+        if (payments.length > 0) {
+          const insertPaymentsMutation = `
+            mutation InsertPayments($objects: [payments_insert_input!]!) {
+              insert_payments(objects: $objects) { affected_rows }
+            }
+          `;
+          await client.request(insertPaymentsMutation, { objects: payments });
         }
       }
-    }
-  }
-
-  revalidatePath('/alunos');
-  revalidatePath('/financeiro');
-  return { success: true, message: 'Planos do aluno atualizados com sucesso!' };
-}
-
-export async function syncStudentPlanPayments(studentId: string) {
-  const supabase = await createSupabaseServerClient();
-
-  // 1. Get student's active plans
-  const { data: studentPlans, error: plansError } = await supabase
-    .from('student_plans')
-    .select('plan_id, plans(id, name, price, recurrence)')
-    .eq('student_id', studentId);
-
-  if (plansError || !studentPlans) {
-    console.error('Error fetching student plans:', plansError);
-    return { success: false, message: 'Erro ao buscar planos do aluno.' };
-  }
-
-  // 2. Check which plans don't have pending payments
-  const { data: existingPayments } = await supabase
-    .from('payments')
-    .select('description')
-    .eq('student_id', studentId)
-    .eq('status', 'pendente');
-
-  const existingPaymentDescriptions = new Set(
-    existingPayments?.map(p => p.description) || []
-  );
-
-  // 3. Create payments for plans without pending charges
-  const paymentsToCreate = [];
-  const today = new Date();
-
-  for (const sp of studentPlans) {
-    const plan = sp.plans as { id: string; name: string; price: number; recurrence: string } | null;
-    if (!plan) continue;
-
-    const description = `Mensalidade - ${plan.name}`;
-
-    // Only create if no pending payment exists for this plan
-    if (!existingPaymentDescriptions.has(description)) {
-      paymentsToCreate.push({
-        student_id: studentId,
-        description,
-        amount: plan.price,
-        due_date: today.toISOString().split('T')[0],
-        status: 'pendente',
-      });
-    }
-  }
-
-  // 4. Insert new payments
-  if (paymentsToCreate.length > 0) {
-    const { error: paymentError } = await supabase
-      .from('payments')
-      .insert(paymentsToCreate);
-
-    if (paymentError) {
-      console.error('Error creating payments:', paymentError);
-      return { success: false, message: 'Erro ao criar cobranças.' };
     }
 
     revalidatePath('/alunos');
     revalidatePath('/financeiro');
-    return {
-      success: true,
-      message: `${paymentsToCreate.length} cobrança(s) criada(s) com sucesso!`
-    };
+    return { success: true, message: 'Planos do aluno atualizados com sucesso!' };
+  } catch (error) {
+    console.error('GraphQL Error updating student plans:', error);
+    return { success: false, message: 'Falha ao atualizar planos do aluno.' };
   }
+}
 
-  return { success: true, message: 'Nenhuma cobrança pendente para criar.' };
+export async function syncStudentPlanPayments(studentId: string) {
+  try {
+    const client = getGraphQLServerClient();
+
+    // 1. Planos ativos do aluno com detalhes
+    const plansQuery = `
+      query StudentPlans($studentId: uuid!) {
+        student_plans(where: { student_id: { _eq: $studentId } }) {
+          plans { id, name, price, recurrence }
+        }
+        payments(where: { student_id: { _eq: $studentId }, status: { _eq: "pendente" } }) {
+          description
+        }
+      }
+    `;
+    const res = await client.request(plansQuery, { studentId });
+    const studentPlans = res.student_plans || [];
+    const existingPaymentDescriptions = new Set((res.payments || []).map((p: any) => p.description));
+
+    // 2. Criar pagamentos que faltam
+    const paymentsToCreate: Array<{ student_id: string; description: string; amount: number; due_date: string; status: 'pendente' }> = [];
+    const today = new Date();
+
+    for (const sp of studentPlans) {
+      const plan = sp.plans as { id: string; name: string; price: number; recurrence: string } | null;
+      if (!plan) continue;
+      const description = `Mensalidade - ${plan.name}`;
+      if (!existingPaymentDescriptions.has(description)) {
+        paymentsToCreate.push({
+          student_id: studentId,
+          description,
+          amount: plan.price,
+          due_date: today.toISOString().split('T')[0],
+          status: 'pendente',
+        });
+      }
+    }
+
+    // 3. Inserir novos pagamentos
+    if (paymentsToCreate.length > 0) {
+      const insertPaymentsMutation = `
+        mutation InsertPayments($objects: [payments_insert_input!]!) {
+          insert_payments(objects: $objects) { affected_rows }
+        }
+      `;
+      await client.request(insertPaymentsMutation, { objects: paymentsToCreate });
+
+      revalidatePath('/alunos');
+      revalidatePath('/financeiro');
+      return { success: true, message: `${paymentsToCreate.length} cobrança(s) criada(s) com sucesso!` };
+    }
+
+    return { success: true, message: 'Nenhuma cobrança pendente para criar.' };
+  } catch (error) {
+    console.error('GraphQL Error syncing student plan payments:', error);
+    return { success: false, message: 'Erro ao sincronizar cobranças de planos.' };
+  }
 }
 
 

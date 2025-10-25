@@ -1,6 +1,6 @@
 'use server';
 
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getGraphQLServerClient } from '@/lib/graphql/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { Database } from '@/lib/database.types';
@@ -21,20 +21,24 @@ const instructorFormSchema = z.object({
 
 export async function getInstructors(): Promise<Instructor[]> {
   try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
-      .from('instructors')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      throw new Error('Não foi possível buscar os professores.');
-    }
-
-    return data;
+    const client = getGraphQLServerClient();
+    const query = `
+      query GetInstructors {
+        instructors(order_by: { created_at: desc }) {
+          id
+          name
+          email
+          phone
+          specialties
+          availability
+          created_at
+        }
+      }
+    `;
+    const data = await client.request(query);
+    return (data.instructors || []) as Instructor[];
   } catch (error) {
-    console.error('Unexpected Error:', error);
+    console.error('GraphQL Error:', error);
     return [];
   }
 }
@@ -51,83 +55,80 @@ export async function addInstructor(formData: unknown) {
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.from('instructors').insert([
-      {
-        name: parsedData.data.name,
-        email: parsedData.data.email,
-        phone: parsedData.data.phone.replace(/\D/g, ''),
-        specialties: parsedData.data.specialties,
-        availability: parsedData.data.availability,
-      },
-    ]);
-
-    if (error) {
-      console.error('Supabase Error:', error);
-      return { success: false, message: `Erro ao cadastrar professor: ${error.message}` };
-    }
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation InsertInstructor($object: instructors_insert_input!) {
+        insert_instructors_one(object: $object) { id }
+      }
+    `;
+    const object = {
+      name: parsedData.data.name,
+      email: parsedData.data.email,
+      phone: parsedData.data.phone.replace(/\D/g, ''),
+      specialties: parsedData.data.specialties,
+      availability: parsedData.data.availability,
+    };
+    await client.request(mutation, { object });
 
     revalidatePath('/professores');
     return { success: true, message: 'Professor cadastrado com sucesso!' };
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { success: false, message: 'Ocorreu um erro inesperado.' };
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    return { success: false, message: error.message || 'Ocorreu um erro inesperado.' };
   }
 }
 
 export async function updateInstructor(id: string, formData: unknown) {
-    const parsedData = instructorFormSchema.safeParse(formData);
+  const parsedData = instructorFormSchema.safeParse(formData);
 
-    if (!parsedData.success) {
-        return {
-            success: false,
-            message: 'Dados do formulário inválidos.',
-            errors: parsedData.error.flatten().fieldErrors,
-        };
-    }
-    
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { error } = await supabase
-        .from('instructors')
-        .update({
-            name: parsedData.data.name,
-            email: parsedData.data.email,
-            phone: parsedData.data.phone.replace(/\D/g, ''),
-            specialties: parsedData.data.specialties,
-            availability: parsedData.data.availability,
-        })
-        .eq('id', id);
+  if (!parsedData.success) {
+    return {
+      success: false,
+      message: 'Dados do formulário inválidos.',
+      errors: parsedData.error.flatten().fieldErrors,
+    };
+  }
+  
+  try {
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation UpdateInstructor($id: uuid!, $changes: instructors_set_input!) {
+        update_instructors_by_pk(pk_columns: { id: $id }, _set: $changes) { id }
+      }
+    `;
+    const changes = {
+      name: parsedData.data.name,
+      email: parsedData.data.email,
+      phone: parsedData.data.phone.replace(/\D/g, ''),
+      specialties: parsedData.data.specialties,
+      availability: parsedData.data.availability,
+    };
+    await client.request(mutation, { id, changes });
 
-        if (error) {
-            console.error('Supabase Error:', error);
-            return { success: false, message: `Erro ao atualizar professor: ${error.message}` };
-        }
+    revalidatePath('/professores');
+    return { success: true, message: 'Professor atualizado com sucesso!' };
 
-        revalidatePath('/professores');
-        return { success: true, message: 'Professor atualizado com sucesso!' };
-
-    } catch (error) {
-        console.error('Unexpected Error:', error);
-        return { success: false, message: 'Ocorreu um erro inesperado.' };
-    }
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    return { success: false, message: error.message || 'Ocorreu um erro inesperado.' };
+  }
 }
 
 export async function deleteInstructor(id: string) {
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { error } = await supabase.from('instructors').delete().eq('id', id);
+  try {
+    const client = getGraphQLServerClient();
+    const mutation = `
+      mutation DeleteInstructor($id: uuid!) {
+        delete_instructors_by_pk(id: $id) { id }
+      }
+    `;
+    await client.request(mutation, { id });
 
-        if (error) {
-            console.error('Supabase Error:', error);
-            return { success: false, message: `Erro ao excluir professor: ${error.message}` };
-        }
+    revalidatePath('/professores');
+    return { success: true, message: 'Professor excluído com sucesso!' };
 
-        revalidatePath('/professores');
-        return { success: true, message: 'Professor excluído com sucesso!' };
-
-    } catch (error) {
-        console.error('Unexpected Error:', error);
-        return { success: false, message: 'Ocorreu um erro inesperado.' };
-    }
+  } catch (error: any) {
+    console.error('GraphQL Error:', error);
+    return { success: false, message: error.message || 'Ocorreu um erro inesperado.' };
+  }
 }

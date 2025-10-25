@@ -1,11 +1,10 @@
 
 'use server';
 
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-import type { Database } from '@/lib/database.types';
+import { getGraphQLServerClient } from '@/lib/graphql/server';
 import { startOfDay, endOfDay } from 'date-fns';
 
-type Attendance = Database['public']['Tables']['attendance']['Row'];
+
 
 export interface AttendanceStats {
   generalRate: number;
@@ -16,53 +15,50 @@ export interface AttendanceStats {
 }
 
 export async function getAttendanceStats(): Promise<AttendanceStats> {
-  const supabase = await createSupabaseServerClient();
-  const today = new Date();
-  
   try {
-    const { data: monthlyAttendance, error: monthlyError } = await supabase
-      .from('attendance')
-      .select('status');
-      
-    if (monthlyError) throw new Error(`Error fetching monthly attendance: ${monthlyError.message}`);
-
-    const generalRate = monthlyAttendance.length > 0
-      ? (monthlyAttendance.filter(a => a.status === 'presente').length / monthlyAttendance.length) * 100
-      : 0;
-
-    const { data: todayAttendance, error: todayError } = await supabase
-      .from('attendance')
-      .select('status')
-      .gte('created_at', startOfDay(today).toISOString())
-      .lte('created_at', endOfDay(today).toISOString());
-
-    if (todayError) throw new Error(`Error fetching today's attendance: ${todayError.message}`);
-
-    const presentToday = todayAttendance.filter(a => a.status === 'presente').length;
-    const absentToday = todayAttendance.filter(a => a.status === 'ausente').length;
-
-    // This is a simplification. A real scenario would need to count unique students scheduled for today.
-    const totalScheduledToday = todayAttendance.length; 
-    
-    // Simplification for classes today
+    const client = getGraphQLServerClient();
+    const today = new Date();
     const dayOfWeekMap = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const currentDayOfWeek = dayOfWeekMap[today.getDay()];
-    const { count: classesToday } = await supabase
-      .from('classes')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'ativa')
-      .contains('days_of_week', [currentDayOfWeek]);
+
+    const query = `
+      query AttendanceStats($startOfDay: timestamptz!, $endOfDay: timestamptz!, $currentDay: String!) {
+        attendance_total: attendance_aggregate { aggregate { count } }
+        attendance_present_total: attendance_aggregate(where: { status: { _eq: "presente" } }) { aggregate { count } }
+        attendance_today_total: attendance_aggregate(where: { created_at: { _gte: $startOfDay, _lte: $endOfDay } }) { aggregate { count } }
+        attendance_today_present: attendance_aggregate(where: { created_at: { _gte: $startOfDay, _lte: $endOfDay }, status: { _eq: "presente" } }) { aggregate { count } }
+        attendance_today_absent: attendance_aggregate(where: { created_at: { _gte: $startOfDay, _lte: $endOfDay }, status: { _eq: "ausente" } }) { aggregate { count } }
+        classes_today: classes_aggregate(where: { status: { _eq: "ativa" }, days_of_week: { _contains: [$currentDay] } }) { aggregate { count } }
+      }
+    `;
+
+    const variables = {
+      startOfDay: startOfDay(today).toISOString(),
+      endOfDay: endOfDay(today).toISOString(),
+      currentDay: currentDayOfWeek,
+    };
+
+    const data = await client.request(query, variables);
+
+    const totalAttendance = data.attendance_total?.aggregate?.count ?? 0;
+    const totalPresent = data.attendance_present_total?.aggregate?.count ?? 0;
+    const generalRate = totalAttendance > 0 ? (totalPresent / totalAttendance) * 100 : 0;
+
+    const totalScheduledToday = data.attendance_today_total?.aggregate?.count ?? 0;
+    const presentToday = data.attendance_today_present?.aggregate?.count ?? 0;
+    const absentToday = data.attendance_today_absent?.aggregate?.count ?? 0;
+
+    const classesToday = data.classes_today?.aggregate?.count ?? 0;
 
     return {
       generalRate,
       presentToday,
       totalScheduledToday,
       absentToday,
-      classesToday: classesToday || 0,
+      classesToday,
     };
-
   } catch (error: any) {
-    console.error("Error in getAttendanceStats:", error.message);
+    console.error('Error in getAttendanceStats (GraphQL):', error?.message || error);
     return {
       generalRate: 0,
       presentToday: 0,

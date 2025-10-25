@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { addUser } from '@/app/configuracoes/actions';
 
@@ -54,30 +54,22 @@ const roles = ['Administrador', 'Recepção'];
 
 export function AddUserDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
   const { toast } = useToast();
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
-    defaultValues: {
-      role: 'Recepção',
-    }
+    defaultValues: { role: 'Recepção' },
   });
 
   const onSubmit = async (data: UserFormValues) => {
     const result = await addUser(data);
     
     if (result.success) {
-      toast({
-        title: 'Sucesso!',
-        description: result.message,
-      });
+      toast({ title: 'Sucesso!', description: result.message });
       setOpen(false);
       form.reset();
     } else {
-      toast({
-        title: 'Erro ao criar usuário!',
-        description: result.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro ao criar usuário!', description: result.message, variant: 'destructive' });
     }
   };
 
@@ -146,7 +138,18 @@ export function AddUserDialog({ children }: { children: React.ReactNode }) {
                   <FormItem>
                     <FormLabel>Senha</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" />
+                      <div className="relative">
+                        <Input type={showPassword ? 'text' : 'password'} placeholder="••••••••" {...field} />
+                        <button
+                          type="button"
+                          aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

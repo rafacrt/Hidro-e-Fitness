@@ -3,9 +3,9 @@ services:
     image: postgres:16
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=hidrofitness
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
@@ -16,12 +16,12 @@ services:
     depends_on:
       - db
     environment:
-      - HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:postgres@db:5432/hidrofitness
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=true
       - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
-      - HASURA_GRAPHQL_ADMIN_SECRET=hasuraadminsecret
-      - HASURA_GRAPHQL_JWT_SECRET={"type":"HS256","key":"superjwtsecretwithrandom"}
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_ADMIN_SECRET}
+      - HASURA_GRAPHQL_JWT_SECRET=${HASURA_GRAPHQL_JWT_SECRET}
     ports:
       - "8080:8080"
 
@@ -37,13 +37,13 @@ services:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
       - HASURA_GRAPHQL_ENDPOINT=http://hasura:8080/v1/graphql
-      - HASURA_ADMIN_SECRET=hasuraadminsecret
-      - JWT_SECRET=superjwtsecretwithrandom
+      - HASURA_ADMIN_SECRET=${HASURA_ADMIN_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
       - FILE_STORAGE_DIR=/app/storage
       - DB_HOST=db
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=hidrofitness
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
     volumes:
       - storage:/app/storage
     ports:

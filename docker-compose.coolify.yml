@@ -1,0 +1,157 @@
+version: '3.8'
+
+services:
+  db_system:
+    image: postgres:16-alpine
+    container_name: hidro-fitness-db-system
+    environment:
+      POSTGRES_USER: hf_system
+      POSTGRES_PASSWORD: S3cure_HF_System_2025!
+      POSTGRES_DB: hf_system_db
+    volumes:
+      - db_system_data:/var/lib/postgresql/data
+      - ./db/system-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hf_system -d hf_system_db']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Banco de dados de DADOS (alunos, financeiro, etc.) totalmente separado
+  db_data:
+    image: postgres:16-alpine
+    container_name: hidro-fitness-db-data
+    environment:
+      POSTGRES_USER: hf_data
+      POSTGRES_PASSWORD: S3cure_HF_Data_2025!
+      POSTGRES_DB: hf_data_db
+    volumes:
+      - db_data_data:/var/lib/postgresql/data
+      - ./db/data-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hf_data -d hf_data_db']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  hasura:
+    image: hasura/graphql-engine:v2.40.0
+    container_name: hidro-fitness-hasura
+    ports:
+      - "8080:8080"
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://hf_system:S3cure_HF_System_2025!@db_system:5432/hf_system_db
+      HASURA_GRAPHQL_ADMIN_SECRET: d7f9a1c2e8b34fa5d16c7b20e5319a44c8e1f72ad9c4b0e6f3a2d1c5b7e9a0d4
+      HASURA_GRAPHQL_JWT_SECRET: '{"type":"HS256","key":"a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"}'
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: "public"
+    depends_on:
+      db_system:
+        condition: service_healthy
+
+  # Inicializador do Hasura para rastrear tabela do sistema (academy_settings)
+  hasura-init:
+    image: curlimages/curl:8.0.1
+    container_name: hidro-fitness-hasura-init
+    depends_on:
+      hasura:
+        condition: service_started
+    command: >-
+      sh -c "
+      sleep 5 &&
+      curl -s -X POST http://hasura:8080/v1/metadata \
+        -H 'X-Hasura-Admin-Secret: d7f9a1c2e8b34fa5d16c7b20e5319a44c8e1f72ad9c4b0e6f3a2d1c5b7e9a0d4' \
+        -H 'Content-Type: application/json' \
+        -d '{"type":"pg_track_table","args":{"source":"default","table":{"schema":"public","name":"academy_settings"}}}'
+      "
+    restart: on-failure
+
+  # Inicializador para adicionar a segunda fonte de dados (appdata) no Hasura
+  hasura-init-appdata:
+    image: curlimages/curl:8.0.1
+    container_name: hidro-fitness-hasura-init-appdata
+    depends_on:
+      hasura:
+        condition: service_started
+      db_data:
+        condition: service_healthy
+    command: >-
+      sh -c "
+      sleep 7 &&
+      curl -s -X POST http://hasura:8080/v1/metadata \
+        -H 'X-Hasura-Admin-Secret: d7f9a1c2e8b34fa5d16c7b20e5319a44c8e1f72ad9c4b0e6f3a2d1c5b7e9a0d4' \
+        -H 'Content-Type: application/json' \
+        -d '{
+              "type": "pg_add_source",
+              "args": {
+                "name": "appdata",
+                "configuration": {
+                  "connection_info": {
+                    "database_url": {
+                      "connection_string": "postgres://hf_data:S3cure_HF_Data_2025!@db_data:5432/hf_data_db"
+                    },
+                    "pool_settings": { "connection_lifetime": 600, "idle_timeout": 60, "max_connections": 50 }
+                  }
+                }
+              }
+            }' &&
+      curl -s -X POST http://hasura:8080/v1/metadata \
+        -H 'X-Hasura-Admin-Secret: d7f9a1c2e8b34fa5d16c7b20e5319a44c8e1f72ad9c4b0e6f3a2d1c5b7e9a0d4' \
+        -H 'Content-Type: application/json' \
+        -d '{
+              "type": "bulk",
+              "args": [
+                { "type": "pg_track_table", "args": { "source": "appdata", "table": { "schema": "public", "name": "students" } } },
+                { "type": "pg_track_table", "args": { "source": "appdata", "table": { "schema": "public", "name": "classes" } } },
+                { "type": "pg_track_table", "args": { "source": "appdata", "table": { "schema": "public", "name": "payments" } } },
+                { "type": "pg_track_table", "args": { "source": "appdata", "table": { "schema": "public", "name": "enrollments" } } },
+                 { "type": "pg_track_table", "args": { "source": "appdata", "table": { "schema": "public", "name": "attendance" } } }
+               ]
+             }'
+       "
+     restart: on-failure
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hidro-fitness-app
+    ports:
+      - "9002:9002"
+    environment:
+      # GraphQL endpoint usado pelo servidor Next.js
+      HASURA_GRAPHQL_ENDPOINT: http://hasura:8080/v1/graphql
+      HASURA_ADMIN_SECRET: d7f9a1c2e8b34fa5d16c7b20e5319a44c8e1f72ad9c4b0e6f3a2d1c5b7e9a0d4
+      # Fallback do Postgres para academy_settings (usa DB de sistema)
+      DB_HOST: db_system
+      DB_PORT: "5432"
+      DB_USER: hf_system
+      DB_PASSWORD: S3cure_HF_System_2025!
+      DB_NAME: hf_system_db
+    depends_on:
+      hasura:
+        condition: service_healthy
+
+  # Job: migra presenças legadas se houver staging
+  data-migrate-legacy:
+    image: postgres:16-alpine
+    container_name: hidro-fitness-data-migrate-legacy
+    depends_on:
+      db_data:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: S3cure_HF_Data_2025!
+    volumes:
+      - ./db/data-init:/migrations
+    command: >-
+      sh -c "
+      sleep 10 &&
+      psql -h db_data -U hf_data -d hf_data_db -f /migrations/20_migrate_legacy_attendance.sql
+      "
+    restart: on-failure
+
+volumes:
+  db_system_data:
+  db_data_data:
+  storage:

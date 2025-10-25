@@ -24,6 +24,12 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      // Compatibilidade: URLs antigas como /storage/... passam a servir via /api/storage
+      { source: '/storage/:path*', destination: '/api/storage/:path*' },
+    ];
+  },
   devIndicators: {
     appIsrStatus: false,
     buildActivity: false,
