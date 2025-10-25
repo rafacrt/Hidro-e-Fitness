@@ -40,9 +40,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      HASURA_GRAPHQL_DATABASE_URL: postgres://hf_system:S3cure_HF_System_2025!@db_system:5432/hf_system_db
-      HASURA_GRAPHQL_ADMIN_SECRET: d7f9a1c2e8b34fa5d16c7b20e5319a44c8e1f72ad9c4b0e6f3a2d1c5b7e9a0d4
-      HASURA_GRAPHQL_JWT_SECRET: "{\"type\":\"HS256\",\"key\":\"a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456\"}"
+      HASURA_GRAPHQL_DATABASE_URL: "postgres://hf_system:S3cure_HF_System_2025!@db_system:5432/hf_system_db"
+      HASURA_GRAPHQL_ADMIN_SECRET: "d7f9a1c2e8b34fa5d16c7b20e5319a44c8e1f72ad9c4b0e6f3a2d1c5b7e9a0d4"
+      HASURA_GRAPHQL_JWT_SECRET: >-
+        {"type":"HS256","key":"a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"}
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
       HASURA_GRAPHQL_DEV_MODE: "true"
       HASURA_GRAPHQL_UNAUTHORIZED_ROLE: "public"
@@ -131,7 +132,7 @@ services:
       DB_NAME: hf_system_db
     depends_on:
       hasura:
-        condition: service_healthy
+        condition: service_started
 
   # Job: migra presenças legadas se houver staging
   data-migrate-legacy:
