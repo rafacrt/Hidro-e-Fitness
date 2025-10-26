@@ -22,7 +22,8 @@ services:
       HASURA_GRAPHQL_DEV_MODE: 'false'
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, query-log
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET}
-      HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
+      HASURA_GRAPHQL_JWT_SECRET: >-
+        {"type":"HS256","key":"${JWT_SECRET}"}
       HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
     # Hasura interno apenas; sem bind externo para evitar conflito de porta
 
