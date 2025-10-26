@@ -2,10 +2,27 @@
 set -e
 
 echo "🔄 Initializing database schema..."
+echo "📊 Database connection info:"
+echo "  Host: ${DB_HOST}"
+echo "  User: ${DB_USER}"
+echo "  Database: ${DB_NAME}"
+echo "  Password: ${DB_PASSWORD:0:10}... (length: ${#DB_PASSWORD})"
 
-# Espera o DB estar pronto
-until PGPASSWORD="${DB_PASSWORD}" psql -h "${DB_HOST}" -U "${DB_USER}" -d "${DB_NAME}" -c '\q' 2>/dev/null; do
-  echo "⏳ Waiting for database to be ready..."
+# Espera o DB estar pronto com logs melhores
+attempt=0
+max_attempts=30
+until PGPASSWORD="${DB_PASSWORD}" psql -h "${DB_HOST}" -U "${DB_USER}" -d "${DB_NAME}" -c '\q' 2>&1; do
+  attempt=$((attempt + 1))
+  if [ $attempt -ge $max_attempts ]; then
+    echo "❌ Failed to connect to database after $max_attempts attempts"
+    echo "💡 Troubleshooting:"
+    echo "  1. Check if DB_PASSWORD matches the password set in the database"
+    echo "  2. Check if DB_USER exists in the database"
+    echo "  3. Check if DB_NAME database exists"
+    echo "  4. Try deleting the postgres volume and redeploying"
+    exit 1
+  fi
+  echo "⏳ Waiting for database to be ready... (attempt $attempt/$max_attempts)"
   sleep 2
 done
 
