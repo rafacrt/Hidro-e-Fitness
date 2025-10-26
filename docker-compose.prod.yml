@@ -32,12 +32,6 @@ services:
         {"type":"HS256","key":"${JWT_SECRET}"}
       HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
     # Hasura interno apenas; sem bind externo para evitar conflito de porta
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/healthz || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 40s
 
   app:
     build:
@@ -48,7 +42,7 @@ services:
       db:
         condition: service_healthy
       hasura:
-        condition: service_healthy
+        condition: service_started
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: '1'

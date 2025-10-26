@@ -31,4 +31,8 @@ RUN apk add --no-cache bash curl
 EXPOSE 9002
 ENV PORT 9002
 
-CMD ["npm", "start", "--", "-p", "9002"]
+# Entrypoint script para aguardar Hasura estar pronto
+COPY --from=builder /app/docker-config/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+CMD ["/app/entrypoint.sh"]
