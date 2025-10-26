@@ -45,4 +45,4 @@ firebase-debug.log
 firestore-debug.log
 
 # scripts de desenvolvimento/teste (não vão no deploy)
-/scripts
+# /scripts - Comentado: precisamos dos scripts de init no deploy!
