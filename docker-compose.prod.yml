@@ -10,12 +10,18 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   hasura:
     image: hasura/graphql-engine:v2.38.0
     restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       HASURA_GRAPHQL_DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       HASURA_GRAPHQL_ENABLE_CONSOLE: 'false'
@@ -26,6 +32,12 @@ services:
         {"type":"HS256","key":"${JWT_SECRET}"}
       HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
     # Hasura interno apenas; sem bind externo para evitar conflito de porta
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 1s bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   app:
     build:
@@ -33,8 +45,10 @@ services:
       dockerfile: docker-config/Dockerfile
     restart: unless-stopped
     depends_on:
-      - hasura
-      - db
+      db:
+        condition: service_healthy
+      hasura:
+        condition: service_healthy
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: '1'

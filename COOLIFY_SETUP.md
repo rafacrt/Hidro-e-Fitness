@@ -26,9 +26,34 @@ DB_PASSWORD=SuaSenhaSeguraAqui123!@#
 DB_NAME=hidrofitness
 ```
 
-⚠️ **IMPORTANTE**:
-- Use a mesma senha que você configurou ao criar o banco no Coolify
-- Se não tem certeza, pode redefinir o banco e criar novos valores
+⚠️ **CRÍTICO - ERRO COMUM**:
+- **O banco já existe no volume do Coolify com uma senha específica**
+- Se você mudar `DB_PASSWORD` nas variáveis de ambiente, o Postgres **NÃO VAI ACEITAR** a nova senha
+- Você precisa usar a **MESMA SENHA** que foi definida quando o banco foi criado pela primeira vez
+
+**Como descobrir qual senha usar?**
+
+**Opção A - Manter a senha original:**
+1. Procure nas variáveis de ambiente antigas qual era o `DB_PASSWORD` original
+2. Use essa mesma senha nas variáveis atuais
+
+**Opção B - Resetar o banco (CUIDADO: apaga todos os dados!):**
+1. No Coolify, vá em **Storage → Volumes**
+2. Delete o volume `db_data`
+3. Redeploy com a nova senha desejada
+4. ⚠️ **ATENÇÃO**: Isso apaga TODOS os dados do banco!
+
+**Opção C - Conectar ao container e mudar a senha manualmente:**
+```bash
+# No terminal do Coolify, conecte ao container do DB
+docker exec -it <container_db_name> psql -U postgres
+
+# Dentro do psql, mude a senha
+ALTER USER postgres WITH PASSWORD 'NovaSenhaSegura123!';
+\q
+
+# Agora atualize a variável DB_PASSWORD no Coolify com a nova senha
+```
 
 ### 2. Hasura Admin Secret
 
