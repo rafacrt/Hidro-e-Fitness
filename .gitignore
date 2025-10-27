@@ -46,3 +46,6 @@ firestore-debug.log
 
 # scripts de desenvolvimento/teste (não vão no deploy)
 # /scripts - Comentado: precisamos dos scripts de init no deploy!
+
+# SQL backups locais (dados sensíveis)
+/sql/
