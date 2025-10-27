@@ -59,6 +59,40 @@ services:
     ports:
       - "9002:9002"
 
+  # Backup automático do banco (roda diariamente às 3h da manhã)
+  backup:
+    image: postgres:16
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      BACKUP_RETENTION_DAYS: 7
+    volumes:
+      - storage:/backups
+    command: >
+      sh -c "
+      echo 'Backup service started. Will run daily at 3 AM';
+      while true; do
+        current_hour=$$(date +%H);
+        if [ \"$$current_hour\" = \"03\" ]; then
+          echo '📦 Running daily backup...';
+          TIMESTAMP=$$(date +%Y%m%d_%H%M%S);
+          PGPASSWORD=$$DB_PASSWORD pg_dump -h $$DB_HOST -U $$DB_USER -d $$DB_NAME --clean --if-exists > /backups/backup_$$TIMESTAMP.sql;
+          gzip /backups/backup_$$TIMESTAMP.sql;
+          echo '✅ Backup completed: backup_$$TIMESTAMP.sql.gz';
+          find /backups -name 'backup_*.sql.gz' -mtime +$$BACKUP_RETENTION_DAYS -delete;
+          echo '🧹 Old backups cleaned';
+          sleep 3600;
+        fi;
+        sleep 60;
+      done
+      "
+
 volumes:
   db_data:
   storage:
