@@ -1,17 +1,36 @@
 services:
-  db:
+  # Database for system data (users, academy_settings)
+  # Backup: Weekly SQL dumps, keep last 3 versions
+  db_system:
     image: postgres:16
     restart: unless-stopped
     environment:
-      # Removidos valores padrão inseguros; obrigar definição via env do Coolify
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_SYSTEM_USER}
+      POSTGRES_PASSWORD: ${DB_SYSTEM_PASSWORD}
+      POSTGRES_DB: ${DB_SYSTEM_NAME}
     volumes:
-      - db_data:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - db_system_data:/var/lib/postgresql/data
+      - ./db/system-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_SYSTEM_USER} -d ${DB_SYSTEM_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Database for transactional data (students, payments, etc)
+  # Backup: Daily JSON exports, keep last 3 versions
+  db_data:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_DATA_USER}
+      POSTGRES_PASSWORD: ${DB_DATA_PASSWORD}
+      POSTGRES_DB: ${DB_DATA_NAME}
+    volumes:
+      - db_data_data:/var/lib/postgresql/data
+      - ./db/data-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_DATA_USER} -d ${DB_DATA_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -20,10 +39,13 @@ services:
     image: hasura/graphql-engine:v2.38.0
     restart: unless-stopped
     depends_on:
-      db:
+      db_system:
+        condition: service_healthy
+      db_data:
         condition: service_healthy
     environment:
-      HASURA_GRAPHQL_DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      # Primary database (system)
+      HASURA_GRAPHQL_DATABASE_URL: postgres://${DB_SYSTEM_USER}:${DB_SYSTEM_PASSWORD}@db_system:5432/${DB_SYSTEM_NAME}
       HASURA_GRAPHQL_ENABLE_CONSOLE: 'false'
       HASURA_GRAPHQL_DEV_MODE: 'false'
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, query-log
@@ -31,7 +53,6 @@ services:
       HASURA_GRAPHQL_JWT_SECRET: >-
         {"type":"HS256","key":"${JWT_SECRET}"}
       HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
-    # Hasura interno apenas; sem bind externo para evitar conflito de porta
 
   app:
     build:
@@ -39,7 +60,9 @@ services:
       dockerfile: docker-config/Dockerfile
     restart: unless-stopped
     depends_on:
-      db:
+      db_system:
+        condition: service_healthy
+      db_data:
         condition: service_healthy
       hasura:
         condition: service_started
@@ -50,43 +73,85 @@ services:
       HASURA_ADMIN_SECRET: ${HASURA_ADMIN_SECRET}
       JWT_SECRET: ${JWT_SECRET}
       FILE_STORAGE_DIR: /app/storage
-      DB_HOST: db
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
+      # System database connection (users, academy_settings)
+      DB_SYSTEM_HOST: db_system
+      DB_SYSTEM_USER: ${DB_SYSTEM_USER}
+      DB_SYSTEM_PASSWORD: ${DB_SYSTEM_PASSWORD}
+      DB_SYSTEM_NAME: ${DB_SYSTEM_NAME}
+      # Data database connection (students, payments, etc)
+      DB_DATA_HOST: db_data
+      DB_DATA_USER: ${DB_DATA_USER}
+      DB_DATA_PASSWORD: ${DB_DATA_PASSWORD}
+      DB_DATA_NAME: ${DB_DATA_NAME}
+      # Legacy env vars for backward compatibility (points to system db)
+      DB_HOST: db_system
+      DB_USER: ${DB_SYSTEM_USER}
+      DB_PASSWORD: ${DB_SYSTEM_PASSWORD}
+      DB_NAME: ${DB_SYSTEM_NAME}
     volumes:
       - storage:/app/storage
     ports:
       - "9002:9002"
 
-  # Backup automático do banco (roda diariamente às 3h da manhã)
-  backup:
+  # Daily JSON backup of transactional data
+  # Runs at 3 AM, keeps last 3 versions
+  backup_data:
     image: postgres:16
     restart: unless-stopped
     depends_on:
-      db:
+      db_data:
         condition: service_healthy
     environment:
-      DB_HOST: db
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      BACKUP_RETENTION_DAYS: 7
+      DB_DATA_HOST: db_data
+      DB_DATA_USER: ${DB_DATA_USER}
+      DB_DATA_PASSWORD: ${DB_DATA_PASSWORD}
+      DB_DATA_NAME: ${DB_DATA_NAME}
     volumes:
       - storage:/backups
+      - ./scripts/backup-data-json.sh:/backup-data-json.sh:ro
     command: >
       sh -c "
-      echo 'Backup service started. Will run daily at 3 AM';
+      apk add --no-cache bash &&
+      chmod +x /backup-data-json.sh &&
+      echo '📅 Daily JSON backup service started. Will run at 3 AM';
       while true; do
         current_hour=$$(date +%H);
         if [ \"$$current_hour\" = \"03\" ]; then
-          echo '📦 Running daily backup...';
-          TIMESTAMP=$$(date +%Y%m%d_%H%M%S);
-          PGPASSWORD=$$DB_PASSWORD pg_dump -h $$DB_HOST -U $$DB_USER -d $$DB_NAME --clean --if-exists > /backups/backup_$$TIMESTAMP.sql;
-          gzip /backups/backup_$$TIMESTAMP.sql;
-          echo '✅ Backup completed: backup_$$TIMESTAMP.sql.gz';
-          find /backups -name 'backup_*.sql.gz' -mtime +$$BACKUP_RETENTION_DAYS -delete;
-          echo '🧹 Old backups cleaned';
+          echo '📦 Running daily JSON backup...';
+          /backup-data-json.sh;
+          sleep 3600;
+        fi;
+        sleep 60;
+      done
+      "
+
+  # Weekly SQL backup of system data
+  # Runs on Sundays at 3 AM, keeps last 3 versions
+  backup_system:
+    image: postgres:16
+    restart: unless-stopped
+    depends_on:
+      db_system:
+        condition: service_healthy
+    environment:
+      DB_SYSTEM_HOST: db_system
+      DB_SYSTEM_USER: ${DB_SYSTEM_USER}
+      DB_SYSTEM_PASSWORD: ${DB_SYSTEM_PASSWORD}
+      DB_SYSTEM_NAME: ${DB_SYSTEM_NAME}
+    volumes:
+      - storage:/backups
+      - ./scripts/backup-system-sql.sh:/backup-system-sql.sh:ro
+    command: >
+      sh -c "
+      apk add --no-cache bash &&
+      chmod +x /backup-system-sql.sh &&
+      echo '📅 Weekly SQL backup service started. Will run on Sundays at 3 AM';
+      while true; do
+        current_hour=$$(date +%H);
+        current_day=$$(date +%u);
+        if [ \"$$current_hour\" = \"03\" ] && [ \"$$current_day\" = \"7\" ]; then
+          echo '📦 Running weekly SQL backup...';
+          /backup-system-sql.sh;
           sleep 3600;
         fi;
         sleep 60;
@@ -94,5 +159,6 @@ services:
       "
 
 volumes:
-  db_data:
+  db_system_data:
+  db_data_data:
   storage:

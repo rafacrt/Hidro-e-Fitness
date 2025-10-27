@@ -4,10 +4,10 @@ import { Pool } from 'pg'
 import { signUserJWT } from '@/lib/auth/jwt'
 
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_NAME || 'hidrofitness',
+  host: process.env.DB_SYSTEM_HOST || process.env.DB_HOST || 'localhost',
+  user: process.env.DB_SYSTEM_USER || process.env.DB_USER || 'postgres',
+  password: process.env.DB_SYSTEM_PASSWORD || process.env.DB_PASSWORD || 'postgres',
+  database: process.env.DB_SYSTEM_NAME || process.env.DB_NAME || 'hidrofitness',
 })
 
 export async function POST(req: NextRequest) {
