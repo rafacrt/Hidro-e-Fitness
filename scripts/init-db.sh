@@ -239,7 +239,7 @@ WHERE NOT EXISTS (SELECT 1 FROM public.academy_settings WHERE id = 1);
 INSERT INTO public.users (email, password_hash, full_name, role)
 SELECT
   'admin@hidrofitness.com',
-  '\$2a\$10\$Bz0YLN/Xozytew5qzDNLqO.bdo0q/30MwQpKXufG6sT1x4o5m/wd6',
+  '$2a$10$AHozTx7OFYZM9nJa8.lbo.K6XaDOyxGJk/.YjubAndcDqP5nbodDa',
   'Administrador',
   'admin'
 WHERE NOT EXISTS (SELECT 1 FROM public.users WHERE email = 'admin@hidrofitness.com');
