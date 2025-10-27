@@ -44,7 +44,8 @@ services:
       db_data:
         condition: service_healthy
     environment:
-      # Primary database (system)
+      # Primary database (system) - usando variáveis separadas para evitar problemas com caracteres especiais
+      PG_DATABASE_URL: postgres://${DB_SYSTEM_USER}:${DB_SYSTEM_PASSWORD}@db_system:5432/${DB_SYSTEM_NAME}
       HASURA_GRAPHQL_DATABASE_URL: postgres://${DB_SYSTEM_USER}:${DB_SYSTEM_PASSWORD}@db_system:5432/${DB_SYSTEM_NAME}
       HASURA_GRAPHQL_ENABLE_CONSOLE: 'false'
       HASURA_GRAPHQL_DEV_MODE: 'false'
@@ -97,7 +98,7 @@ services:
   # Runs at 3 AM, keeps last 3 versions
   backup_data:
     image: postgres:16
-    restart: unless-stopped
+    restart: "no"
     depends_on:
       db_data:
         condition: service_healthy
@@ -129,7 +130,7 @@ services:
   # Runs on Sundays at 3 AM, keeps last 3 versions
   backup_system:
     image: postgres:16
-    restart: unless-stopped
+    restart: "no"
     depends_on:
       db_system:
         condition: service_healthy
