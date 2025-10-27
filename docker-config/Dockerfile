@@ -26,7 +26,8 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/scripts ./scripts
 
 # AWS SDK v3 needs these for node-alpine sometimes
-RUN apk add --no-cache bash curl
+# postgresql-client needed for init-db.sh script
+RUN apk add --no-cache bash curl postgresql-client
 
 EXPOSE 9002
 ENV PORT 9002
