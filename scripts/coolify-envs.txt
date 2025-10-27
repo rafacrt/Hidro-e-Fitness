@@ -1,0 +1,19 @@
+# Variáveis de ambiente para configurar no Coolify
+# Cole estes valores nas Environment Variables do seu projeto
+
+# Database credentials
+DB_USER=hf_app
+DB_PASSWORD=P@ssw0rd2024!HF_Secure
+DB_NAME=hidro_fitness_db
+
+# Hasura secrets
+HASURA_ADMIN_SECRET=d7f9a1c2e8b34fa5d16c7b20e5319a44c8e1f72ad9c4b0e6f3a2d1c5b7e9a0d4
+
+# JWT secrets
+JWT_SECRET=a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
+HASURA_GRAPHQL_JWT_SECRET={"type":"HS256","key":"a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"}
+
+# Postgres (para o serviço de banco)
+POSTGRES_USER=hf_app
+POSTGRES_PASSWORD=P@ssw0rd2024!HF_Secure  
+POSTGRES_DB=hidro_fitness_db
