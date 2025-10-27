@@ -234,9 +234,22 @@ CREATE TABLE IF NOT EXISTS public.academy_settings (
 INSERT INTO public.academy_settings (id, name)
 SELECT 1, 'Hidro Fitness'
 WHERE NOT EXISTS (SELECT 1 FROM public.academy_settings WHERE id = 1);
+
+-- Criar usuário admin padrão
+INSERT INTO public.users (email, password_hash, full_name, role)
+SELECT
+  'admin@hidrofitness.com',
+  '\$2a\$10\$Bz0YLN/Xozytew5qzDNLqO.bdo0q/30MwQpKXufG6sT1x4o5m/wd6',
+  'Administrador',
+  'admin'
+WHERE NOT EXISTS (SELECT 1 FROM public.users WHERE email = 'admin@hidrofitness.com');
 EOF
 
 echo "✅ Schema migrations completed!"
+echo "👤 Admin user created:"
+echo "   Email: admin@hidrofitness.com"
+echo "   Password: admin123"
+echo "   ⚠️  Change password after first login!"
 
 # Rastrear tabelas no Hasura
 echo "🔄 Tracking tables in Hasura..."
