@@ -4,12 +4,12 @@
 
 Sistema foi **SIMPLIFICADO** de 2 bancos para **1 banco único**:
 
-- ✅ Todos os 193 alunos prontos para importar
-- ✅ Todos os 72 planos prontos
+- ✅ Todos os 169 alunos prontos para importar (backup convertido)
+- ✅ Todos os 69 planos prontos
 - ✅ Todas as 13 modalidades prontas
 - ✅ Arquitetura igual ao desenvolvimento local (mais simples)
 - ✅ Sem problemas de volume entre 2 bancos
-- ✅ Admin user criado automaticamente
+- ✅ Admin users criados automaticamente (admin + Janaina)
 
 ---
 
@@ -77,12 +77,14 @@ Clique em **"Redeploy"** e aguarde 2-3 minutos.
 2. PostgreSQL cria banco "hidrofitness"
 3. Executa db/init-prod/01_schema.sql → Cria TODAS as tabelas
 4. Executa db/init-prod/02_seed_data.sql → 13 modalidades
-5. Executa db/init-prod/03_students_data.sql → 193 alunos
-6. Executa db/init-prod/04_plans_data.sql → 72 planos
-7. Executa db/init-prod/05_admin_user.sql → admin user
-8. Container hasura conecta ao banco
-9. Container app rastreia todas as tabelas no Hasura
-10. Sistema pronto! 🎉
+5. Executa db/init-prod/03_students_data.sql → 169 alunos (backup)
+6. Executa db/init-prod/04_plans_data.sql → 69 planos
+7. Executa db/init-prod/05_student_plans_data.sql → associações
+8. Executa db/init-prod/06_payments_data.sql → 2 pagamentos
+9. Executa db/init-prod/07_admin_user.sql → admin + Janaina
+10. Container hasura conecta ao banco
+11. Container app inicia
+12. Sistema pronto! 🎉
 ```
 
 ---
@@ -101,32 +103,42 @@ successfully acquired the sourced metadata lock
 
 ### Logs do **app**:
 ```
-✅ Hasura is ready!
-🔄 Tracking all tables...
-✅ All tables tracked in Hasura!
-🚀 Hasura initialization complete!
-✓ Ready in XXXms
+Starting application initialization...
+Starting Next.js application...
+   ▲ Next.js 15.3.3
+   - Local:        http://localhost:9002
+ ✓ Ready in XXXms
 ```
 
 ---
 
 ## 🔑 Login Após Deploy
 
-- **URL**: Seu domínio configurado no Coolify
+**Admin:**
 - **Email**: `admin@hidrofitness.com`
 - **Senha**: `admin123`
 
-⚠️ **IMPORTANTE:** Altere a senha após primeiro login!
+**Janaina:**
+- **Email**: `academiahidrofitness86@gmail.com`
+- **Senha**: `ferdinando50`
+
+⚠️ **IMPORTANTE:** Altere a senha do admin após primeiro login!
 
 ---
 
 ## 🎉 Resultado Final
 
 Ao entrar em **"Alunos"**, você verá:
-- ✅ **193 estudantes** listados automaticamente
+- ✅ **169 estudantes** listados automaticamente (backup importado)
 - ✅ Todos com CPF, telefone, endereço completos
-- ✅ Planos e modalidades já vinculados
-- ✅ Histórico de pagamentos importado
+- ✅ **69 planos** disponíveis
+- ✅ **13 modalidades** configuradas
+- ✅ Histórico de pagamentos importado (2 registros)
+
+**IMPORTANTE:** Após o deploy, você precisará:
+1. Acessar o console do Hasura (porta 8080)
+2. Rastrear as tabelas manualmente OU
+3. Executar o script de tracking que está em `track_tables.ps1`
 
 ---
 

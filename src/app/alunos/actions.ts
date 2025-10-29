@@ -191,7 +191,7 @@ export async function updateStudent(id: string, formData: unknown) {
     const cleanCpf = parsedData.data.cpf?.replace(/\D/g, '') || null;
 
     const mutation = `
-      mutation UpdateStudent($id: uuid!, $changes: students_set_input!) {
+      mutation UpdateStudent($id: String!, $changes: students_set_input!) {
         update_students_by_pk(pk_columns: { id: $id }, _set: $changes) { id }
       }
     `;
@@ -235,7 +235,7 @@ export async function deleteStudent(id: string) {
   try {
     const client = getGraphQLServerClient();
     const mutation = `
-      mutation DeleteStudent($id: uuid!) {
+      mutation DeleteStudent($id: String!) {
         delete_students_by_pk(id: $id) { id }
       }
     `;
@@ -299,7 +299,7 @@ export async function getStudentHistory(studentId: string): Promise<HistoryEvent
   try {
     const client = getGraphQLServerClient();
     const query = `
-      query StudentHistory($studentId: uuid!) {
+      query StudentHistory($studentId: String!) {
         students_by_pk(id: $studentId) { created_at }
         enrollments(where: { student_id: { _eq: $studentId } }) {
           created_at
@@ -369,7 +369,7 @@ export async function getStudentPlans(studentId: string): Promise<Array<{ id: st
   try {
     const client = getGraphQLServerClient();
     const query = `
-      query StudentPlans($studentId: uuid!) {
+      query StudentPlans($studentId: String!) {
         student_plans(where: { student_id: { _eq: $studentId } }) {
           plans { id, name }
         }
@@ -391,7 +391,7 @@ export async function updateStudentPlans(studentId: string, planIds: string[]) {
 
     // 1. Buscar planos atuais
     const currentQuery = `
-      query CurrentPlans($studentId: uuid!) {
+      query CurrentPlans($studentId: String!) {
         student_plans(where: { student_id: { _eq: $studentId } }) { plan_id }
       }
     `;
@@ -401,7 +401,7 @@ export async function updateStudentPlans(studentId: string, planIds: string[]) {
 
     // 2. Remover planos existentes do aluno
     const deleteMutation = `
-      mutation DeleteStudentPlans($studentId: uuid!) {
+      mutation DeleteStudentPlans($studentId: String!) {
         delete_student_plans(where: { student_id: { _eq: $studentId } }) { affected_rows }
       }
     `;
@@ -460,7 +460,7 @@ export async function syncStudentPlanPayments(studentId: string) {
 
     // 1. Planos ativos do aluno com detalhes
     const plansQuery = `
-      query StudentPlans($studentId: uuid!) {
+      query StudentPlans($studentId: String!) {
         student_plans(where: { student_id: { _eq: $studentId } }) {
           plans { id, name, price, recurrence }
         }

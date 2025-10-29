@@ -153,7 +153,7 @@ export async function getPendingPayments(studentId: string): Promise<Payment[]> 
   try {
     const client = getGraphQLServerClient();
     const query = `
-      query PendingPayments($studentId: uuid!) {
+      query PendingPayments($studentId: String!) {
         payments(where: { student_id: { _eq: $studentId }, status: { _in: ["pendente", "vencido"] } }, order_by: { due_date: asc }) {
           id
           description
@@ -182,7 +182,7 @@ export async function getAllStudentPayments(studentId: string): Promise<Payment[
   try {
     const client = getGraphQLServerClient();
     const query = `
-      query AllStudentPayments($studentId: uuid!) {
+      query AllStudentPayments($studentId: String!) {
         payments(where: { student_id: { _eq: $studentId } }, order_by: { due_date: desc }) {
           id
           description

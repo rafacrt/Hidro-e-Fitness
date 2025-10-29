@@ -20,7 +20,7 @@ ON CONFLICT (email) DO UPDATE SET
 INSERT INTO public.users (email, password_hash, full_name, role)
 VALUES (
   'academiahidrofitness86@gmail.com',
-  '$2a$10$vHqKxU7z0L5yOJhYLXGqLO3EQ4OWH5GhGKZ8qN.3wXfKxqWZqJKqm',
+  '$2a$10$JBjtResDEYaar9FTnmDC0ejfuohfPEUy6H3n5/zrxa2RzfJAp8vUO',
   'Janaina',
   'admin'
 )

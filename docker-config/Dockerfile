@@ -33,7 +33,7 @@ EXPOSE 9002
 ENV PORT 9002
 
 # Entrypoint script para aguardar Hasura estar pronto
-COPY --from=builder /app/docker-config/entrypoint.sh /app/entrypoint.sh
+COPY docker-config/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-CMD ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]

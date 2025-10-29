@@ -28,7 +28,14 @@
       "Bash(timeout 30 bash -c 'until docker-compose logs db 2>&1 | grep -q \"\"database system is ready to accept connections\"\"; do sleep 1; done && echo \"\"Database is ready!\"\"')",
       "Bash(docker exec:*)",
       "Bash(timeout 30 bash -c 'until docker-compose logs db 2>&1 | grep -q \"\"database system is ready to accept connections\"\"; do sleep 1; done && echo \"\"Database ready!\"\"')",
-      "Bash(docker-compose restart:*)"
+      "Bash(docker-compose restart:*)",
+      "Bash(docker system prune:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(docker-compose stop:*)",
+      "Bash(docker run:*)",
+      "Bash(dos2unix:*)"
     ],
     "deny": [],
     "ask": []
