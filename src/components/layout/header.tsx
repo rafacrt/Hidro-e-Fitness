@@ -135,11 +135,13 @@ export default function Header({ settings, userProfile }: HeaderProps) {
             <Link href="/configuracoes">Configurações</Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <form action={logout}>
-            <button type="submit" className="w-full">
-              <DropdownMenuItem>Sair</DropdownMenuItem>
-            </button>
-          </form>
+          <DropdownMenuItem asChild>
+            <form action={logout} className="w-full">
+              <button type="submit" className="w-full text-left cursor-pointer">
+                Sair
+              </button>
+            </form>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

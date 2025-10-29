@@ -7,7 +7,7 @@ import { z } from 'zod';
 import type { Database } from '@/lib/database.types';
 
 type Modality = Database['public']['Tables']['modalities']['Row'];
-type Plan = Database['public']['Tables']['plans']['Row'] & { modalities: Pick<Modality, 'name'> | null };
+type Plan = Database['public']['Tables']['plans']['Row'] & { modality: Pick<Modality, 'name'> | null };
 
 
 const modalityFormSchema = z.object({
@@ -60,14 +60,14 @@ export async function getPlans(): Promise<Plan[]> {
           benefits
           status
           created_at
-          modalities { name }
+          modality { name }
         }
       }
     `;
     const data = await client.request(query);
     return data.plans as Plan[];
   } catch (error) {
-    console.error('GraphQL Error:', error);
+    console.error('GraphQL Error getting plans:', error);
     return [];
   }
 }

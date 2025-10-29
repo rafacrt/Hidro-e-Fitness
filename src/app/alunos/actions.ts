@@ -371,13 +371,13 @@ export async function getStudentPlans(studentId: string): Promise<Array<{ id: st
     const query = `
       query StudentPlans($studentId: String!) {
         student_plans(where: { student_id: { _eq: $studentId } }) {
-          plans { id, name }
+          plan { id, name }
         }
       }
     `;
     const data = await client.request(query, { studentId });
     return (data.student_plans || [])
-      .map((sp: any) => sp.plans as { id: string; name: string })
+      .map((sp: any) => sp.plan as { id: string; name: string })
       .filter((plan: any) => plan && plan.id && plan.name);
   } catch (error) {
     console.error('GraphQL Error fetching student plans:', error);
@@ -462,7 +462,7 @@ export async function syncStudentPlanPayments(studentId: string) {
     const plansQuery = `
       query StudentPlans($studentId: String!) {
         student_plans(where: { student_id: { _eq: $studentId } }) {
-          plans { id, name, price, recurrence }
+          plan { id, name, price, recurrence }
         }
         payments(where: { student_id: { _eq: $studentId }, status: { _eq: "pendente" } }) {
           description
@@ -478,7 +478,7 @@ export async function syncStudentPlanPayments(studentId: string) {
     const today = new Date();
 
     for (const sp of studentPlans) {
-      const plan = sp.plans as { id: string; name: string; price: number; recurrence: string } | null;
+      const plan = sp.plan as { id: string; name: string; price: number; recurrence: string } | null;
       if (!plan) continue;
       const description = `Mensalidade - ${plan.name}`;
       if (!existingPaymentDescriptions.has(description)) {

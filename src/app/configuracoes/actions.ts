@@ -19,12 +19,22 @@ export async function getUserProfile(): Promise<Profile | null> {
     if (!user?.id) return null;
     const client = await getGraphQLServerClient();
     const query = /* GraphQL */ `
-      query GetProfile($id: uuid!) {
-        profiles_by_pk(id: $id) { id full_name avatar_url role email }
+      query GetUser($id: String!) {
+        users_by_pk(id: $id) { id full_name email role }
       }
     `;
     const res = await client.request(query, { id: user.id });
-    return res?.profiles_by_pk ?? null;
+    const userData = res?.users_by_pk;
+    if (!userData) return null;
+
+    // Mapear dados de users para o formato de Profile
+    return {
+      id: userData.id,
+      full_name: userData.full_name,
+      email: userData.email,
+      role: userData.role,
+      avatar_url: null, // users não tem avatar_url ainda
+    } as Profile;
   } catch (error) {
     console.error('Unexpected Error getting profile:', error);
     return null;

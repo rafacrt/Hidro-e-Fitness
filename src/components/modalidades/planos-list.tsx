@@ -10,7 +10,7 @@ import { DeletePlanAlert } from "./delete-plan-alert";
 import { DuplicatePlanDialog } from "./duplicate-plan-dialog";
 
 type Modality = Database['public']['Tables']['modalities']['Row'];
-type Plan = Database['public']['Tables']['plans']['Row'] & { modalities: Pick<Modality, 'name'> | null };
+type Plan = Database['public']['Tables']['plans']['Row'] & { modality: Pick<Modality, 'name'> | null };
 
 interface PlanosListProps {
   plans: Plan[];
@@ -56,7 +56,7 @@ export default function PlanosList({ plans, modalities, onSuccess }: PlanosListP
                         <div className="flex justify-between items-start">
                             <div>
                                 <CardTitle className="text-xl">{plan.name}</CardTitle>
-                                <p className="text-sm text-muted-foreground">{plan.modalities?.name}</p>
+                                <p className="text-sm text-muted-foreground">{plan.modality?.name}</p>
                             </div>
                             <div className="text-right">
                                 <p className="text-2xl font-bold">{formatCurrency(plan.price)}</p>

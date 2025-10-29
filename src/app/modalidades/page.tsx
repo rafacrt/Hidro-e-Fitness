@@ -22,7 +22,7 @@ import { useRouter } from 'next/navigation';
 type AcademySettings = Database['public']['Tables']['academy_settings']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Modality = Database['public']['Tables']['modalities']['Row'];
-type Plan = Database['public']['Tables']['plans']['Row'] & { modalities: Pick<Modality, 'name'> | null };
+type Plan = Database['public']['Tables']['plans']['Row'] & { modality: Pick<Modality, 'name'> | null };
 
 
 export type ActiveTabModalities = "Visão Geral" | "Gerenciar Modalidades" | "Preços e Planos";
