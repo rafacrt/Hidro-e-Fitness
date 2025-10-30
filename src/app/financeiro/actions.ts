@@ -154,7 +154,7 @@ export async function getPendingPayments(studentId: string): Promise<Payment[]> 
     const client = getGraphQLServerClient();
     const query = `
       query PendingPayments($studentId: String!) {
-        payments(where: { student_id: { _eq: $studentId }, status: { _in: ["pendente", "vencido"] } }, order_by: { due_date: asc }) {
+        payments(where: { student_id: { _eq: $studentId }, status: { _in: ["pendente", "vencido", "inadimplente"] } }, order_by: { due_date: asc }) {
           id
           description
           amount
@@ -183,18 +183,14 @@ export async function getAllStudentPayments(studentId: string): Promise<Payment[
     const client = getGraphQLServerClient();
     const query = `
       query AllStudentPayments($studentId: String!) {
-        payments(where: { student_id: { _eq: $studentId } }, order_by: { due_date: desc }) {
+        payments(where: { student_id: { _eq: $studentId } }, order_by: { payment_date: desc }) {
           id
-          description
           amount
-          due_date
+          payment_date
           payment_method
           status
           student_id
-          category
-          type
           created_at
-          paid_at
         }
       }
     `;
@@ -202,6 +198,93 @@ export async function getAllStudentPayments(studentId: string): Promise<Payment[
     return data.payments as Payment[];
   } catch (error) {
     console.error('GraphQL Error fetching student payments:', error);
+    return [];
+  }
+}
+
+export interface PaymentsFilters {
+  status?: 'pendente' | 'pago' | 'vencido' | 'inadimplente';
+  month?: string; // formato: YYYY-MM
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export async function getPaymentsWithFilters(filters?: PaymentsFilters): Promise<Payment[]> {
+  try {
+    const client = getGraphQLServerClient();
+
+    // Default: current month
+    const now = new Date();
+    const defaultStartDate = startOfMonth(now);
+    const defaultEndDate = endOfMonth(now);
+
+    let whereConditions: any = {
+      amount: { _gt: 0 }, // Only receivables (positive amounts)
+    };
+
+    // Apply status filter
+    if (filters?.status) {
+      if (filters.status === 'inadimplente') {
+        // Inadimplentes: vencidos há mais de 30 dias
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        whereConditions = {
+          ...whereConditions,
+          status: { _eq: 'pendente' },
+          payment_date: { _lt: thirtyDaysAgo.toISOString() },
+        };
+      } else if (filters.status === 'vencido') {
+        // Vencidos: data passou mas ainda não pago
+        whereConditions = {
+          ...whereConditions,
+          status: { _eq: 'pendente' },
+          payment_date: { _lt: now.toISOString() },
+        };
+      } else {
+        whereConditions.status = { _eq: filters.status };
+      }
+    }
+
+    // Apply date filter
+    if (filters?.startDate && filters?.endDate) {
+      whereConditions.payment_date = {
+        _gte: filters.startDate.toISOString(),
+        _lte: filters.endDate.toISOString(),
+      };
+    } else if (filters?.month) {
+      const [year, month] = filters.month.split('-');
+      const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+      const endDate = endOfMonth(startDate);
+      whereConditions.payment_date = {
+        _gte: startDate.toISOString(),
+        _lte: endDate.toISOString(),
+      };
+    } else {
+      // Default to current month
+      whereConditions.payment_date = {
+        _gte: defaultStartDate.toISOString(),
+        _lte: defaultEndDate.toISOString(),
+      };
+    }
+
+    const query = `
+      query GetPayments($where: payments_bool_exp!) {
+        payments(where: $where, order_by: { payment_date: desc }) {
+          id
+          amount
+          payment_date
+          payment_method
+          status
+          student_id
+          created_at
+        }
+      }
+    `;
+
+    const data = await client.request(query, { where: whereConditions });
+    return data.payments as Payment[];
+  } catch (error) {
+    console.error('GraphQL Error fetching payments with filters:', error);
     return [];
   }
 }
