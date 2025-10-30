@@ -213,70 +213,51 @@ export async function getPaymentsWithFilters(filters?: PaymentsFilters): Promise
   try {
     const client = getGraphQLServerClient();
 
-    // Default: current month
     const now = new Date();
     const defaultStartDate = startOfMonth(now);
     const defaultEndDate = endOfMonth(now);
 
-    let whereConditions: any = {
-      amount: { _gt: 0 }, // Only receivables (positive amounts)
+    const whereConditions: Record<string, unknown> = {
+      amount: { _gt: 0 },
     };
 
-    // Apply status filter
     if (filters?.status) {
-      if (filters.status === 'inadimplente') {
-        // Inadimplentes: vencidos há mais de 30 dias
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        whereConditions = {
-          ...whereConditions,
-          status: { _eq: 'pendente' },
-          payment_date: { _lt: thirtyDaysAgo.toISOString() },
-        };
-      } else if (filters.status === 'vencido') {
-        // Vencidos: data passou mas ainda não pago
-        whereConditions = {
-          ...whereConditions,
-          status: { _eq: 'pendente' },
-          payment_date: { _lt: now.toISOString() },
-        };
-      } else {
-        whereConditions.status = { _eq: filters.status };
-      }
+      whereConditions.status = { _eq: filters.status };
     }
 
-    // Apply date filter
+    const setDateRange = (start: Date, end: Date) => {
+      whereConditions.due_date = {
+        _gte: toDateOnlyISOString(start),
+        _lte: toDateOnlyISOString(end),
+      };
+    };
+
     if (filters?.startDate && filters?.endDate) {
-      whereConditions.payment_date = {
-        _gte: filters.startDate.toISOString(),
-        _lte: filters.endDate.toISOString(),
-      };
+      setDateRange(filters.startDate, filters.endDate);
     } else if (filters?.month) {
-      const [year, month] = filters.month.split('-');
-      const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+      const [year, month] = filters.month.split('-').map(Number);
+      const startDate = new Date(year, (month || 1) - 1, 1);
       const endDate = endOfMonth(startDate);
-      whereConditions.payment_date = {
-        _gte: startDate.toISOString(),
-        _lte: endDate.toISOString(),
-      };
+      setDateRange(startDate, endDate);
     } else {
-      // Default to current month
-      whereConditions.payment_date = {
-        _gte: defaultStartDate.toISOString(),
-        _lte: defaultEndDate.toISOString(),
-      };
+      setDateRange(defaultStartDate, defaultEndDate);
     }
 
     const query = `
       query GetPayments($where: payments_bool_exp!) {
-        payments(where: $where, order_by: { payment_date: desc }) {
+        payments(where: $where, order_by: { due_date: desc }) {
           id
+          description
           amount
+          due_date
           payment_date
           payment_method
           status
           student_id
+          category
+          type
           created_at
+          paid_at
         }
       }
     `;
