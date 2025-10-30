@@ -124,8 +124,10 @@ export async function uploadLogo(formData: FormData) {
 }
 
 const pgPool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER,
+  // Em produção, o host padrão deve ser o serviço do Docker Compose
+  host: process.env.DB_HOST || 'db',
+  // Evita fallback para o usuário do SO (root) quando DB_USER não está definido
+  user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
 })
