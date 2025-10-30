@@ -91,6 +91,60 @@ export async function getModalitiesStats() {
   }
 }
 
+export interface PlansStats {
+  activePlans: number;
+  totalStudents: number;
+  averagePrice: number;
+  totalRevenue: number;
+}
+
+export async function getPlansStats(): Promise<PlansStats> {
+  try {
+    const client = getGraphQLServerClient();
+    const query = `
+      query GetPlansStats {
+        plans_aggregate(where: { status: { _eq: "ativo" } }) {
+          aggregate { count }
+        }
+        plans(where: { status: { _eq: "ativo" } }) {
+          price
+        }
+        student_plans_aggregate {
+          aggregate { count }
+        }
+        payments_aggregate(where: { status: { _eq: "pago" } }) {
+          aggregate { sum { amount } }
+        }
+      }
+    `;
+    const data = await client.request(query);
+
+    const activePlans = data.plans_aggregate?.aggregate?.count ?? 0;
+    const totalStudents = data.student_plans_aggregate?.aggregate?.count ?? 0;
+    const totalRevenue = data.payments_aggregate?.aggregate?.sum?.amount ?? 0;
+
+    // Calculate average price from active plans
+    const plans = data.plans || [];
+    const totalPrice = plans.reduce((sum: number, plan: any) => sum + (plan.price || 0), 0);
+    const averagePrice = plans.length > 0 ? totalPrice / plans.length : 0;
+
+    return {
+      activePlans,
+      totalStudents,
+      averagePrice,
+      totalRevenue,
+    };
+  } catch (error) {
+    console.error('GraphQL Error getting plans stats:', error);
+    return {
+      activePlans: 0,
+      totalStudents: 0,
+      averagePrice: 0,
+      totalRevenue: 0,
+    };
+  }
+}
+
 
 export async function addModality(formData: unknown) {
   const parsedData = modalityFormSchema.safeParse(formData);

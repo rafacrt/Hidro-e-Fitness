@@ -25,9 +25,9 @@ export async function getAttendanceStats(): Promise<AttendanceStats> {
       query AttendanceStats($startOfDay: timestamptz!, $endOfDay: timestamptz!, $currentDay: String!) {
         attendance_total: attendance_aggregate { aggregate { count } }
         attendance_present_total: attendance_aggregate(where: { status: { _eq: "presente" } }) { aggregate { count } }
-        attendance_today_total: attendance_aggregate(where: { created_at: { _gte: $startOfDay, _lte: $endOfDay } }) { aggregate { count } }
-        attendance_today_present: attendance_aggregate(where: { created_at: { _gte: $startOfDay, _lte: $endOfDay }, status: { _eq: "presente" } }) { aggregate { count } }
-        attendance_today_absent: attendance_aggregate(where: { created_at: { _gte: $startOfDay, _lte: $endOfDay }, status: { _eq: "ausente" } }) { aggregate { count } }
+        attendance_today_total: attendance_aggregate(where: { attendance_date: { _gte: $startOfDay, _lte: $endOfDay } }) { aggregate { count } }
+        attendance_today_present: attendance_aggregate(where: { attendance_date: { _gte: $startOfDay, _lte: $endOfDay }, status: { _eq: "presente" } }) { aggregate { count } }
+        attendance_today_absent: attendance_aggregate(where: { attendance_date: { _gte: $startOfDay, _lte: $endOfDay }, status: { _eq: "ausente" } }) { aggregate { count } }
         classes_today: classes_aggregate(where: { status: { _eq: "ativa" }, days_of_week: { _contains: [$currentDay] } }) { aggregate { count } }
       }
     `;

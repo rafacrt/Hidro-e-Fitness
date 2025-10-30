@@ -20,7 +20,7 @@ import type { Database } from '@/lib/database.types';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
 import { NavContent } from '@/components/layout/nav-content';
 import { getFinancialSummary, getTransactions, type FinancialSummary } from './actions';
-import { getModalities, getPlans } from '../modalidades/actions';
+import { getModalities, getPlans, getPlansStats, type PlansStats } from '../modalidades/actions';
 import { Loader2 } from 'lucide-react';
 import TransacoesRecentesTable from '@/components/financeiro/transacoes-recentes-table';
 
@@ -41,33 +41,37 @@ export default function FinanceiroPage() {
   const [summary, setSummary] = React.useState<FinancialSummary | null>(null);
   const [modalities, setModalities] = React.useState<Modality[]>([]);
   const [plans, setPlans] = React.useState<Plan[]>([]);
+  const [plansStats, setPlansStats] = React.useState<PlansStats | null>(null);
   const [loading, setLoading] = React.useState(true);
 
   const loadData = React.useCallback(async () => {
     setLoading(true);
     try {
       const [
-        academySettings, 
-        profile, 
-        receitasData, 
-        despesasData, 
+        academySettings,
+        profile,
+        receitasData,
+        despesasData,
         financialSummary,
         modalitiesData,
         plansData,
+        plansStatsData,
       ] = await Promise.all([
-        getAcademySettings(), 
+        getAcademySettings(),
         getUserProfile(),
         getTransactions('receita'),
         getTransactions('despesa'),
         getFinancialSummary(),
         getModalities(),
         getPlans(),
+        getPlansStats(),
       ]);
       setSettings(academySettings);
       setUserProfile(profile);
       setRecebimentos(receitasData);
       setModalities(modalitiesData);
       setPlans(plansData);
+      setPlansStats(plansStatsData);
       setPagamentos(despesasData);
       setSummary(financialSummary);
     } catch (error) {
@@ -108,7 +112,7 @@ export default function FinanceiroPage() {
       case 'Métodos de Pagamento':
         return <MetodosPagamentoTab />;
       case 'Planos e Preços':
-        return <PlanosPrecosTab modalities={modalities} plans={plans} onSuccess={loadData} />;
+        return plansStats && <PlanosPrecosTab modalities={modalities} plans={plans} plansStats={plansStats} onSuccess={loadData} />;
       default:
         return null;
     }

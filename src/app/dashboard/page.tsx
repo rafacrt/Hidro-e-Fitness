@@ -3,10 +3,11 @@ import Header from '@/components/layout/header';
 import Sidebar from '@/components/layout/sidebar';
 import StatCard from '@/components/dashboard/stat-card';
 import UpcomingClasses from '@/components/dashboard/upcoming-classes';
+import ActiveStudents from '@/components/dashboard/active-students';
 import QuickActions from '@/components/dashboard/quick-actions';
 import { Users, Calendar, DollarSign, Percent } from 'lucide-react';
 import { getAcademySettings, getUserProfile } from '../configuracoes/actions';
-import { getDashboardStats, getUpcomingClasses } from './actions';
+import { getDashboardStats, getUpcomingClasses, getActiveStudents } from './actions';
 import { unstable_noStore as noStore } from 'next/cache';
 import { NavContent } from '@/components/layout/nav-content';
 
@@ -19,11 +20,12 @@ const formatCurrency = (value: number) => {
 
 export default async function DashboardPage() {
   noStore();
-  const [academySettings, userProfile, stats, upcomingClasses] = await Promise.all([
+  const [academySettings, userProfile, stats, upcomingClasses, activeStudents] = await Promise.all([
     getAcademySettings(),
     getUserProfile(),
     getDashboardStats(),
-    getUpcomingClasses()
+    getUpcomingClasses(),
+    getActiveStudents()
   ]);
 
   return (
@@ -87,10 +89,11 @@ export default async function DashboardPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <UpcomingClasses classes={upcomingClasses} />
+            <ActiveStudents students={activeStudents} />
           </div>
-          
+
           <QuickActions />
 
         </main>

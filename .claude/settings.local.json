@@ -35,7 +35,9 @@
       "Bash(docker-compose build:*)",
       "Bash(docker-compose stop:*)",
       "Bash(docker run:*)",
-      "Bash(dos2unix:*)"
+      "Bash(dos2unix:*)",
+      "Bash(npx playwright install chromium)",
+      "Bash(python -m json.tool:*)"
     ],
     "deny": [],
     "ask": []

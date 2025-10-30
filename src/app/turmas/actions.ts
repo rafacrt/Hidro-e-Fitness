@@ -54,8 +54,6 @@ export async function getClasses(): Promise<(ClassRow & { instructors: Pick<Inst
           max_students
           status
           created_at
-          instructors { name }
-          modalities { name }
         }
       }
     `;

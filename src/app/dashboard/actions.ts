@@ -7,6 +7,7 @@ import { startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
 
 type ClassRow = Database['public']['Tables']['classes']['Row'];
 type Instructor = Database['public']['Tables']['instructors']['Row'];
+type Student = Database['public']['Tables']['students']['Row'];
 
 export interface DashboardStats {
   activeStudents: number;
@@ -31,7 +32,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
           aggregate { count }
         }
         classes_today: classes_aggregate(
-          where: { status: { _eq: "ativa" }, days_of_week: { _contains: [$currentDay] } }
+          where: { day_of_week: { _eq: $currentDay } }
         ) {
           aggregate { count }
         }
@@ -40,10 +41,10 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         ) {
           aggregate { sum { amount } }
         }
-        attendance_total: attendance_aggregate(where: { created_at: { _gte: $start, _lte: $end } }) {
+        attendance_total: attendance_aggregate(where: { attendance_date: { _gte: $start, _lte: $end } }) {
           aggregate { count }
         }
-        attendance_present: attendance_aggregate(where: { status: { _eq: "presente" }, created_at: { _gte: $start, _lte: $end } }) {
+        attendance_present: attendance_aggregate(where: { status: { _eq: "presente" }, attendance_date: { _gte: $start, _lte: $end } }) {
           aggregate { count }
         }
       }
@@ -85,18 +86,18 @@ export async function getUpcomingClasses(): Promise<(ClassRow & { instructors: P
     const query = `
       query UpcomingClasses($currentDay: String!) {
         classes(
-          where: { status: { _eq: "ativa" }, days_of_week: { _contains: [$currentDay] } },
+          where: { day_of_week: { _eq: $currentDay } },
           order_by: { start_time: asc },
           limit: 5
         ) {
           id
-          name
-          status
-          days_of_week
+          modality_id
+          instructor_id
+          day_of_week
           start_time
           end_time
-          instructor_id
-          instructors { name }
+          capacity
+          created_at
         }
       }
     `;
@@ -105,6 +106,35 @@ export async function getUpcomingClasses(): Promise<(ClassRow & { instructors: P
     return (data.classes || []) as any;
   } catch (error) {
     console.error('Unexpected error fetching upcoming classes (GraphQL):', error);
+    return [];
+  }
+}
+
+export async function getActiveStudents(): Promise<Student[]> {
+  try {
+    const client = getGraphQLServerClient();
+
+    const query = `
+      query ActiveStudents {
+        students(
+          where: { status: { _eq: "ativo" } },
+          order_by: { created_at: desc },
+          limit: 10
+        ) {
+          id
+          name
+          email
+          phone
+          status
+          created_at
+        }
+      }
+    `;
+
+    const data = await client.request(query);
+    return (data.students || []) as Student[];
+  } catch (error) {
+    console.error('Unexpected error fetching active students (GraphQL):', error);
     return [];
   }
 }

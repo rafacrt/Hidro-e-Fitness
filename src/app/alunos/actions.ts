@@ -458,38 +458,36 @@ export async function syncStudentPlanPayments(studentId: string) {
   try {
     const client = getGraphQLServerClient();
 
-    // 1. Planos ativos do aluno com detalhes
+    // 1. Buscar planos ativos do aluno
     const plansQuery = `
       query StudentPlans($studentId: String!) {
         student_plans(where: { student_id: { _eq: $studentId } }) {
           plan { id, name, price, recurrence }
         }
-        payments(where: { student_id: { _eq: $studentId }, status: { _eq: "pendente" } }) {
-          description
-        }
       }
     `;
     const res = await client.request(plansQuery, { studentId });
     const studentPlans = res.student_plans || [];
-    const existingPaymentDescriptions = new Set((res.payments || []).map((p: any) => p.description));
 
-    // 2. Criar pagamentos que faltam
-    const paymentsToCreate: Array<{ student_id: string; description: string; amount: number; due_date: string; status: 'pendente' }> = [];
+    if (studentPlans.length === 0) {
+      return { success: false, message: 'Este aluno não possui planos ativos.' };
+    }
+
+    // 2. Criar pagamentos (usando a mesma estrutura que payment-generator.ts)
+    const paymentsToCreate: Array<{ student_id: string; amount: number; payment_date: string; payment_method: string | null; status: string }> = [];
     const today = new Date();
 
     for (const sp of studentPlans) {
       const plan = sp.plan as { id: string; name: string; price: number; recurrence: string } | null;
       if (!plan) continue;
-      const description = `Mensalidade - ${plan.name}`;
-      if (!existingPaymentDescriptions.has(description)) {
-        paymentsToCreate.push({
-          student_id: studentId,
-          description,
-          amount: plan.price,
-          due_date: today.toISOString().split('T')[0],
-          status: 'pendente',
-        });
-      }
+
+      paymentsToCreate.push({
+        student_id: studentId,
+        amount: plan.price,
+        payment_date: today.toISOString(),
+        payment_method: null,
+        status: 'pendente',
+      });
     }
 
     // 3. Inserir novos pagamentos

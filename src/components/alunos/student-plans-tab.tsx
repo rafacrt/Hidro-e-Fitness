@@ -2,12 +2,13 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2, Tags } from 'lucide-react';
+import { Loader2, Tags, CreditCard } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import type { Database } from '@/lib/database.types';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ManageStudentPlansDialog } from './manage-student-plans-dialog';
+import { GeneratePaymentsDialog } from './generate-payments-dialog';
 import { getStudentPlans } from '@/app/alunos/actions';
 import { getPlans } from '@/app/modalidades/actions';
 import { useToast } from '@/hooks/use-toast';
@@ -99,22 +100,37 @@ export default function StudentPlansTab({ studentId, onSuccess }: StudentPlansTa
                         {studentPlans.map(plan => {
                             const recurrenceInfo = recurrenceMap[plan.recurrence as keyof typeof recurrenceMap] || { text: '', badge: '' };
                             return (
-                                <div key={plan.id} className="p-4 border rounded-lg flex justify-between items-center">
-                                    <div>
-                                        <p className="font-semibold">{plan.name}</p>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="secondary">{recurrenceInfo.badge}</Badge>
-                                            <Badge variant={plan.status === 'ativo' ? 'default' : 'destructive'} className={plan.status === 'ativo' ? 'bg-green-600' : ''}>
-                                                {plan.status}
-                                            </Badge>
+                                <div key={plan.id} className="p-4 border rounded-lg space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="font-semibold">{plan.name}</p>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="secondary">{recurrenceInfo.badge}</Badge>
+                                                <Badge variant={plan.status === 'ativo' ? 'default' : 'destructive'} className={plan.status === 'ativo' ? 'bg-green-600' : ''}>
+                                                    {plan.status}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                        <div className='text-right'>
+                                          <p className="font-bold text-lg">{formatCurrency(plan.price)}</p>
+                                          <p className="text-sm text-muted-foreground capitalize">
+                                            {recurrenceInfo.text}
+                                          </p>
                                         </div>
                                     </div>
-                                    <div className='text-right'>
-                                      <p className="font-bold text-lg">{formatCurrency(plan.price)}</p>
-                                      <p className="text-sm text-muted-foreground capitalize">
-                                        {recurrenceInfo.text}
-                                      </p>
-                                    </div>
+                                    <GeneratePaymentsDialog
+                                        studentId={studentId}
+                                        plan={plan}
+                                        onSuccess={() => {
+                                            loadData();
+                                            onSuccess();
+                                        }}
+                                    >
+                                        <Button variant="outline" size="sm" className="w-full">
+                                            <CreditCard className="mr-2 h-4 w-4" />
+                                            Gerar Ordens de Pagamento
+                                        </Button>
+                                    </GeneratePaymentsDialog>
                                 </div>
                             );
                         })}

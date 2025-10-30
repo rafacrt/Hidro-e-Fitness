@@ -19,7 +19,7 @@ export async function getUserProfile(): Promise<Profile | null> {
     if (!user?.id) return null;
     const client = await getGraphQLServerClient();
     const query = /* GraphQL */ `
-      query GetUser($id: String!) {
+      query GetUser($id: uuid!) {
         users_by_pk(id: $id) { id full_name email role }
       }
     `;

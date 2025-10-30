@@ -122,26 +122,7 @@ export default function StudentFinancialTab({ studentId, studentName }: StudentF
                     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-12">
                         <Calendar className="h-12 w-12 mb-4 opacity-50" />
                         <p className="font-semibold text-lg">Nenhum pagamento registrado</p>
-                        <p className="text-sm mb-4">Ainda não há cobranças para este aluno.</p>
-                        <Button
-                            onClick={handleSyncPayments}
-                            disabled={syncing}
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
-                        >
-                            {syncing ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                    Sincronizando...
-                                </>
-                            ) : (
-                                <>
-                                    <RefreshCw className="h-4 w-4" />
-                                    Gerar Cobranças dos Planos
-                                </>
-                            )}
-                        </Button>
+                        <p className="text-sm">Gere pagamentos na aba "Planos" acima.</p>
                     </div>
                 ) : (
                     <div className="rounded-md border">
@@ -158,8 +139,8 @@ export default function StudentFinancialTab({ studentId, studentName }: StudentF
                             <TableBody>
                                 {allPayments.map(payment => {
                                     const statusInfo = statusConfig[payment.status] || statusConfig.pendente;
-                                    const dueDate = new Date(payment.due_date);
-                                    const monthYear = format(dueDate, 'MMM/yyyy', { locale: ptBR });
+                                    const paymentDate = new Date(payment.payment_date);
+                                    const monthYear = format(paymentDate, 'MMM/yyyy', { locale: ptBR });
 
                                     return (
                                         <TableRow
@@ -167,7 +148,7 @@ export default function StudentFinancialTab({ studentId, studentName }: StudentF
                                             className={cn(statusInfo.rowClassName)}
                                         >
                                             <TableCell className="font-medium">
-                                                {payment.description}
+                                                Mensalidade {monthYear}
                                             </TableCell>
                                             <TableCell className="text-center font-semibold">
                                                 {formatCurrency(payment.amount)}
@@ -176,7 +157,7 @@ export default function StudentFinancialTab({ studentId, studentName }: StudentF
                                                 <div className="flex flex-col items-center">
                                                     <span className="capitalize font-medium">{monthYear}</span>
                                                     <span className="text-xs text-muted-foreground">
-                                                        {format(dueDate, 'dd/MM/yyyy')}
+                                                        {format(paymentDate, 'dd/MM/yyyy')}
                                                     </span>
                                                 </div>
                                             </TableCell>
@@ -186,9 +167,9 @@ export default function StudentFinancialTab({ studentId, studentName }: StudentF
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                {payment.paid_at ? (
+                                                {payment.status === 'pago' ? (
                                                     <span className="text-sm">
-                                                        {format(new Date(payment.paid_at), 'dd/MM/yyyy')}
+                                                        {format(paymentDate, 'dd/MM/yyyy')}
                                                     </span>
                                                 ) : (
                                                     <span className="text-sm text-muted-foreground">-</span>
