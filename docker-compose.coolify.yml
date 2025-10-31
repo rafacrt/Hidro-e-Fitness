@@ -12,7 +12,7 @@ services:
     healthcheck:
       # Use valores literais para evitar fallback para usuário do SO (root)
       # e problemas de expansão de variáveis no Coolify
-      test: ["CMD-SHELL", "pg_isready -U postgres -d hostnfitness"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hidrofitness"]
       interval: 5s
       timeout: 5s
       retries: 20
