@@ -10,7 +10,8 @@ services:
       - db_data:/var/lib/postgresql/data
       - ./db/data-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      # Healthcheck explícito para evitar fallback para usuário root
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB:-hidrofitness}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -22,7 +23,8 @@ services:
       db:
         condition: service_healthy
     environment:
-      HASURA_GRAPHQL_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-hidrofitness}
+      # Usa senha codificada para URL (ex.: "@" -> "%40"). Defina POSTGRES_PASSWORD_URL_ENCODED.
+      HASURA_GRAPHQL_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD_URL_ENCODED}@db:5432/${POSTGRES_DB:-hidrofitness}
       HASURA_GRAPHQL_ENABLE_CONSOLE: 'false'
       HASURA_GRAPHQL_DEV_MODE: 'false'
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, query-log
