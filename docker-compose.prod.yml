@@ -24,7 +24,7 @@ services:
         condition: service_healthy
     environment:
       # Usa senha codificada para URL (ex.: "@" -> "%40"). Defina POSTGRES_PASSWORD_URL_ENCODED.
-      HASURA_GRAPHQL_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD_URL_ENCODED}@db:5432/${POSTGRES_DB:-hidrofitness}
+      HASURA_GRAPHQL_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-hidrofitness}
       HASURA_GRAPHQL_ENABLE_CONSOLE: 'false'
       HASURA_GRAPHQL_DEV_MODE: 'false'
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, query-log
