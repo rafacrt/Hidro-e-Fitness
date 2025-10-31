@@ -1,30 +1,44 @@
+version: "3.9"
+
 services:
   db:
     image: postgres:16
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # ⛔ Evite bind local no Coolify. Veja "Seed do banco" abaixo.
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./db/data-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   hasura:
     image: hasura/graphql-engine:v2.38.0
     restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       HASURA_GRAPHQL_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
-      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "false"       # em prod, deixe false (use a console local com port-forward quando precisar)
+      HASURA_GRAPHQL_DEV_MODE: "false"
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET}
-      HASURA_GRAPHQL_JWT_SECRET: >-
-        {"type":"HS256","key":"${JWT_SECRET}"}
-    ports:
-      - "8080:8080"
+      # Defina isso COMPLETO no .env (JSON inteiro):
+      # HASURA_GRAPHQL_JWT_SECRET={"type":"HS256","key":"sua-chave"}
+      HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   app:
     build:
@@ -32,23 +46,37 @@ services:
       dockerfile: docker-config/Dockerfile
     restart: unless-stopped
     depends_on:
-      - hasura
-      - db
+      hasura:
+        condition: service_healthy
+      db:
+        condition: service_healthy
     environment:
-      - NODE_ENV=production
-      - NEXT_TELEMETRY_DISABLED=1
-      - HASURA_GRAPHQL_ENDPOINT=http://hasura:8080/v1/graphql
-      - HASURA_ADMIN_SECRET=${HASURA_ADMIN_SECRET}
-      - JWT_SECRET=${JWT_SECRET}
-      - FILE_STORAGE_DIR=/app/storage
-      - DB_HOST=db
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      HASURA_GRAPHQL_ENDPOINT: http://hasura:8080/v1/graphql
+      HASURA_ADMIN_SECRET: ${HASURA_ADMIN_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      FILE_STORAGE_DIR: /app/storage
+
+      # Unifique com o banco:
+      DB_HOST: db
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
+
+      # Se seu app usa URL absoluta/cookies/forwarded-proto, inclua:
+      # APP_URL: https://seu-dominio
+      # TRUST_PROXY: "1"
     volumes:
       - storage:/app/storage
-    ports:
-      - "9002:9002"
+    expose:
+      - "9002"
+    healthcheck:
+      # ajuste o path de health do seu app
+      test: ["CMD", "wget", "-qO-", "http://localhost:9002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
 
 volumes:
   db_data:
