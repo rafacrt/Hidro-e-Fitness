@@ -152,24 +152,38 @@ export async function getPendingPayments(studentId: string): Promise<Payment[]> 
   if (!studentId) return [];
   try {
     const client = getGraphQLServerClient();
+    const now = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
     const query = `
-      query PendingPayments($studentId: String!) {
-        payments(where: { student_id: { _eq: $studentId }, status: { _in: ["pendente", "vencido", "inadimplente"] } }, order_by: { due_date: asc }) {
+      query PendingPayments($studentId: String!, $now: timestamptz!, $thirtyDaysAgo: timestamptz!) {
+        payments(
+          where: {
+            student_id: { _eq: $studentId },
+            status: { _eq: "pendente" },
+            _or: [
+              { payment_date: { _gte: $now } },
+              { payment_date: { _lt: $now } }
+            ]
+          },
+          order_by: { payment_date: asc }
+        ) {
           id
-          description
           amount
-          due_date
+          payment_date
           payment_method
           status
           student_id
-          category
-          type
           created_at
-          paid_at
         }
       }
     `;
-    const data = await client.request(query, { studentId });
+    const data = await client.request(query, {
+      studentId,
+      now: now.toISOString(),
+      thirtyDaysAgo: thirtyDaysAgo.toISOString()
+    });
     return data.payments as Payment[];
   } catch (error) {
     console.error('GraphQL Error fetching pending payments:', error);
