@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { processPayment } from '@/app/caixa/actions';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 type Student = Database['public']['Tables']['students']['Row'];
 type Payment = Database['public']['Tables']['payments']['Row'];
@@ -36,9 +38,47 @@ const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style
 
 const formatDate = (value: string | null | undefined) => {
   if (!value) return 'Sem data';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'Sem data';
-  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(parsed);
+  try {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return 'Sem data';
+    return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' }).format(parsed);
+  } catch {
+    return 'Sem data';
+  }
+};
+
+// Generate description from payment_date
+const getPaymentDescription = (paymentDate: string | null): string => {
+  if (!paymentDate) return 'Mensalidade';
+  try {
+    const date = new Date(paymentDate);
+    if (Number.isNaN(date.getTime())) return 'Mensalidade';
+    const monthYear = format(date, 'MMM/yyyy', { locale: ptBR });
+    return `Mensalidade ${monthYear}`;
+  } catch {
+    return 'Mensalidade';
+  }
+};
+
+// Calculate payment status based on payment_date
+const getPaymentStatus = (payment: Payment): string => {
+  if (payment.status === 'pago') return 'pago';
+  if (payment.status !== 'pendente') return payment.status || 'pendente';
+
+  if (!payment.payment_date) return 'pendente';
+
+  try {
+    const paymentDate = new Date(payment.payment_date);
+    const now = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    if (paymentDate < thirtyDaysAgo) return 'inadimplente';
+    if (paymentDate < now) return 'vencido';
+    return 'pendente';
+  } catch {
+    return 'pendente';
+  }
 };
 
 const statusLabels: Record<string, string> = {
@@ -92,10 +132,10 @@ export default function PaymentDetails({ student, fetchStudentDebts, onClear, on
         setPendingPayments(data);
         const pendingCartItems = data.map((payment) => ({
           id: payment.id,
-          description: payment.description || 'Cobrança',
+          description: getPaymentDescription(payment.payment_date),
           amount: payment.amount || 0,
-          type: 'receita',
-          category: payment.category || 'Mensalidade',
+          type: 'receita' as const,
+          category: 'Mensalidade',
         }));
         setCart(pendingCartItems);
       } catch (error) {
@@ -159,10 +199,10 @@ export default function PaymentDetails({ student, fetchStudentDebts, onClear, on
         ...prev,
         {
           id: payment.id,
-          description: payment.description || 'Cobrança',
+          description: getPaymentDescription(payment.payment_date),
           amount: payment.amount || 0,
-          type: 'receita',
-          category: payment.category || 'Mensalidade',
+          type: 'receita' as const,
+          category: 'Mensalidade',
         },
       ];
     });
@@ -227,17 +267,18 @@ export default function PaymentDetails({ student, fetchStudentDebts, onClear, on
             )}
             {pendingPayments.map((payment) => {
               const inCart = cart.some((item) => item.id === payment.id);
+              const calculatedStatus = getPaymentStatus(payment);
               return (
                 <div key={payment.id} className="rounded-lg border p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold leading-tight">{payment.description}</p>
+                      <p className="text-sm font-semibold leading-tight">{getPaymentDescription(payment.payment_date)}</p>
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span>Vencimento: {formatDate(payment.due_date)}</span>
+                        <span>Vencimento: {formatDate(payment.payment_date)}</span>
                         <span>{formatCurrency(payment.amount || 0)}</span>
                       </div>
-                      <Badge variant={statusVariant(payment.status)}>
-                        {statusLabels[payment.status || 'pendente'] || 'Pendente'}
+                      <Badge variant={statusVariant(calculatedStatus)}>
+                        {statusLabels[calculatedStatus] || 'Pendente'}
                       </Badge>
                     </div>
                     <Button
