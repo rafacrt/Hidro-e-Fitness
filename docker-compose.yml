@@ -31,8 +31,8 @@ services:
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET}
       HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
       HASURA_GRAPHQL_LOG_LEVEL: debug
-    expose:
-      - "8080"
+    ports:
+      - "8080:8080"
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://127.0.0.1:8080/healthz"]
       interval: 5s
@@ -68,8 +68,8 @@ services:
       # TRUST_PROXY: "1"
     volumes:
       - storage:/app/storage
-    expose:
-      - "9002"
+    ports:
+      - "9002:9002"
     healthcheck:
       # ajuste o path de health do seu app
       test: ["CMD", "wget", "-qO-", "http://localhost:9002/health"]
