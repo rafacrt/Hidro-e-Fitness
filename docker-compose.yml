@@ -8,7 +8,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    # ⛔ Evite bind local no Coolify. Veja "Seed do banco" abaixo.
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,6 +15,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    networks:
+      - dokploy-network
 
   hasura:
     image: hasura/graphql-engine:v2.38.0
@@ -31,13 +32,15 @@ services:
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET}
       HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
       HASURA_GRAPHQL_LOG_LEVEL: debug
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://127.0.0.1:8080/healthz"]
       interval: 5s
       timeout: 5s
       retries: 60
+    networks:
+      - dokploy-network
 
   app:
     build:
@@ -52,31 +55,31 @@ services:
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
+      PORT: "9002"                               # garante que o app escute em 9002
       HASURA_GRAPHQL_ENDPOINT: http://hasura:8080/v1/graphql
       HASURA_ADMIN_SECRET: ${HASURA_ADMIN_SECRET}
       JWT_SECRET: ${JWT_SECRET}
       FILE_STORAGE_DIR: /app/storage
-
-      # Unifique com o banco:
       DB_HOST: db
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_NAME: ${POSTGRES_DB}
-
-      # Se seu app usa URL absoluta/cookies/forwarded-proto, inclua:
-      # APP_URL: https://seu-dominio
-      # TRUST_PROXY: "1"
     volumes:
       - storage:/app/storage
-    ports:
-      - "9002:9002"
+    expose:
+      - "9002"                                   # apenas expõe para a rede interna
     healthcheck:
-      # ajuste o path de health do seu app
       test: ["CMD", "wget", "-qO-", "http://localhost:9002/health"]
       interval: 10s
       timeout: 5s
       retries: 30
+    networks:
+      - dokploy-network
 
 volumes:
   db_data:
   storage:
+
+networks:
+  dokploy-network:
+    external: true
